@@ -1,0 +1,300 @@
+
+.bb-loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #080d19;
+  color: #ffffff;
+
+  animation: bbLoaderFadeIn 0.3s ease both;
+}
+
+.bb-loader-fullscreen {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.bb-loader-inline {
+  position: relative;
+  min-height: 300px;
+  width: 100%;
+}
+
+.bb-loader-content {
+  width: min(90%, 340px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* LOGO ANIMATION */
+
+.bb-loader-animation {
+  width: 104px;
+  height: 104px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 25px;
+}
+
+.bb-loader-orbit {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid transparent;
+}
+
+.bb-orbit-one {
+  border-top-color: #69a9ff;
+  border-right-color: rgba(105, 169, 255, 0.2);
+  animation: bbOrbitRotate 1.5s linear infinite;
+}
+
+.bb-orbit-two {
+  inset: 9px;
+  border-bottom-color: #3978e8;
+  border-left-color: rgba(57, 120, 232, 0.2);
+  animation: bbOrbitRotate 2s linear infinite reverse;
+}
+
+.bb-loader-logo {
+  position: relative;
+  width: 64px;
+  height: 64px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(105, 169, 255, 0.35);
+  border-radius: 19px;
+
+  background: linear-gradient(
+    145deg,
+    #172c50,
+    #0c1930
+  );
+
+  box-shadow: 0 0 35px rgba(48, 120, 235, 0.2);
+}
+
+.bb-loader-logo span {
+  font-size: 38px;
+  font-weight: 700;
+  font-family: Arial, sans-serif;
+  color: #8fc2ff;
+  letter-spacing: -3px;
+}
+
+.bb-loader-logo-dot {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 6px;
+  height: 6px;
+  background: #65a7ff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #65a7ff;
+}
+
+/* BRANDING */
+
+.bb-loader-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.bb-loader-brand-name {
+  font-size: 31px;
+  font-weight: 650;
+  letter-spacing: -1.5px;
+  color: #ffffff;
+}
+
+.bb-loader-brand-name span {
+  color: #72aaff;
+}
+
+.bb-loader-powered {
+  font-size: 9px;
+  letter-spacing: 3px;
+  font-weight: 600;
+  color: #7f91aa;
+}
+
+/* PROGRESS ANIMATION */
+
+.bb-loader-progress {
+  width: 145px;
+  height: 3px;
+  margin-top: 29px;
+
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.bb-loader-progress span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+
+  background: linear-gradient(
+    90deg,
+    #3477e9,
+    #9bc9ff
+  );
+
+  animation: bbLoaderProgress 1.4s ease-in-out infinite;
+}
+
+/* MESSAGE */
+
+.bb-loader-message {
+  margin-top: 17px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #91a0b5;
+  letter-spacing: 0.2px;
+}
+
+/* ANIMATIONS */
+
+@keyframes bbOrbitRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bbLoaderProgress {
+  0% {
+    transform: translateX(-110%);
+  }
+
+  100% {
+    transform: translateX(370%);
+  }
+}
+
+@keyframes bbLoaderFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* LIGHT THEME */
+
+html[data-theme="light"] .bb-loader-overlay {
+  background: #f5f7fc;
+  color: #17243a;
+}
+
+html[data-theme="light"] .bb-loader-logo {
+  background: linear-gradient(
+    145deg,
+    #ffffff,
+    #eaf1ff
+  );
+}
+
+html[data-theme="light"] .bb-loader-brand-name {
+  color: #17243a;
+}
+
+html[data-theme="light"] .bb-loader-powered,
+html[data-theme="light"] .bb-loader-message {
+  color: #78869b;
+}
+
+html[data-theme="light"] .bb-loader-progress {
+  background: rgba(20, 40, 80, 0.1);
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  .bb-loader-overlay,
+  .bb-loader-orbit,
+  .bb-loader-progress span {
+    animation-duration: 3s;
+  }
+}
+
+@media (max-width: 480px) {
+  .bb-loader-animation {
+    width: 90px;
+    height: 90px;
+  }
+
+  .bb-loader-logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .bb-loader-brand-name {
+    font-size: 28px;
+  }
+}
+
+
+
+/* =================================
+   BILLBOX LOADER - PERMANENT DARK
+================================= */
+
+.bb-loader-overlay {
+  background: #080d19 !important;
+  color: #ffffff !important;
+  color-scheme: dark !important;
+}
+
+.bb-loader-content,
+.bb-loader-brand-name,
+.bb-loader-logo span {
+  color: #ffffff !important;
+}
+
+.bb-loader-brand-name span {
+  color: #438cff !important;
+}
+
+.bb-loader-powered,
+.bb-loader-message {
+  color: #aab7cc !important;
+}
+
+.bb-loader-logo {
+  background: #101d35 !important;
+  border-color: #438cff !important;
+}
+
+.bb-loader-logo-dot {
+  background: #438cff !important;
+}
+
+.bb-loader-orbit {
+  border-color: rgba(67, 140, 255, 0.35) !important;
+}
+
+.bb-loader-progress {
+  background: #1b2940 !important;
+}
+
+.bb-loader-progress span {
+  background: #438cff !important;
+}

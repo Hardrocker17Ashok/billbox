@@ -1,328 +1,616 @@
 import "./Jewellery.css";
-import { useEffect, useState } from "react";
+
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import { useNavigate } from "react-router-dom";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+
+import { onAuthStateChanged } from "firebase/auth";
+
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+
+import { auth, db } from "../firebase";
+import PageLoader from "../components/PageLoader";
+
+const DEFAULT_PROFILE = {
+  shopName: "BillBox",
+  logoUrl: "",
+  language: "hi",
+  theme: "dark",
+};
+
+const TEXT = {
+  hi: {
+    collection: "आभूषण संग्रह",
+    totalJewellery: "कुल आभूषण",
+    eyebrow: "JEWELLERY COLLECTION",
+    headingStart: "हमारे",
+    headingEnd: "आभूषण",
+    description: "आपकी दुकान के सभी उपलब्ध आभूषणों का संग्रह देखें।",
+    gold: "सोना",
+    silver: "चाँदी",
+    searchPlaceholder: "आभूषण खोजें...",
+    all: "सभी",
+    sectionEyebrow: "संग्रह",
+    listHeading: "आभूषण सूची",
+    itemCount: "आभूषण",
+    loading: "आभूषण लोड हो रहे हैं...",
+    emptyHeading: "कोई आभूषण नहीं मिला",
+    emptyDescription: "खोज या फ़िल्टर बदलकर दोबारा प्रयास करें।",
+    itemLabel: "आभूषण",
+    goldItem: "सोने का आभूषण",
+    silverItem: "चाँदी का आभूषण",
+    available: "उपलब्ध",
+    trust: "विश्वास",
+    purity: "शुद्धता",
+    beauty: "सुंदरता",
+    fetchError: "आभूषण लोड नहीं हो पाए। कृपया दोबारा प्रयास करें।",
+    loginError: "कृपया पहले लॉगिन करें।",
+    preparing: "आपका आभूषण संग्रह तैयार हो रहा है...",
+    retry: "दोबारा प्रयास करें",
+    unknownItem: "आभूषण",
+    unknownMetal: "अन्य",
+    otherItem: "अन्य आभूषण",
+  },
+
+  en: {
+    collection: "Jewellery Collection",
+    totalJewellery: "Total Jewellery",
+    eyebrow: "JEWELLERY COLLECTION",
+    headingStart: "Our",
+    headingEnd: "Jewellery",
+    description: "Explore all available jewellery items in your shop.",
+    gold: "Gold",
+    silver: "Silver",
+    searchPlaceholder: "Search jewellery...",
+    all: "All",
+    sectionEyebrow: "COLLECTION",
+    listHeading: "Jewellery List",
+    itemCount: "items",
+    loading: "Loading jewellery...",
+    emptyHeading: "No jewellery found",
+    emptyDescription: "Try changing your search or filters.",
+    itemLabel: "JEWELLERY",
+    goldItem: "Gold Jewellery",
+    silverItem: "Silver Jewellery",
+    available: "Available",
+    trust: "Trust",
+    purity: "Purity",
+    beauty: "Beauty",
+    fetchError: "Unable to load jewellery. Please try again.",
+    loginError: "Please login first.",
+    preparing: "Preparing your jewellery collection...",
+    retry: "Try Again",
+    unknownItem: "Jewellery",
+    unknownMetal: "Other",
+    otherItem: "Other Jewellery",
+  },
+};
+
+const normalizeLanguage = (value) =>
+  value === "en" ? "en" : "hi";
+
+const normalizeTheme = (value) =>
+  value === "light" ? "light" : "dark";
+
+const normalizeMetal = (value) =>
+  String(value || "").trim().toLowerCase();
 
 function Jewellery() {
   const navigate = useNavigate();
 
+  const [user, setUser] = useState(null);
+
+  const [shopProfile, setShopProfile] =
+    useState(DEFAULT_PROFILE);
+
   const [jewellery, setJewellery] = useState([]);
+
+  const [authReady, setAuthReady] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [loading, setLoading] = useState(true);
+
+  const [error, setError] = useState("");
+
   const [search, setSearch] = useState("");
   const [metalFilter, setMetalFilter] = useState("all");
 
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // ================= FETCH JEWELLERY =================
+  const language = normalizeLanguage(shopProfile.language);
+  const theme = normalizeTheme(shopProfile.theme);
+
+  const t = TEXT[language];
+
+  // ============================================
+  // AUTH + SHOP PROFILE + JEWELLERY FETCH
+  // ============================================
 
   useEffect(() => {
-    const fetchJewellery = async () => {
-      try {
+    let mounted = true;
+    let requestId = 0;
+
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (currentUser) => {
+        const currentRequest = ++requestId;
+
+        const isCurrentRequest = () =>
+          mounted && currentRequest === requestId;
+
+        if (!isCurrentRequest()) return;
+
+        setAuthReady(true);
+        setUser(currentUser);
+        setError("");
+        setJewellery([]);
+
+        if (!currentUser) {
+          setShopProfile(DEFAULT_PROFILE);
+          setProfileLoading(false);
+          setLoading(false);
+          setError(TEXT.hi.loginError);
+          return;
+        }
+
+        setProfileLoading(true);
         setLoading(true);
 
-        const snapshot = await getDocs(
-          collection(db, "jewellery")
-        );
+        try {
+          // Fetch current shop profile
+          const shopRef = doc(
+            db,
+            "shops",
+            currentUser.uid
+          );
 
-        const jewelleryData = snapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }))
-          .filter((item) => item.active !== false);
+          const shopSnapshot = await getDoc(shopRef);
 
-        setJewellery(jewelleryData);
+          if (!isCurrentRequest()) return;
 
-      } catch (error) {
-        console.error(
-          "Jewellery Fetch Error:",
-          error
-        );
-      } finally {
-        setLoading(false);
+          let profile = DEFAULT_PROFILE;
+
+          if (shopSnapshot.exists()) {
+            const shopData = shopSnapshot.data();
+
+            profile = {
+              ...DEFAULT_PROFILE,
+              shopName:
+                shopData.shopName ||
+                DEFAULT_PROFILE.shopName,
+              logoUrl: shopData.logoUrl || "",
+              language: normalizeLanguage(
+                shopData.language
+              ),
+              theme: normalizeTheme(
+                shopData.theme
+              ),
+            };
+          }
+
+          setShopProfile(profile);
+          setProfileLoading(false);
+
+          // Fetch only current logged-in shop's jewellery
+          const jewelleryQuery = query(
+            collection(db, "jewellery"),
+            where("ownerId", "==", currentUser.uid)
+          );
+
+          const snapshot = await getDocs(
+            jewelleryQuery
+          );
+
+          if (!isCurrentRequest()) return;
+
+          const jewelleryData = snapshot.docs
+            .map((itemDoc) => ({
+              id: itemDoc.id,
+              ...itemDoc.data(),
+            }))
+            .filter((item) => item.active !== false);
+
+          setJewellery(jewelleryData);
+          setError("");
+        } catch (fetchError) {
+          console.error(
+            "Jewellery Fetch Error:",
+            fetchError
+          );
+
+          if (!isCurrentRequest()) return;
+
+          setError(
+            TEXT[
+              normalizeLanguage(shopProfile.language)
+            ].fetchError
+          );
+        } finally {
+          if (isCurrentRequest()) {
+            setProfileLoading(false);
+            setLoading(false);
+          }
+        }
       }
-    };
-
-    fetchJewellery();
-  }, []);
-
-
-  // ================= FILTER =================
-
-  const filteredJewellery = jewellery.filter((item) => {
-
-    const itemName = String(
-      item.name || ""
-    ).toLowerCase();
-
-    const itemMetal = String(
-      item.metal || ""
-    ).toLowerCase();
-
-    const searchMatch = itemName.includes(
-      search.toLowerCase()
     );
 
-    const metalMatch =
-      metalFilter === "all" ||
-      itemMetal === metalFilter;
+    return () => {
+      mounted = false;
+      requestId += 1;
+      unsubscribe();
+    };
+  }, [refreshKey]);
 
-    return searchMatch && metalMatch;
-  });
+  // ============================================
+  // DASHBOARD THEME + LANGUAGE SYNC
+  // ============================================
 
+  useEffect(() => {
+    const handlePreferenceChange = (event) => {
+      const savedLanguage =
+        event.detail?.language;
 
-  // ================= COUNTS =================
+      const savedTheme =
+        event.detail?.theme;
 
-  const goldCount = jewellery.filter(
-    (item) =>
-      String(item.metal || "").toLowerCase() ===
-      "gold"
-  ).length;
+      setShopProfile((current) => ({
+        ...current,
 
-  const silverCount = jewellery.filter(
-    (item) =>
-      String(item.metal || "").toLowerCase() ===
-      "silver"
-  ).length;
+        language: ["hi", "en"].includes(savedLanguage)
+          ? savedLanguage
+          : current.language,
 
+        theme: ["dark", "light"].includes(savedTheme)
+          ? savedTheme
+          : current.theme,
+      }));
+    };
+
+    window.addEventListener(
+      "billbox-preferences-change",
+      handlePreferenceChange
+    );
+
+    return () => {
+      window.removeEventListener(
+        "billbox-preferences-change",
+        handlePreferenceChange
+      );
+    };
+  }, []);
+
+  // ============================================
+  // APPLY THEME + LANGUAGE
+  // ============================================
+
+  useEffect(() => {
+    document.documentElement.setAttribute(
+      "data-theme",
+      theme
+    );
+
+    document.documentElement.setAttribute(
+      "data-language",
+      language
+    );
+
+    document.body.setAttribute(
+      "data-theme",
+      theme
+    );
+
+    document.body.setAttribute(
+      "data-language",
+      language
+    );
+
+    document.documentElement.classList.toggle(
+      "dark-theme",
+      theme === "dark"
+    );
+
+    document.documentElement.classList.toggle(
+      "light-theme",
+      theme === "light"
+    );
+
+    try {
+      localStorage.setItem(
+        "billbox-theme",
+        theme
+      );
+
+      localStorage.setItem(
+        "billbox-language",
+        language
+      );
+    } catch (storageError) {
+      console.warn(
+        "Preference storage unavailable:",
+        storageError
+      );
+    }
+  }, [theme, language]);
+
+  // ============================================
+  // REFRESH
+  // ============================================
+
+  const handleRefresh = useCallback(() => {
+    if (!user) return;
+
+    setError("");
+    setRefreshKey((current) => current + 1);
+  }, [user]);
+
+  // ============================================
+  // FILTER JEWELLERY
+  // ============================================
+
+  const filteredJewellery = useMemo(() => {
+    const searchValue = search
+      .trim()
+      .toLowerCase();
+
+    return jewellery.filter((item) => {
+      const itemName = String(
+        item.name || ""
+      ).toLowerCase();
+
+      const itemMetal = normalizeMetal(
+        item.metal
+      );
+
+      const searchMatch =
+        itemName.includes(searchValue);
+
+      const metalMatch =
+        metalFilter === "all" ||
+        itemMetal === metalFilter;
+
+      return searchMatch && metalMatch;
+    });
+  }, [jewellery, search, metalFilter]);
+
+  // ============================================
+  // COUNTS
+  // ============================================
+
+  const goldCount = useMemo(
+    () =>
+      jewellery.filter(
+        (item) =>
+          normalizeMetal(item.metal) === "gold"
+      ).length,
+    [jewellery]
+  );
+
+  const silverCount = useMemo(
+    () =>
+      jewellery.filter(
+        (item) =>
+          normalizeMetal(item.metal) === "silver"
+      ).length,
+    [jewellery]
+  );
+
+  // ============================================
+  // METAL LABEL
+  // ============================================
+
+  const getMetalLabel = (metal) => {
+    const value = normalizeMetal(metal);
+
+    if (value === "gold") return t.gold;
+    if (value === "silver") return t.silver;
+
+    return t.unknownMetal;
+  };
+
+  const getItemDescription = (metal) => {
+    const value = normalizeMetal(metal);
+
+    if (value === "gold") return t.goldItem;
+    if (value === "silver") return t.silverItem;
+
+    return t.otherItem;
+  };
+
+  // ============================================
+  // LOADER
+  // ============================================
+
+  if (
+    !authReady ||
+    profileLoading ||
+    loading
+  ) {
+    return (
+      <PageLoader
+        loading={true}
+        message={t.preparing}
+        fullScreen={true}
+      />
+    );
+  }
+
+  // ============================================
+  // MAIN UI
+  // ============================================
 
   return (
-    <div className="jewellery-page">
-
-      {/* ================= HEADER ================= */}
+    <div
+      className={`jewellery-page ${
+        theme === "light"
+          ? "jewellery-light"
+          : "jewellery-dark"
+      }`}
+      data-theme={theme}
+      data-language={language}
+    >
+      {/* HEADER */}
 
       <header className="jewellery-topbar">
-
         <div className="jewellery-brand">
-
           <button
             className="back-button"
+            type="button"
             onClick={() => navigate("/dashboard")}
+            aria-label="Back to dashboard"
           >
             ←
           </button>
 
-          <img
-            src="/logo1.png"
-            alt="कनिष्का ज्वेलर्स"
-          />
-
-          <div className="brand-text">
-
-            <strong>
-              कनिष्का ज्वेलर्स
-            </strong>
-
-            <span>
-              आभूषण संग्रह
-            </span>
-
+          <div className="jewellery-logo">
+            {shopProfile.logoUrl ? (
+              <img
+                src={shopProfile.logoUrl}
+                alt={shopProfile.shopName}
+                onError={(event) => {
+                  event.currentTarget.style.display =
+                    "none";
+                }}
+              />
+            ) : (
+              <span>
+                {String(
+                  shopProfile.shopName || "B"
+                )
+                  .trim()
+                  .charAt(0)
+                  .toUpperCase()}
+              </span>
+            )}
           </div>
 
-        </div>
+          <div className="brand-text">
+            <strong>
+              {shopProfile.shopName}
+            </strong>
 
+            <span>{t.collection}</span>
+          </div>
+        </div>
 
         <div className="jewellery-topbar-right">
+          <span>{t.totalJewellery}</span>
 
-          <span>
-            कुल आभूषण
-          </span>
-
-          <strong>
-            {jewellery.length}
-          </strong>
-
-        </div>
-
-      </header>
-
-
-
-
-
-
-
-
-{/* 
-<header className="jewellery-topbar">
-
-        <div className="jewellery-brand">
+          <strong>{jewellery.length}</strong>
 
           <button
-            className="back-button"
-            onClick={() => navigate("/dashboard")}
+            className="jewellery-refresh"
+            type="button"
+            onClick={handleRefresh}
+            title={t.retry}
+            aria-label={t.retry}
           >
-            ←
+            ↻
           </button>
-
-          <img
-            src="/logo1.png"
-            alt="कनिष्का ज्वेलर्स"
-          />
-
-          <div className="brand-text">
-
-            <strong>
-              कनिष्का ज्वेलर्स
-            </strong>
-
-            <span>
-              आभूषण संग्रह
-            </span>
-
-          </div>
-
         </div>
-
-
-        <div className="jewellery-topbar-right">
-
-          <span>
-            कुल आभूषण
-          </span>
-
-          <strong>
-            {jewellery.length}
-          </strong>
-
-        </div>
-
       </header>
- */}
 
-
-
-
-
-
-
-
-
-
-      {/* ================= MAIN ================= */}
+      {/* MAIN */}
 
       <main className="jewellery-content">
-
-
-        {/* ================= PAGE INTRO ================= */}
+        {/* INTRO */}
 
         <section className="jewellery-intro">
-
           <div>
-
             <span className="jewellery-eyebrow">
-              JEWELLERY COLLECTION
+              {t.eyebrow}
             </span>
 
             <h1>
-              हमारे <em>आभूषण</em>
+              {t.headingStart}{" "}
+              <em>{t.headingEnd}</em>
             </h1>
 
-            <p>
-              कनिष्का ज्वेलर्स के सभी उपलब्ध आभूषणों
-              का संग्रह देखें।
-            </p>
-
+            <p>{t.description}</p>
           </div>
 
-
           <div className="collection-stats">
-
             <div className="collection-stat">
-
-              <span>
-                सोना
-              </span>
-
-              <strong>
-                {goldCount}
-              </strong>
-
+              <span>{t.gold}</span>
+              <strong>{goldCount}</strong>
             </div>
-
 
             <div className="stat-divider"></div>
 
-
             <div className="collection-stat">
-
-              <span>
-                चाँदी
-              </span>
-
-              <strong>
-                {silverCount}
-              </strong>
-
+              <span>{t.silver}</span>
+              <strong>{silverCount}</strong>
             </div>
-
           </div>
-
         </section>
 
-
-        {/* ================= FILTER BAR ================= */}
+        {/* TOOLBAR */}
 
         <section className="jewellery-toolbar">
-
           <div className="search-box">
-
             <span className="search-icon">
               ⌕
             </span>
 
             <input
               type="text"
-              placeholder="आभूषण खोजें..."
+              placeholder={t.searchPlaceholder}
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
+              onChange={(event) =>
+                setSearch(event.target.value)
               }
+              aria-label={t.searchPlaceholder}
             />
 
             {search && (
               <button
                 className="clear-search"
+                type="button"
                 onClick={() => setSearch("")}
+                aria-label="Clear search"
               >
                 ×
               </button>
             )}
-
           </div>
 
-
           <div className="metal-filters">
-
             <button
+              type="button"
               className={
                 metalFilter === "all"
                   ? "metal-filter active"
                   : "metal-filter"
               }
-              onClick={() =>
-                setMetalFilter("all")
-              }
+              onClick={() => setMetalFilter("all")}
             >
-              सभी
+              {t.all}
             </button>
 
-
             <button
+              type="button"
               className={
                 metalFilter === "gold"
                   ? "metal-filter gold active"
                   : "metal-filter gold"
               }
-              onClick={() =>
-                setMetalFilter("gold")
-              }
+              onClick={() => setMetalFilter("gold")}
             >
-              सोना
+              {t.gold}
             </button>
 
-
             <button
+              type="button"
               className={
                 metalFilter === "silver"
                   ? "metal-filter silver active"
@@ -332,239 +620,171 @@ function Jewellery() {
                 setMetalFilter("silver")
               }
             >
-              चाँदी
+              {t.silver}
             </button>
-
           </div>
-
         </section>
 
-
-        {/* ================= COLLECTION ================= */}
+        {/* COLLECTION */}
 
         <section className="collection-section">
-
           <div className="collection-heading">
-
             <div>
-
-              <span>
-                संग्रह
-              </span>
-
-              <h2>
-                आभूषण सूची
-              </h2>
-
+              <span>{t.sectionEyebrow}</span>
+              <h2>{t.listHeading}</h2>
             </div>
 
             <p>
-              {filteredJewellery.length} आभूषण
+              {filteredJewellery.length}{" "}
+              {t.itemCount}
             </p>
-
           </div>
 
+          {/* ERROR */}
 
-          {/* LOADING */}
+          {error && (
+            <div className="empty-jewellery jewellery-error">
+              <div className="empty-icon">!</div>
 
-          {loading && (
+              <h3>{error}</h3>
 
-            <div className="jewellery-loading">
-
-              <div className="loading-ring"></div>
-
-              <span>
-                आभूषण लोड हो रहे हैं...
-              </span>
-
+              <button
+                type="button"
+                className="jewellery-retry-button"
+                onClick={handleRefresh}
+              >
+                {t.retry}
+              </button>
             </div>
-
           )}
-
 
           {/* EMPTY */}
 
-          {!loading &&
+          {!error &&
             filteredJewellery.length === 0 && (
-
               <div className="empty-jewellery">
+                <div className="empty-icon">◇</div>
 
-                <div className="empty-icon">
-                  ◇
-                </div>
+                <h3>{t.emptyHeading}</h3>
 
-                <h3>
-                  कोई आभूषण नहीं मिला
-                </h3>
-
-                <p>
-                  खोज या फ़िल्टर बदलकर दोबारा प्रयास करें।
-                </p>
-
+                <p>{t.emptyDescription}</p>
               </div>
-
             )}
-
 
           {/* JEWELLERY GRID */}
 
-          {!loading &&
+          {!error &&
             filteredJewellery.length > 0 && (
-
               <div className="jewellery-grid">
+                {filteredJewellery.map((item) => {
+                  const metal = normalizeMetal(
+                    item.metal
+                  );
 
-                {filteredJewellery.map(
-                  (item) => {
+                  const isGold = metal === "gold";
+                  const isSilver = metal === "silver";
 
-                    const metal = String(
-                      item.metal || ""
-                    ).toLowerCase();
+                  const imageUrl = String(
+                    item.imageUrl || ""
+                  ).trim();
 
-                    const isGold =
-                      metal === "gold";
+                  return (
+                    <article
+                      className="jewellery-card"
+                      key={item.id}
+                    >
+                      {/* IMAGE */}
 
-                    return (
-
-                      <article
-                        className="jewellery-card"
-                        key={item.id}
+                      <div
+                        className={`jewellery-image ${
+                          isGold
+                            ? "gold-image"
+                            : isSilver
+                              ? "silver-image"
+                              : "other-image"
+                        }`}
                       >
-
-                        {/* IMAGE */}
-
-                        <div
-                          className={
-                            isGold
-                              ? "jewellery-image gold-image"
-                              : "jewellery-image silver-image"
-                          }
-                        >
-
-                          {item.imageUrl ? (
-
-                            <img
-                              src={
-                                item.imageUrl.startsWith(
-                                  "http"
-                                )
-                                  ? item.imageUrl
-                                  : `https://${item.imageUrl}`
-                              }
-                              alt={
-                                item.name ||
-                                "आभूषण"
-                              }
-                              onError={(e) => {
-                                e.currentTarget.style.display =
-                                  "none";
-
-                                e.currentTarget.parentElement.classList.add(
-                                  "image-error"
-                                );
-                              }}
-                            />
-
-                          ) : (
-
-                            <div className="no-image">
-                              ◇
-                            </div>
-
-                          )}
-
-
-                          {/* METAL BADGE */}
-
-                          <span
-                            className={
-                              isGold
-                                ? "metal-badge gold-badge"
-                                : "metal-badge silver-badge"
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={
+                              item.name ||
+                              t.unknownItem
                             }
-                          >
-                            {isGold
-                              ? "सोना"
-                              : "चाँदी"}
-                          </span>
+                            loading="lazy"
+                            onError={(event) => {
+                              event.currentTarget.style.display =
+                                "none";
 
-                        </div>
-
-
-                        {/* CARD CONTENT */}
-
-                        <div className="jewellery-card-content">
-
-                          <span className="item-number">
-                            आभूषण
-                          </span>
-
-                          <h3>
-                            {item.name ||
-                              "आभूषण"}
-                          </h3>
-
-
-                          <div className="card-bottom">
-
-                            <span>
-                              {isGold
-                                ? "सोने का आभूषण"
-                                : "चाँदी का आभूषण"}
-                            </span>
-
-                            <span className="active-status">
-                              उपलब्ध
-                            </span>
-
+                              event.currentTarget.parentElement.classList.add(
+                                "image-error"
+                              );
+                            }}
+                          />
+                        ) : (
+                          <div className="no-image">
+                            ◇
                           </div>
+                        )}
 
+                        <span
+                          className={`metal-badge ${
+                            isGold
+                              ? "gold-badge"
+                              : isSilver
+                                ? "silver-badge"
+                                : "other-badge"
+                          }`}
+                        >
+                          {getMetalLabel(item.metal)}
+                        </span>
+                      </div>
+
+                      {/* CARD CONTENT */}
+
+                      <div className="jewellery-card-content">
+                        <span className="item-number">
+                          {t.itemLabel}
+                        </span>
+
+                        <h3>
+                          {item.name || t.unknownItem}
+                        </h3>
+
+                        <div className="card-bottom">
+                          <span>
+                            {getItemDescription(
+                              item.metal
+                            )}
+                          </span>
+
+                          <span className="active-status">
+                            {t.available}
+                          </span>
                         </div>
-
-                      </article>
-
-                    );
-                  }
-                )}
-
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
-
             )}
-
         </section>
-
       </main>
 
-
-      {/* ================= FOOTER ================= */}
+      {/* FOOTER */}
 
       <footer className="jewellery-footer">
-
-        <span>
-          विश्वास
-        </span>
-
-        <b>
-          •
-        </b>
-
-        <span>
-          शुद्धता
-        </span>
-
-        <b>
-          •
-        </b>
-
-        <span>
-          सुंदरता
-        </span>
+        <span>{t.trust}</span>
+        <b>•</b>
+        <span>{t.purity}</span>
+        <b>•</b>
+        <span>{t.beauty}</span>
 
         <small>
-          © 2026 कनिष्का ज्वेलर्स
+          © {new Date().getFullYear()}{" "}
+          {shopProfile.shopName}
         </small>
-
       </footer>
-
     </div>
   );
 }
