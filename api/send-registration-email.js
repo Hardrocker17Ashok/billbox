@@ -1,7 +1,7 @@
 
-const { initializeApp, cert, getApps } = require("firebase-admin/app");
-const { getAuth } = require("firebase-admin/auth");
-const { getFirestore, FieldValue } = require("firebase-admin/firestore");
+import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 function getFirebaseAdmin() {
   if (getApps().length) return getApps()[0];
@@ -15,15 +15,20 @@ function getFirebaseAdmin() {
   });
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ success: false, message: "Method not allowed" });
+    return res.status(405).json({
+      success: false,
+      message: "Method not allowed",
+    });
   }
 
   try {
-    if (!process.env.FIREBASE_SERVICE_ACCOUNT ||
-        !process.env.RESEND_API_KEY ||
-        !process.env.BILLBOX_ADMIN_EMAIL) {
+    if (
+      !process.env.FIREBASE_SERVICE_ACCOUNT ||
+      !process.env.RESEND_API_KEY ||
+      !process.env.BILLBOX_ADMIN_EMAIL
+    ) {
       throw new Error("Required environment variables are missing");
     }
 
@@ -37,7 +42,10 @@ module.exports = async function handler(req, res) {
       : "";
 
     if (!token) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
     }
 
     const decodedToken = await adminAuth.verifyIdToken(token);
@@ -47,13 +55,19 @@ module.exports = async function handler(req, res) {
     const shopSnapshot = await shopRef.get();
 
     if (!shopSnapshot.exists) {
-      return res.status(404).json({ success: false, message: "Shop not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Shop not found",
+      });
     }
 
     const shop = shopSnapshot.data();
 
     if (shop.status !== "pending") {
-      return res.status(400).json({ success: false, message: "Shop is not pending" });
+      return res.status(400).json({
+        success: false,
+        message: "Shop is not pending",
+      });
     }
 
     if (shop.registrationNotificationSentAt) {
@@ -108,6 +122,7 @@ module.exports = async function handler(req, res) {
       return res.status(502).json({
         success: false,
         message: "Email delivery failed",
+        error: emailResult,
       });
     }
 
@@ -119,13 +134,12 @@ module.exports = async function handler(req, res) {
       success: true,
       message: "Registration notification sent",
     });
-
   } catch (error) {
     console.error("Registration email error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Unable to send registration notification",
+      message: error.message || "Unable to send registration notification",
     });
   }
-};
+}
