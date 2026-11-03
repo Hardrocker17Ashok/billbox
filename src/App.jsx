@@ -23,12 +23,13 @@ import BillHistory from "./pages/BillHistory";
 import TodaySales from "./pages/TodaySales";
 import Jewellery from "./pages/Jewellery";
 
+const ADMIN_EMAIL = "kj@gmail.com";
+
 const DEFAULT_PREFERENCES = {
   theme: "dark",
   language: "hi",
 };
 
-// Apply preferences globally.
 function applyPreferences(preferences, broadcast = true) {
   const theme = preferences.theme === "light" ? "light" : "dark";
   const language = preferences.language === "en" ? "en" : "hi";
@@ -48,8 +49,14 @@ function applyPreferences(preferences, broadcast = true) {
   }
 }
 
-// Protected route.
-function ProtectedRoute({ children, user }) {
+// Only a user validated as an active shop (or the BillBox admin)
+// can enter protected routes. Do not use auth.currentUser here:
+// Firebase also signs in users immediately after registration.
+function ProtectedRoute({ children, user, authReady }) {
+  if (!authReady) {
+    return null;
+  }
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -57,7 +64,6 @@ function ProtectedRoute({ children, user }) {
   return children;
 }
 
-// Main application content.
 function AppContent() {
   const [user, setUser] = useState(null);
   const [appReady, setAppReady] = useState(false);
@@ -66,77 +72,100 @@ function AppContent() {
 
   useEffect(() => {
     let active = true;
+    let authEventVersion = 0;
+
+    const applyLocalPreferences = () => {
+      applyPreferences({
+        theme:
+          localStorage.getItem("billbox-theme") ||
+          DEFAULT_PREFERENCES.theme,
+        language:
+          localStorage.getItem("billbox-language") ||
+          DEFAULT_PREFERENCES.language,
+      });
+    };
 
     const unsubscribeAuth = onAuthStateChanged(
       auth,
       async (currentUser) => {
         if (!active) return;
 
-        // Keep the global loader active during authentication.
-        setBootLoading(true);
-        setAppReady(false);
-        setUser(currentUser);
+        const thisEvent = ++authEventVersion;
 
-        // No logged-in user.
+        // A signed-out state is always safe to apply immediately.
         if (!currentUser) {
-          applyPreferences({
-            theme: localStorage.getItem("billbox-theme") || "dark",
-            language: localStorage.getItem("billbox-language") || "hi",
-          });
-
-          if (active) {
-            setAppReady(true);
-            setBootLoading(false);
-          }
-
+          setUser(null);
+          applyLocalPreferences();
+          setAppReady(true);
+          setBootLoading(false);
           return;
         }
 
-        // Load saved shop preferences.
-        try {
-          const shopRef = doc(
-            db,
-            "shops",
-            currentUser.uid
-          );
+        // The existing BillBox admin account does not need a shops/{uid} doc.
+        if (
+          String(currentUser.email || "").toLowerCase() ===
+          ADMIN_EMAIL.toLowerCase()
+        ) {
+          setUser(currentUser);
+          applyPreferences(DEFAULT_PREFERENCES);
+          setAppReady(true);
+          setBootLoading(false);
+          return;
+        }
 
+        try {
+          // IMPORTANT:
+          // Do not mark a Firebase user as logged in until their shop
+          // document exists AND its status is active.
+          const shopRef = doc(db, "shops", currentUser.uid);
           const shopSnapshot = await getDoc(shopRef);
 
-          if (!active) return;
+          if (!active || thisEvent !== authEventVersion) return;
 
-          if (shopSnapshot.exists()) {
-            const shopData = shopSnapshot.data();
-
-            applyPreferences({
-              theme: shopData.theme || DEFAULT_PREFERENCES.theme,
-              language: shopData.language || DEFAULT_PREFERENCES.language,
-            });
+          if (!shopSnapshot.exists()) {
+            // This is commonly the short interval during registration:
+            // Firebase Auth has created the user, but the shop document
+            // has not yet been written. Keep the Login page mounted.
+            setUser(null);
+            applyLocalPreferences();
           } else {
-            applyPreferences(DEFAULT_PREFERENCES);
+            const shopData = shopSnapshot.data();
+            const shopStatus = String(shopData.status || "")
+              .toLowerCase()
+              .trim();
+
+            if (shopStatus === "active") {
+              setUser(currentUser);
+
+              applyPreferences({
+                theme:
+                  shopData.theme || DEFAULT_PREFERENCES.theme,
+                language:
+                  shopData.language || DEFAULT_PREFERENCES.language,
+              });
+            } else {
+              // Pending / rejected / suspended / unknown accounts
+              // must never be treated as authenticated app users.
+              setUser(null);
+              applyLocalPreferences();
+            }
           }
         } catch (error) {
-          console.error(
-            "Could not load saved preferences:",
-            error
-          );
+          console.error("Could not verify shop account:", error);
 
-          if (active) {
-            applyPreferences({
-              theme: localStorage.getItem("billbox-theme") || "dark",
-              language: localStorage.getItem("billbox-language") || "hi",
-            });
-          }
+          if (!active || thisEvent !== authEventVersion) return;
+
+          setUser(null);
+          applyLocalPreferences();
         } finally {
-          if (active) {
+          if (active && thisEvent === authEventVersion) {
             setAppReady(true);
-
             setBootLoading(false);
           }
         }
       }
     );
 
-    // Listen for preference changes from any page.
     const handlePreferenceChange = (event) => {
       if (event.detail) {
         applyPreferences(event.detail, false);
@@ -159,8 +188,6 @@ function AppContent() {
     };
   }, [setBootLoading]);
 
-  // Wait until authentication and preferences are initialized.
-  // The global PageLoader is already rendered by LoadingProvider.
   if (!appReady) {
     return null;
   }
@@ -175,13 +202,19 @@ function AppContent() {
 
         <Route
           path="/login"
-          element={<Login />}
+          element={
+            user ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Login />
+            )
+          }
         />
 
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} authReady={appReady}>
               <Dashboard />
             </ProtectedRoute>
           }
@@ -190,7 +223,7 @@ function AppContent() {
         <Route
           path="/new-bill"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} authReady={appReady}>
               <NewBill />
             </ProtectedRoute>
           }
@@ -199,7 +232,7 @@ function AppContent() {
         <Route
           path="/bill-history"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} authReady={appReady}>
               <BillHistory />
             </ProtectedRoute>
           }
@@ -208,7 +241,7 @@ function AppContent() {
         <Route
           path="/today-sales"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} authReady={appReady}>
               <TodaySales />
             </ProtectedRoute>
           }
@@ -217,7 +250,7 @@ function AppContent() {
         <Route
           path="/jewellery"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} authReady={appReady}>
               <Jewellery />
             </ProtectedRoute>
           }
@@ -232,7 +265,6 @@ function AppContent() {
   );
 }
 
-// Root application.
 function App() {
   return (
     <LoadingProvider>

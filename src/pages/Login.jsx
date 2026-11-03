@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGlobalLoading } from "../context/LoadingContext";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -24,7 +25,6 @@ import "./Login.css";
 const ADMIN_EMAIL = "kj@gmail.com";
 const VALID_USERNAME = "kj001";
 const WHATSAPP_SUPPORT_NUMBER = "917597201594";
-
 const getWhatsAppUrl = (message) => {
   const text = encodeURIComponent(message);
 
@@ -69,6 +69,7 @@ const wait = (milliseconds) =>
 
 export default function Login() {
   const navigate = useNavigate();
+  const { startLoading, stopLoading } = useGlobalLoading();
 
   // Page and form states
   const [mode, setMode] = useState("login");
@@ -104,7 +105,18 @@ export default function Login() {
 
   useEffect(() => {
     let cancelled = false;
-    let timeoutId;
+    let timeoutId = null;
+    let loadingReleased = false;
+
+    // Keep the existing global PageLoader visible while the login artwork loads.
+    startLoading("Preparing your workspace...");
+
+    const releaseLoading = () => {
+      if (!loadingReleased) {
+        loadingReleased = true;
+        stopLoading();
+      }
+    };
 
     const preloadImages = async () => {
       const imagePromises = jewelleryImages.map(
@@ -116,9 +128,7 @@ export default function Login() {
             image.onerror = resolve;
             image.src = item.src;
 
-            if (image.complete) {
-              resolve();
-            }
+            if (image.complete) resolve();
           })
       );
 
@@ -132,15 +142,23 @@ export default function Login() {
       if (!cancelled) {
         setAssetsReady(true);
       }
+
+      releaseLoading();
     };
 
     preloadImages();
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timeoutId);
+
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+
+      // Also balances the loading counter if React StrictMode replays the effect.
+      releaseLoading();
     };
-  }, []);
+  }, [startLoading, stopLoading]);
 
   // --------------------------------------------------
   // FULL-SCREEN LOADER BEFORE DASHBOARD
@@ -148,10 +166,14 @@ export default function Login() {
 
   const openDashboard = async () => {
     setDashboardLoading(true);
+    startLoading("Opening your workspace...");
 
-    await wait(650);
-
-    navigate("/dashboard", { replace: true });
+    try {
+      await wait(650);
+      navigate("/dashboard", { replace: true });
+    } finally {
+      stopLoading();
+    }
   };
 
   // --------------------------------------------------
@@ -512,59 +534,10 @@ export default function Login() {
     }
   };
 
-  // --------------------------------------------------
-  // FULL-SCREEN LOADER
-  // --------------------------------------------------
-  // Appears:
-  // 1. On initial page load / browser refresh.
-  // 2. Only after successful active-account verification.
-  //
-  // Does NOT appear:
-  // 1. While switching login and registration.
-  // 2. While submitting registration.
-  // 3. For wrong credentials.
-  // 4. For pending, rejected or suspended accounts.
+
 
   if (!assetsReady || dashboardLoading) {
-    return (
-      <main className="billbox-loading-screen">
-        <div className="loader-orb loader-orb-one" />
-        <div className="loader-orb loader-orb-two" />
-
-        <div className="billbox-loader-content">
-          <div className="billbox-loader-mark">
-            <span>B</span>
-            <i />
-          </div>
-
-          <h1>
-            BillBox<span>.</span>
-          </h1>
-
-          <p>SMART BILLING. SIMPLE BUSINESS.</p>
-
-          <div className="billbox-loader-track">
-            <span />
-          </div>
-
-          <div className="billbox-loader-caption">
-            {dashboardLoading
-              ? "Opening your workspace"
-              : "Preparing your workspace"}
-
-            <span className="loader-dots">
-              <i />
-              <i />
-              <i />
-            </span>
-          </div>
-        </div>
-
-        <div className="billbox-loader-footer">
-          POWERED BY <strong>TechSez</strong>
-        </div>
-      </main>
-    );
+    return null;
   }
 
   // --------------------------------------------------

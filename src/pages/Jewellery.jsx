@@ -1,3 +1,4 @@
+
 import "./Jewellery.css";
 
 import {
@@ -16,8 +17,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  query,
-  where,
 } from "firebase/firestore";
 
 import { auth, db } from "../firebase";
@@ -62,6 +61,7 @@ const TEXT = {
     unknownItem: "आभूषण",
     unknownMetal: "अन्य",
     otherItem: "अन्य आभूषण",
+    dashboard: "डैशबोर्ड",
   },
 
   en: {
@@ -95,6 +95,7 @@ const TEXT = {
     unknownItem: "Jewellery",
     unknownMetal: "Other",
     otherItem: "Other Jewellery",
+    dashboard: "Dashboard",
   },
 };
 
@@ -155,61 +156,51 @@ function Jewellery() {
         setUser(currentUser);
         setError("");
         setJewellery([]);
-
-        if (!currentUser) {
-          setShopProfile(DEFAULT_PROFILE);
-          setProfileLoading(false);
-          setLoading(false);
-          setError(TEXT.hi.loginError);
-          return;
-        }
-
-        setProfileLoading(true);
         setLoading(true);
+        setProfileLoading(Boolean(currentUser));
+
+        let profile = DEFAULT_PROFILE;
 
         try {
-          // Fetch current shop profile
-          const shopRef = doc(
-            db,
-            "shops",
-            currentUser.uid
-          );
+          // Load shop profile only when a user is logged in.
+          if (currentUser) {
+            const shopRef = doc(
+              db,
+              "shops",
+              currentUser.uid
+            );
 
-          const shopSnapshot = await getDoc(shopRef);
+            const shopSnapshot = await getDoc(shopRef);
+
+            if (!isCurrentRequest()) return;
+
+            if (shopSnapshot.exists()) {
+              const shopData = shopSnapshot.data();
+
+              profile = {
+                ...DEFAULT_PROFILE,
+                shopName:
+                  shopData.shopName ||
+                  DEFAULT_PROFILE.shopName,
+                logoUrl: shopData.logoUrl || "",
+                language: normalizeLanguage(
+                  shopData.language
+                ),
+                theme: normalizeTheme(
+                  shopData.theme
+                ),
+              };
+            }
+          }
 
           if (!isCurrentRequest()) return;
-
-          let profile = DEFAULT_PROFILE;
-
-          if (shopSnapshot.exists()) {
-            const shopData = shopSnapshot.data();
-
-            profile = {
-              ...DEFAULT_PROFILE,
-              shopName:
-                shopData.shopName ||
-                DEFAULT_PROFILE.shopName,
-              logoUrl: shopData.logoUrl || "",
-              language: normalizeLanguage(
-                shopData.language
-              ),
-              theme: normalizeTheme(
-                shopData.theme
-              ),
-            };
-          }
 
           setShopProfile(profile);
           setProfileLoading(false);
 
-          // Fetch only current logged-in shop's jewellery
-          const jewelleryQuery = query(
-            collection(db, "jewellery"),
-            where("ownerId", "==", currentUser.uid)
-          );
-
+          // Public jewellery: fetch ALL documents.
           const snapshot = await getDocs(
-            jewelleryQuery
+            collection(db, "jewellery")
           );
 
           if (!isCurrentRequest()) return;
@@ -233,7 +224,7 @@ function Jewellery() {
 
           setError(
             TEXT[
-              normalizeLanguage(shopProfile.language)
+              normalizeLanguage(profile.language)
             ].fetchError
           );
         } finally {
@@ -348,11 +339,9 @@ function Jewellery() {
   // ============================================
 
   const handleRefresh = useCallback(() => {
-    if (!user) return;
-
     setError("");
     setRefreshKey((current) => current + 1);
-  }, [user]);
+  }, []);
 
   // ============================================
   // FILTER JEWELLERY
@@ -463,14 +452,8 @@ function Jewellery() {
 
       <header className="jewellery-topbar">
         <div className="jewellery-brand">
-          <button
-            className="back-button"
-            type="button"
-            onClick={() => navigate("/dashboard")}
-            aria-label="Back to dashboard"
-          >
-            ←
-          </button>
+
+          {/* SHOP LOGO — EXISTING DESIGN PRESERVED */}
 
           <div className="jewellery-logo">
             {shopProfile.logoUrl ? (
@@ -503,26 +486,22 @@ function Jewellery() {
           </div>
         </div>
 
-        <div className="jewellery-topbar-right">
-          <span>{t.totalJewellery}</span>
+        {/* DASHBOARD BUTTON — RIGHT CORNER */}
 
-          <strong>{jewellery.length}</strong>
-
-          <button
-            className="jewellery-refresh"
-            type="button"
-            onClick={handleRefresh}
-            title={t.retry}
-            aria-label={t.retry}
-          >
-            ↻
-          </button>
-        </div>
+        <button
+          className="jewellery-dashboard-button"
+          type="button"
+          onClick={() => navigate("/dashboard")}
+        >
+          <span aria-hidden="true">←</span>
+          <span>{t.dashboard}</span>
+        </button>
       </header>
 
       {/* MAIN */}
 
       <main className="jewellery-content">
+
         {/* INTRO */}
 
         <section className="jewellery-intro">
@@ -539,6 +518,8 @@ function Jewellery() {
             <p>{t.description}</p>
           </div>
 
+          {/* COLLECTION STATS */}
+
           <div className="collection-stats">
             <div className="collection-stat">
               <span>{t.gold}</span>
@@ -551,6 +532,25 @@ function Jewellery() {
               <span>{t.silver}</span>
               <strong>{silverCount}</strong>
             </div>
+
+            <div className="stat-divider"></div>
+
+            <div className="collection-stat total-stat">
+              <span>{t.totalJewellery}</span>
+              <strong>{jewellery.length}</strong>
+            </div>
+
+            {/* REFRESH BUTTON */}
+
+            <button
+              className="jewellery-refresh"
+              type="button"
+              onClick={handleRefresh}
+              title={t.retry}
+              aria-label={t.retry}
+            >
+              ↻
+            </button>
           </div>
         </section>
 
@@ -563,6 +563,8 @@ function Jewellery() {
             </span>
 
             <input
+              id="jewellery-search"
+              name="jewellerySearch"
               type="text"
               placeholder={t.searchPlaceholder}
               value={search}

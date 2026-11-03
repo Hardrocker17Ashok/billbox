@@ -202,105 +202,105 @@ const TEXT = {
 };
 
 const GOLD_ITEMS = [
-  "सोने की अंगूठी",
-  "सोने की चेन",
-  "सोने का कंगन",
-  "सोने का हार",
-  "सोने की कान की बाली",
-  "सोने का पेंडेंट",
-  "सोने की चूड़ी",
-  "सोने की नाक की पिन",
-  "सोने का माँग टीका",
-  "सोने का झूमर",
-  "सोने का बोरला",
-  "सोने की रखड़ी",
-  "सोने का शीशफूल",
-  "सोने के कान के आभूषण",
-  "सोने का झुमका",
-  "सोने की झुमकी",
-  "सोने की बाली",
-  "सोने के टॉप्स",
-  "सोने का सूई-धागा",
-  "सोने की कान की चेन",
-  "सोने का कर्णफूल",
-  "सोने का कुंडल",
-  "सोने की मुरकी",
-  "सोने की लटकन",
-  "सोने के गले के आभूषण",
-  "सोने का हार",
-  "सोने की नेकलेस",
-  "सोने का चोकर",
-  "सोने का रानी हार",
-  "सोने का लच्छा",
-  "सोने की हँसली",
-  "सोने की कंठी",
-  "सोने की तिमणिया",
-  "सोने का मंगलसूत्र",
-  "सोने का चंद्रहार",
-  "सोने की अंगूठी",
-  "सोने की चूड़ी",
-  "सोने का कंगन",
-  "सोने का ब्रेसलेट",
-  "सोने का बाजूबंद",
-  "सोने का हथफूल",
-  "सोने की पोंची",
-  "सोने की गजरा",
-  "सोने का कड़ा",
-  "सोने का कमरबंद",
-  "सोने की तगड़ी",
-  "सोने की बिछिया",
-  "सोने की चाँट",
-  "सोने की पायल",
-  "सोने की पाजेब",
-  "सोने की नथ",
-  "सोने की नथिया",
-  "सोने की लौंग",
-  "सोने की नथनी",
-  "सोने की नोज पिन",
-  "सोने की बेसरी",
-];
+  { value: "gold-01", hi: 'सोने की अंगूठी', en: 'Gold Ring' },
+  { value: "gold-02", hi: 'सोने की चेन', en: 'Gold Chain' },
+  { value: "gold-03", hi: 'सोने का कंगन', en: 'Gold Bangle' },
+  { value: "gold-04", hi: 'सोने का हार', en: 'Gold Necklace' },
+  { value: "gold-05", hi: 'सोने की कान की बाली', en: 'Gold Earrings' },
+  { value: "gold-06", hi: 'सोने का पेंडेंट', en: 'Gold Pendant' },
+  { value: "gold-07", hi: 'सोने की चूड़ी', en: 'Gold Bangle' },
+  { value: "gold-08", hi: 'सोने की नाक की पिन', en: 'Gold Nose Pin' },
+  { value: "gold-09", hi: 'सोने का माँग टीका', en: 'Gold Maang Tikka' },
+  { value: "gold-10", hi: 'सोने का झूमर', en: 'Gold Jhumar' },
+  { value: "gold-11", hi: 'सोने का बोरला', en: 'Gold Borla' },
+  { value: "gold-12", hi: 'सोने की रखड़ी', en: 'Gold Rakhdi' },
+  { value: "gold-13", hi: 'सोने का शीशफूल', en: 'Gold Shishphool' },
+  { value: "gold-14", hi: 'सोने के कान के आभूषण', en: 'Gold Ear Jewellery' },
+  { value: "gold-15", hi: 'सोने का झुमका', en: 'Gold Jhumka' },
+  { value: "gold-16", hi: 'सोने की झुमकी', en: 'Gold Jhumki' },
+  { value: "gold-17", hi: 'सोने की बाली', en: 'Gold Bali Earrings' },
+  { value: "gold-18", hi: 'सोने के टॉप्स', en: 'Gold Stud Earrings' },
+  { value: "gold-19", hi: 'सोने का सूई-धागा', en: 'Gold Sui-Dhaga' },
+  { value: "gold-20", hi: 'सोने की कान की चेन', en: 'Gold Ear Chain' },
+  { value: "gold-21", hi: 'सोने का कर्णफूल', en: 'Gold Karnphool' },
+  { value: "gold-22", hi: 'सोने का कुंडल', en: 'Gold Kundal' },
+  { value: "gold-23", hi: 'सोने की मुरकी', en: 'Gold Murki' },
+  { value: "gold-24", hi: 'सोने की लटकन', en: 'Gold Hanging Ornament' },
+  { value: "gold-25", hi: 'सोने के गले के आभूषण', en: 'Gold Neck Jewellery' },
+  { value: "gold-26", hi: 'सोने का हार', en: 'Gold Necklace' },
+  { value: "gold-27", hi: 'सोने की नेकलेस', en: 'Gold Necklace' },
+  { value: "gold-28", hi: 'सोने का चोकर', en: 'Gold Choker' },
+  { value: "gold-29", hi: 'सोने का रानी हार', en: 'Gold Rani Haar' },
+  { value: "gold-30", hi: 'सोने का लच्छा', en: 'Gold Lachha' },
+  { value: "gold-31", hi: 'सोने की हँसली', en: 'Gold Hansli' },
+  { value: "gold-32", hi: 'सोने की कंठी', en: 'Gold Kanthi' },
+  { value: "gold-33", hi: 'सोने की तिमणिया', en: 'Gold Timaniya' },
+  { value: "gold-34", hi: 'सोने का मंगलसूत्र', en: 'Gold Mangalsutra' },
+  { value: "gold-35", hi: 'सोने का चंद्रहार', en: 'Gold Chandrahaar' },
+  { value: "gold-36", hi: 'सोने की अंगूठी', en: 'Gold Ring' },
+  { value: "gold-37", hi: 'सोने की चूड़ी', en: 'Gold Bangle' },
+  { value: "gold-38", hi: 'सोने का कंगन', en: 'Gold Bangle' },
+  { value: "gold-39", hi: 'सोने का ब्रेसलेट', en: 'Gold Bracelet' },
+  { value: "gold-40", hi: 'सोने का बाजूबंद', en: 'Gold Armlet' },
+  { value: "gold-41", hi: 'सोने का हथफूल', en: 'Gold Hathphool' },
+  { value: "gold-42", hi: 'सोने की पोंची', en: 'Gold Ponchi' },
+  { value: "gold-43", hi: 'सोने की गजरा', en: 'Gold Gajra' },
+  { value: "gold-44", hi: 'सोने का कड़ा', en: 'Gold Kada' },
+  { value: "gold-45", hi: 'सोने का कमरबंद', en: 'Gold Waist Belt' },
+  { value: "gold-46", hi: 'सोने की तगड़ी', en: 'Gold Tagdi' },
+  { value: "gold-47", hi: 'सोने की बिछिया', en: 'Gold Toe Ring' },
+  { value: "gold-48", hi: 'सोने की चाँट', en: 'Gold ChaanT' },
+  { value: "gold-49", hi: 'सोने की पायल', en: 'Gold Payal' },
+  { value: "gold-50", hi: 'सोने की पाजेब', en: 'Gold Pajeb' },
+  { value: "gold-51", hi: 'सोने की नथ', en: 'Gold Nath' },
+  { value: "gold-52", hi: 'सोने की नथिया', en: 'Gold Nathiya' },
+  { value: "gold-53", hi: 'सोने की लौंग', en: 'Gold Nose Stud' },
+  { value: "gold-54", hi: 'सोने की नथनी', en: 'Gold Nathni' },
+  { value: "gold-55", hi: 'सोने की नोज पिन', en: 'Gold Nose Pin' },
+  { value: "gold-56", hi: 'सोने की बेसरी', en: 'Gold Besari' },
+] ;
 
 const SILVER_ITEMS = [
-  "चाँदी की पायल",
-  "चाँदी की बिछिया",
-  "चाँदी की पाजेब",
-  "चाँदी का कंगन",
-  "चाँदी का कड़ा",
-  "चाँदी की चूड़ियाँ",
-  "चाँदी की अंगूठी",
-  "चाँदी का बाजूबंद",
-  "चाँदी का हथफूल",
-  "चाँदी की पोंची",
-  "चाँदी का गजरा",
-  "चाँदी का हार",
-  "चाँदी की हँसली",
-  "चाँदी की कंठी",
-  "चाँदी की तिमणिया",
-  "चाँदी की मटरमाला",
-  "चाँदी का चंदनहार",
-  "चाँदी का झुमका, झुमकी",
-  "चाँदी की चाँद बालियाँ",
-  "चाँदी का कर्णफूल",
-  "चाँदी की बाली",
-  "चाँदी का कुण्डल",
-  "चाँदी का कान पासा",
-  "चाँदी की मुरकी",
-  "चाँदी का मांग टीका",
-  "चाँदी का टीका",
-  "चाँदी का बोरला",
-  "चाँदी की रखड़ी",
-  "चाँदी का शीशफूल",
-  "चाँदी की नथ",
-  "चाँदी की नथड़ी",
-  "चाँदी की नथुनी",
-  "चाँदी की नथनी",
-  "चाँदी की लौंग",
-  "चाँदी की नोज पिन",
-  "चाँदी का कमरबंद",
-  "चाँदी की तगड़ी",
-  "चाँदी की करधनी",
-  "चाँदी का कंदोरा",
-];
+  { value: "silver-01", hi: 'चाँदी की पायल', en: 'Silver Payal' },
+  { value: "silver-02", hi: 'चाँदी की बिछिया', en: 'Silver Toe Ring' },
+  { value: "silver-03", hi: 'चाँदी की पाजेब', en: 'Silver Pajeb' },
+  { value: "silver-04", hi: 'चाँदी का कंगन', en: 'Silver Bangle' },
+  { value: "silver-05", hi: 'चाँदी का कड़ा', en: 'Silver Kada' },
+  { value: "silver-06", hi: 'चाँदी की चूड़ियाँ', en: 'Silver Bangles' },
+  { value: "silver-07", hi: 'चाँदी की अंगूठी', en: 'Silver Ring' },
+  { value: "silver-08", hi: 'चाँदी का बाजूबंद', en: 'Silver Armlet' },
+  { value: "silver-09", hi: 'चाँदी का हथफूल', en: 'Silver Hathphool' },
+  { value: "silver-10", hi: 'चाँदी की पोंची', en: 'Silver Ponchi' },
+  { value: "silver-11", hi: 'चाँदी का गजरा', en: 'Silver Gajra' },
+  { value: "silver-12", hi: 'चाँदी का हार', en: 'Silver Necklace' },
+  { value: "silver-13", hi: 'चाँदी की हँसली', en: 'Silver Hansli' },
+  { value: "silver-14", hi: 'चाँदी की कंठी', en: 'Silver Kanthi' },
+  { value: "silver-15", hi: 'चाँदी की तिमणिया', en: 'Silver Timaniya' },
+  { value: "silver-16", hi: 'चाँदी की मटरमाला', en: 'Silver Matar Mala' },
+  { value: "silver-17", hi: 'चाँदी का चंदनहार', en: 'Silver Chandan Haar' },
+  { value: "silver-18", hi: 'चाँदी का झुमका, झुमकी', en: 'Silver Jhumka / Jhumki' },
+  { value: "silver-19", hi: 'चाँदी की चाँद बालियाँ', en: 'Silver Chand Bali Earrings' },
+  { value: "silver-20", hi: 'चाँदी का कर्णफूल', en: 'Silver Karnphool' },
+  { value: "silver-21", hi: 'चाँदी की बाली', en: 'Silver Earrings' },
+  { value: "silver-22", hi: 'चाँदी का कुण्डल', en: 'Silver Kundal' },
+  { value: "silver-23", hi: 'चाँदी का कान पासा', en: 'Silver Ear Pasa' },
+  { value: "silver-24", hi: 'चाँदी की मुरकी', en: 'Silver Murki' },
+  { value: "silver-25", hi: 'चाँदी का मांग टीका', en: 'Silver Maang Tikka' },
+  { value: "silver-26", hi: 'चाँदी का टीका', en: 'Silver Tikka' },
+  { value: "silver-27", hi: 'चाँदी का बोरला', en: 'Silver Borla' },
+  { value: "silver-28", hi: 'चाँदी की रखड़ी', en: 'Silver Rakhdi' },
+  { value: "silver-29", hi: 'चाँदी का शीशफूल', en: 'Silver Shishphool' },
+  { value: "silver-30", hi: 'चाँदी की नथ', en: 'Silver Nath' },
+  { value: "silver-31", hi: 'चाँदी की नथड़ी', en: 'Silver Nathdi' },
+  { value: "silver-32", hi: 'चाँदी की नथुनी', en: 'Silver Nathuni' },
+  { value: "silver-33", hi: 'चाँदी की नथनी', en: 'Silver Nathni' },
+  { value: "silver-34", hi: 'चाँदी की लौंग', en: 'Silver Nose Stud' },
+  { value: "silver-35", hi: 'चाँदी की नोज पिन', en: 'Silver Nose Pin' },
+  { value: "silver-36", hi: 'चाँदी का कमरबंद', en: 'Silver Waist Belt' },
+  { value: "silver-37", hi: 'चाँदी की तगड़ी', en: 'Silver Tagdi' },
+  { value: "silver-38", hi: 'चाँदी की करधनी', en: 'Silver Kardhani' },
+  { value: "silver-39", hi: 'चाँदी का कंदोरा', en: 'Silver Kandora' },
+] ;
 
 const normalizeLanguage = (value) =>
   value === "en" ? "en" : "hi";
@@ -368,6 +368,13 @@ function NewBill() {
   const language = normalizeLanguage(shopProfile.language);
   const theme = normalizeTheme(shopProfile.theme);
   const t = TEXT[language];
+
+  // Stable item keys keep rates and bill records independent of the UI language.
+  const getItemLabel = (itemKey, currentMetal = metal, currentLanguage = language) => {
+    const source = currentMetal === "gold" ? GOLD_ITEMS : SILVER_ITEMS;
+    const selected = source.find((entry) => entry.value === itemKey);
+    return selected ? selected[currentLanguage] : itemKey || "";
+  };
 
   // ============================================
   // AUTH + SHOP PROFILE
@@ -611,7 +618,7 @@ function NewBill() {
     setItems((previous) => {
       const existingIndex = previous.findIndex(
         (line) =>
-          line.itemName === item &&
+          (line.itemKey === item || line.itemName === getItemLabel(item, metal, "hi") || line.itemName === getItemLabel(item, metal, "en")) &&
           line.metal === metal &&
           line.carat === (metal === "gold" ? carat : "")
       );
@@ -621,6 +628,8 @@ function NewBill() {
           index === existingIndex
             ? {
                 ...line,
+                itemKey: item,
+                itemName: getItemLabel(item, metal, language),
                 quantity:
                   Number(line.quantity) + Number(quantity),
                 weight:
@@ -636,7 +645,8 @@ function NewBill() {
         ...previous,
         {
           id: `${Date.now()}-${Math.random()}`,
-          itemName: item,
+          itemKey: item,
+          itemName: getItemLabel(item, metal, language),
           metal,
           carat: metal === "gold" ? carat : "",
           quantity: Number(quantity),
@@ -699,7 +709,10 @@ function NewBill() {
     const generatedBillNumber = makeBillNumber();
 
     const billItems = items.map((line) => ({
-      itemName: line.itemName,
+      itemName: line.itemKey
+        ? getItemLabel(line.itemKey, line.metal, language)
+        : line.itemName,
+      itemKey: line.itemKey || "",
       metal: line.metal,
       carat: line.metal === "gold" ? line.carat : "",
       quantity: Number(line.quantity) || 0,
@@ -971,9 +984,9 @@ function NewBill() {
                 >
                   <option value="">{t.selectItem}</option>
                   {(metal === "gold" ? GOLD_ITEMS : SILVER_ITEMS).map(
-                    (name, index) => (
-                      <option value={name} key={`${name}-${index}`}>
-                        {name}
+                    (entry) => (
+                      <option value={entry.value} key={entry.value}>
+                        {entry[language]}
                       </option>
                     )
                   )}
@@ -1092,7 +1105,7 @@ function NewBill() {
                     <div>
                       <strong>
                         {String(index + 1).padStart(2, "0")} •{" "}
-                        {line.itemName}
+                        {line.itemKey ? getItemLabel(line.itemKey, line.metal, language) : line.itemName}
                       </strong>
                       <span>
                         {line.metal === "gold"
@@ -1392,7 +1405,7 @@ function NewBill() {
                 </div>
 
                 <div>
-                  <h3>{line.itemName || t.item}</h3>
+                  <h3>{(line.itemKey ? getItemLabel(line.itemKey, line.metal, language) : line.itemName) || t.item}</h3>
                   <p>
                     {line.metal === "gold"
                       ? `${t.gold}${line.carat ? ` • ${line.carat}` : ""}`

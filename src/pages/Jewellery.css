@@ -1,3 +1,4 @@
+
 /* =====================================================
    JEWELLERY PAGE — THEME VARIABLES
 ===================================================== */
@@ -126,35 +127,49 @@
   min-width: 0;
 }
 
-/* BACK BUTTON */
+/* =====================================================
+   DASHBOARD BUTTON
+===================================================== */
 
-.jewellery-page .back-button {
-  width: 42px;
-  height: 42px;
-  flex-shrink: 0;
-
-  display: flex;
+.jewellery-dashboard-button {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 9px;
 
-  border-radius: 50%;
+  min-height: 42px;
+  padding: 0 17px;
+  flex-shrink: 0;
+
   border: 1px solid rgba(190, 153, 82, 0.35);
+  border-radius: 9px;
 
-  background: rgba(190, 153, 82, 0.05);
+  background: rgba(190, 153, 82, 0.06);
   color: var(--j-gold-light);
 
-  font-size: 21px;
-  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
 
+  cursor: pointer;
   transition: 0.25s ease;
 }
 
-.jewellery-page .back-button:hover {
-  background: rgba(190, 153, 82, 0.12);
+.jewellery-dashboard-button span:first-child {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.jewellery-dashboard-button:hover {
+  background: rgba(190, 153, 82, 0.13);
+  border-color: var(--j-gold);
   transform: translateX(-2px);
 }
 
-/* SHOP LOGO */
+/* =====================================================
+   SHOP LOGO
+   EXISTING DESIGN PRESERVED
+===================================================== */
 
 .jewellery-logo {
   width: 48px;
@@ -183,7 +198,9 @@
   object-fit: contain;
 }
 
-/* BRAND TEXT */
+/* =====================================================
+   BRAND TEXT
+===================================================== */
 
 .jewellery-page .brand-text {
   min-width: 0;
@@ -215,28 +232,14 @@
   text-transform: uppercase;
 }
 
-/* TOPBAR RIGHT */
-
-.jewellery-topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-
-  color: var(--j-muted);
-  font-size: 13px;
-}
-
-.jewellery-topbar-right strong {
-  color: var(--j-gold-light);
-
-  font-family: Georgia, serif;
-  font-size: 19px;
-  font-weight: 500;
-}
+/* =====================================================
+   REFRESH BUTTON
+===================================================== */
 
 .jewellery-refresh {
   width: 36px;
   height: 36px;
+  flex-shrink: 0;
 
   display: flex;
   align-items: center;
@@ -252,6 +255,7 @@
   cursor: pointer;
 
   transition: 0.25s ease;
+  margin-left: 16px;
 }
 
 .jewellery-refresh:hover {
@@ -323,8 +327,9 @@
 .collection-stats {
   display: flex;
   align-items: center;
+  gap: 0;
 
-  padding: 18px 26px;
+  padding: 18px 22px;
 
   border: 1px solid rgba(190, 153, 82, 0.18);
   border-radius: 14px;
@@ -333,7 +338,7 @@
 }
 
 .collection-stat {
-  min-width: 90px;
+  min-width: 82px;
 
   display: flex;
   flex-direction: column;
@@ -361,7 +366,7 @@
   width: 1px;
   height: 42px;
 
-  margin: 0 20px;
+  margin: 0 15px;
 
   background: var(--j-divider);
 }
@@ -385,7 +390,9 @@
   background: var(--j-surface-soft);
 }
 
-/* SEARCH */
+/* =====================================================
+   SEARCH
+===================================================== */
 
 .jewellery-page .search-box {
   height: 48px;
@@ -945,12 +952,6 @@
     gap: 10px;
   }
 
-  .jewellery-page .back-button {
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
-  }
-
   .jewellery-logo {
     width: 40px;
     height: 40px;
@@ -968,8 +969,15 @@
     letter-spacing: 1px;
   }
 
-  .jewellery-topbar-right {
-    display: none;
+  .jewellery-dashboard-button {
+    min-height: 36px;
+    padding: 0 10px;
+    gap: 5px;
+    font-size: 11px;
+  }
+
+  .jewellery-dashboard-button span:first-child {
+    font-size: 16px;
   }
 
   .jewellery-content {
@@ -992,12 +1000,34 @@
 
   .collection-stats {
     width: 100%;
-    justify-content: center;
-    padding: 15px 20px;
+    justify-content: space-between;
+    padding: 14px 10px;
+    gap: 0;
   }
 
   .collection-stat {
-    min-width: 100px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .collection-stat span {
+    font-size: 9px;
+    letter-spacing: 0.3px;
+  }
+
+  .collection-stat strong {
+    font-size: 21px;
+  }
+
+  .collection-stats .stat-divider {
+    margin: 0 7px;
+  }
+
+  .collection-stats .jewellery-refresh {
+    width: 32px;
+    height: 32px;
+    margin-left: 8px;
+    font-size: 18px;
   }
 
   .jewellery-toolbar {
@@ -1071,12 +1101,27 @@
     font-size: 34px;
   }
 
-  .collection-stat {
-    min-width: 80px;
+  .collection-stats {
+    padding-left: 6px;
+    padding-right: 6px;
   }
 
-  .stat-divider {
-    margin: 0 12px;
+  .collection-stat span {
+    font-size: 8px;
+  }
+
+  .collection-stat strong {
+    font-size: 19px;
+  }
+
+  .collection-stats .stat-divider {
+    margin: 0 5px;
+  }
+
+  .collection-stats .jewellery-refresh {
+    width: 29px;
+    height: 29px;
+    margin-left: 5px;
   }
 }
 
@@ -1093,4 +1138,38 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+
+/* =====================================================
+   MATCH BILL HISTORY TYPOGRAPHY
+===================================================== */
+
+.jewellery-page {
+  font-family: inherit;
+}
+
+.jewellery-page *:not(.jewellery-logo):not(.no-image) {
+  font-family: inherit !important;
+}
+
+
+
+/* DASHBOARD BUTTON — MATCH BILL HISTORY */
+
+.jewellery-page .jewellery-dashboard-button {
+  padding: 11px 17px;
+  border: 1px solid rgba(197, 160, 91, 0.35);
+  background: transparent;
+  color: var(--j-gold);
+  border-radius: 5px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  transition: 0.2s ease;
+}
+
+.jewellery-page .jewellery-dashboard-button:hover {
+  background: rgba(197, 160, 91, 0.09);
+  border-color: var(--j-gold);
 }

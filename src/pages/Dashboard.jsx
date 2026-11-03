@@ -1,17 +1,15 @@
 import "./Dashboard.css";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { signOut } from "firebase/auth";
 import {
   collection,
   getDocs,
   doc,
   getDoc,
-  setDoc,
   updateDoc,
   query,
   where,
-  serverTimestamp,
 } from "firebase/firestore";
 
 import {
@@ -192,12 +190,54 @@ function Dashboard() {
   const user = auth.currentUser;
 
   const [showMenu, setShowMenu] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const profileWrapperRef = useRef(null);
   const [showSettings, setShowSettings] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [notice, setNotice] = useState("");
   const [noticeError, setNoticeError] = useState(false);
+
+  // Close the profile dropdown when the user clicks anywhere outside it.
+  useEffect(() => {
+    if (!showMenu) return;
+
+    const handleOutsideClick = (event) => {
+      if (
+        profileWrapperRef.current &&
+        !profileWrapperRef.current.contains(event.target)
+      ) {
+        setShowMenu(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") setShowMenu(false);
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [showMenu]);
+
+  // Show dashboard notifications briefly, then dismiss them automatically.
+  useEffect(() => {
+    if (!notice) return;
+
+    const timer = window.setTimeout(() => {
+      setNotice("");
+      setNoticeError(false);
+    }, 1800);
+
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   const [profile, setProfile] = useState({
     ...DEFAULT_PROFILE,
@@ -257,10 +297,44 @@ function Dashboard() {
   };
 
   // Load this signed-in user's shop settings.
+  // Load shop settings and preload the shop logo before hiding PageLoader.
   useEffect(() => {
     if (!user) return;
 
     let active = true;
+
+    const preloadShopLogo = (logoUrl) => {
+      if (!logoUrl) return Promise.resolve();
+
+      return new Promise((resolve) => {
+        const image = new Image();
+        let completed = false;
+
+        const finish = () => {
+          if (completed) return;
+
+          completed = true;
+          window.clearTimeout(timeout);
+
+          image.onload = null;
+          image.onerror = null;
+
+          resolve();
+        };
+
+        // Safety timeout: never keep the dashboard loader forever.
+        const timeout = window.setTimeout(finish, 10000);
+
+        image.onload = finish;
+        image.onerror = finish;
+        image.src = logoUrl;
+
+        // Handle an already cached image.
+        if (image.complete) {
+          finish();
+        }
+      });
+    };
 
     const loadProfile = async () => {
       try {
@@ -275,7 +349,9 @@ function Dashboard() {
             `shops/${user.uid}`
           );
 
-          setNotice("Shop profile not found. Please contact BillBox support.");
+          setNotice(
+            "Shop profile not found. Please contact BillBox support."
+          );
           setNoticeError(true);
 
           setProfile(DEFAULT_PROFILE);
@@ -292,6 +368,12 @@ function Dashboard() {
           language: saved.language === "hi" ? "hi" : "en",
         };
 
+        // IMPORTANT: Wait for Firebase Storage logo image to load.
+        await preloadShopLogo(merged.logoUrl);
+
+        if (!active) return;
+
+        // Only show dashboard after logo loading has completed.
         setProfile(merged);
         setDraft(merged);
 
@@ -707,17 +789,30 @@ function Dashboard() {
     };
   }, [user]);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setShowMenu(false);
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = async () => {
     try {
       await signOut(auth);
+      setShowLogoutConfirm(false);
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
+      setNoticeError(true);
+      setNotice(
+        language === "en"
+          ? "Unable to log out. Please try again."
+          : "लॉग आउट नहीं हो सका। कृपया दोबारा प्रयास करें।"
+      );
+      setShowLogoutConfirm(false);
     }
   };
 
   const shopName =
-  profile.shopName || "BillBox";
+    profile.shopName || "BillBox";
 
   const ownerName =
     profile.ownerName || t.admin;
@@ -768,11 +863,10 @@ function Dashboard() {
 
         <div className="topbar-right">
           <div className="admin-info">
-            <strong>{ownerName}</strong>
-            <span>{shopName}</span>
+            <strong>{shopName}</strong>
           </div>
 
-          <div className="profile-wrapper">
+          <div className="profile-wrapper" ref={profileWrapperRef}>
             <button
               type="button"
               className="admin-avatar"
@@ -782,7 +876,8 @@ function Dashboard() {
               aria-label={t.profile}
               aria-expanded={showMenu}
             >
-              {avatarLetter}
+              <span className="admin-avatar-letter">{avatarLetter}</span>
+              <span className="admin-avatar-chevron" aria-hidden="true">⌄</span>
             </button>
 
             {showMenu && (
@@ -828,10 +923,11 @@ function Dashboard() {
         </div>
       </header>
 
-      {notice && (
+      {notice && !showSettings && (
         <div
-          className={`dashboard-notice ${noticeError ? "is-error" : ""
-            }`}
+          className={`dashboard-notice ${noticeError ? "is-error" : ""}`}
+          role="status"
+          aria-live="polite"
         >
           {notice}
 
@@ -1170,6 +1266,51 @@ function Dashboard() {
           © {new Date().getFullYear()} {shopName}
         </small>
       </footer>
+      {showLogoutConfirm && (
+        <div
+          className="logout-confirm-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowLogoutConfirm(false);
+            }
+          }}
+        >
+          <section
+            className="logout-confirm-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="logout-confirm-title"
+            aria-describedby="logout-confirm-description"
+          >
+            <div className="logout-confirm-icon" aria-hidden="true">↪</div>
+            <h2 id="logout-confirm-title">
+              {language === "en" ? "Confirm Logout" : "लॉग आउट की पुष्टि करें"}
+            </h2>
+            <p id="logout-confirm-description">
+              {language === "en"
+                ? "Are you sure you want to log out of your BillBox account?"
+                : "क्या आप वाकई अपने BillBox अकाउंट से लॉग आउट करना चाहते हैं?"}
+            </p>
+            <div className="logout-confirm-actions">
+              <button
+                type="button"
+                className="logout-confirm-cancel"
+                onClick={() => setShowLogoutConfirm(false)}
+              >
+                {t.cancel}
+              </button>
+              <button
+                type="button"
+                className="logout-confirm-submit"
+                onClick={confirmLogout}
+              >
+                {language === "en" ? "Yes, Log out" : "हाँ, लॉग आउट करें"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {showSettings && (
         <div
           className="shop-settings-overlay"
@@ -1252,13 +1393,13 @@ function Dashboard() {
                   <input
                     type="text"
                     value={draft.shopName}
+                    maxLength={40}
                     onChange={(event) =>
                       updateDraft(
                         "shopName",
                         event.target.value
                       )
                     }
-                    required
                   />
                 </label>
 

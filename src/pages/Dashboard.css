@@ -2044,3 +2044,902 @@ button {
     padding: 10px;
   }
 }
+
+
+/* =========================================================
+   DASHBOARD PROFILE CONTROL — PREMIUM INTERACTIVE BUTTON
+   ========================================================= */
+
+.profile-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.admin-avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  padding: 0 0 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid rgba(197, 160, 91, 0.55);
+  border-radius: 50%;
+  background: linear-gradient(145deg, #292317 0%, #11110f 75%);
+  color: #f0d69b;
+  box-shadow:
+    0 0 0 3px rgba(197, 160, 91, 0.07),
+    0 5px 16px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    border-color 0.2s ease, background 0.2s ease;
+}
+
+.admin-avatar-letter {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: rgba(197, 160, 91, 0.15);
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.admin-avatar-chevron {
+  position: absolute;
+  right: -3px;
+  bottom: -2px;
+  width: 17px;
+  height: 17px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #0b0b0a;
+  border-radius: 50%;
+  background: #c5a05b;
+  color: #17140d;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.admin-avatar:hover,
+.admin-avatar:focus-visible,
+.admin-avatar[aria-expanded="true"] {
+  border-color: #ead29d;
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 4px rgba(197, 160, 91, 0.13),
+    0 8px 22px rgba(0, 0, 0, 0.3);
+}
+
+.admin-avatar:focus-visible {
+  outline: 2px solid var(--gold-light);
+  outline-offset: 4px;
+}
+
+:root[data-theme="light"] .admin-avatar {
+  background: linear-gradient(145deg, #fffdf7, #eee8da);
+  color: #8a6829;
+  border-color: rgba(160, 119, 47, 0.5);
+  box-shadow: 0 0 0 3px rgba(160, 119, 47, 0.08),
+    0 5px 16px rgba(40, 34, 22, 0.1);
+}
+
+:root[data-theme="light"] .admin-avatar-chevron {
+  border-color: #fff;
+}
+
+/* Keep owner/shop details polished and aligned in the header. */
+.admin-info {
+  gap: 5px;
+}
+
+.admin-info strong {
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.15px;
+}
+
+.admin-info span {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.65px;
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   CENTER SUCCESS / ERROR TOAST
+   ========================================================= */
+
+.dashboard-notice {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  z-index: 10050;
+  width: max-content;
+  max-width: min(440px, calc(100vw - 36px));
+  padding: 16px 44px 16px 20px;
+  border: 1px solid rgba(76, 175, 120, 0.48);
+  border-radius: 12px;
+  background: rgba(20, 35, 26, 0.97);
+  color: #e1f7e7;
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.32);
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  animation: dashboardToastIn 0.22s ease-out;
+  backdrop-filter: blur(12px);
+}
+
+.dashboard-notice.is-error {
+  border-color: rgba(220, 80, 80, 0.55);
+  background: rgba(48, 26, 26, 0.97);
+  color: #ffe4e4;
+}
+
+.dashboard-notice button {
+  top: 7px;
+  right: 10px;
+}
+
+@keyframes dashboardToastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* =========================================================
+   LOGOUT CONFIRMATION DIALOG
+   ========================================================= */
+
+.logout-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(7px);
+}
+
+.logout-confirm-modal {
+  width: min(100%, 390px);
+  padding: 28px 26px 24px;
+  border: 1px solid var(--gold-border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--white);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  text-align: center;
+  animation: profileOpen 0.18s ease-out;
+}
+
+.logout-confirm-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 15px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(220, 120, 110, 0.3);
+  border-radius: 14px;
+  background: rgba(220, 80, 80, 0.09);
+  color: #e7a09a;
+  font-size: 24px;
+}
+
+.logout-confirm-modal h2 {
+  margin: 0;
+  color: var(--white);
+  font-size: 19px;
+  font-weight: 650;
+}
+
+.logout-confirm-modal p {
+  margin: 10px 0 22px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.logout-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.logout-confirm-actions button {
+  min-height: 42px;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.logout-confirm-cancel {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+}
+
+.logout-confirm-cancel:hover {
+  border-color: var(--gold-border);
+  background: rgba(197, 160, 91, 0.06);
+}
+
+.logout-confirm-submit {
+  border: 1px solid #a94e48;
+  background: #9f403a;
+  color: #fff;
+}
+
+.logout-confirm-submit:hover {
+  background: #b64d46;
+  transform: translateY(-1px);
+}
+
+.dashboard-light .logout-confirm-modal {
+  background: #fff;
+  color: #25231e;
+}
+
+.dashboard-light .logout-confirm-modal h2 {
+  color: #25231e;
+}
+
+.dashboard-light .logout-confirm-modal p {
+  color: #625d53;
+}
+
+@media (max-width: 700px) {
+  .admin-avatar {
+    width: 42px;
+    height: 42px;
+  }
+
+  .admin-avatar-letter {
+    width: 23px;
+    height: 23px;
+    font-size: 14px;
+  }
+
+  .dashboard-notice {
+    max-width: calc(100vw - 30px);
+    padding: 14px 40px 14px 16px;
+  }
+
+  .logout-confirm-modal {
+    padding: 24px 18px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-notice,
+  .logout-confirm-modal {
+    animation: none;
+  }
+}
+
+
+
+/* ==========================================
+   BILLBOX — CLICKABLE PROFILE BUTTON
+   Actual JSX: .dashboard > .topbar > .topbar-right
+========================================== */
+
+.dashboard .topbar-right .profile-wrapper {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.dashboard .topbar-right .profile-wrapper .admin-avatar {
+  position: relative !important;
+  width: 142px !important;
+  min-width: 142px !important;
+  height: 48px !important;
+  padding: 5px 12px 5px 7px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+
+  border: 1px solid rgba(197, 160, 91, 0.55) !important;
+  border-radius: 11px !important;
+
+  background: linear-gradient(
+    135deg,
+    #282318 0%,
+    #171612 100%
+  ) !important;
+
+  color: #e9cc91 !important;
+  cursor: pointer !important;
+
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09) !important;
+
+  transition: all 0.25s ease !important;
+}
+
+/* Initial avatar */
+.dashboard .topbar-right .admin-avatar .admin-avatar-letter {
+  width: 34px !important;
+  height: 34px !important;
+  flex-shrink: 0 !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  border-radius: 8px !important;
+  background: linear-gradient(145deg, #e6c783, #ae843e) !important;
+  color: #21190c !important;
+
+  font-size: 15px !important;
+  font-weight: 700 !important;
+}
+
+/* Profile label */
+.dashboard .topbar-right .admin-avatar::after {
+  content: "Profile" !important;
+  display: block !important;
+  flex: 1 !important;
+
+  color: #f1dfb9 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.2px !important;
+  text-align: left !important;
+}
+
+/* Dropdown arrow */
+.dashboard .topbar-right .admin-avatar .admin-avatar-chevron {
+  position: static !important;
+  width: 22px !important;
+  height: 22px !important;
+  flex-shrink: 0 !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  border: 1px solid rgba(197, 160, 91, 0.25) !important;
+  border-radius: 6px !important;
+  background: rgba(197, 160, 91, 0.12) !important;
+
+  color: #e9cc91 !important;
+  font-size: 14px !important;
+
+  transition: transform 0.25s ease !important;
+}
+
+/* Hover — clearly clickable */
+.dashboard .topbar-right .admin-avatar:hover {
+  transform: translateY(-2px) !important;
+  border-color: #e3c17c !important;
+
+  background: linear-gradient(
+    135deg,
+    #39301e,
+    #211d15
+  ) !important;
+
+  box-shadow:
+    0 7px 20px rgba(0, 0, 0, 0.32),
+    0 0 0 3px rgba(197, 160, 91, 0.10) !important;
+}
+
+/* Open state */
+.dashboard .topbar-right .admin-avatar[aria-expanded="true"] {
+  border-color: #e3c17c !important;
+  background: #302719 !important;
+}
+
+.dashboard .topbar-right .admin-avatar[aria-expanded="true"] .admin-avatar-chevron {
+  transform: rotate(180deg) !important;
+}
+
+.dashboard .topbar-right .admin-avatar:active {
+  transform: scale(0.97) !important;
+}
+
+/* Light theme */
+.dashboard-light .topbar-right .admin-avatar {
+  background: linear-gradient(135deg, #fffdf8, #f2ead9) !important;
+  border-color: rgba(160, 119, 47, 0.45) !important;
+  color: #76551f !important;
+  box-shadow: 0 4px 14px rgba(70, 55, 25, 0.12) !important;
+}
+
+.dashboard-light .topbar-right .admin-avatar::after {
+  color: #76551f !important;
+}
+
+.dashboard-light .topbar-right .admin-avatar-letter {
+  background: linear-gradient(145deg, #e9d39f, #c09a53) !important;
+  color: #30230e !important;
+}
+
+.dashboard-light .topbar-right .admin-avatar-chevron {
+  color: #76551f !important;
+  background: rgba(160, 119, 47, 0.10) !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .dashboard .topbar-right .profile-wrapper .admin-avatar {
+    width: 116px !important;
+    min-width: 116px !important;
+    height: 44px !important;
+    gap: 7px !important;
+  }
+
+  .dashboard .topbar-right .admin-avatar-letter {
+    width: 30px !important;
+    height: 30px !important;
+  }
+}
+
+
+/* ==========================================
+   BILLBOX PROFILE BUTTON — THEME ADAPTIVE
+========================================== */
+
+/* DARK THEME */
+.dashboard:not(.dashboard-light) .topbar-right .profile-wrapper .admin-avatar {
+  background: linear-gradient(135deg, #282318, #171612) !important;
+  color: #f1dfb9 !important;
+  border-color: rgba(197, 160, 91, 0.55) !important;
+}
+
+/* LIGHT THEME */
+.dashboard.dashboard-light .topbar-right .profile-wrapper .admin-avatar {
+  background: linear-gradient(135deg, #ffffff, #f4efe3) !important;
+  color: #705326 !important;
+  border: 1px solid rgba(169, 128, 57, 0.40) !important;
+
+  box-shadow:
+    0 3px 12px rgba(90, 70, 35, 0.09),
+    inset 0 1px 0 #ffffff !important;
+}
+
+.dashboard.dashboard-light .topbar-right .admin-avatar::after {
+  color: #705326 !important;
+}
+
+.dashboard.dashboard-light .topbar-right .admin-avatar-letter {
+  background: linear-gradient(145deg, #f0dfb9, #d8bd83) !important;
+  color: #60451d !important;
+}
+
+.dashboard.dashboard-light .topbar-right .admin-avatar:hover {
+  background: linear-gradient(135deg, #fffdf7, #eee3ca) !important;
+  border-color: #b48a45 !important;
+
+  box-shadow:
+    0 6px 18px rgba(130, 98, 43, 0.15),
+    0 0 0 3px rgba(197, 160, 91, 0.08) !important;
+}
+
+.dashboard.dashboard-light .topbar-right .admin-avatar[aria-expanded="true"] {
+  background: #f0e7d5 !important;
+  border-color: #b48a45 !important;
+}
+
+/* ==========================================
+   CUSTOM CHEVRON — REPLACES V TEXT
+========================================== */
+
+.dashboard .topbar-right .admin-avatar-chevron {
+  position: relative !important;
+  font-size: 0 !important;
+  color: transparent !important;
+}
+
+.dashboard .topbar-right .admin-avatar-chevron::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+
+  display: block;
+
+  border-right: 1.8px solid currentColor;
+  border-bottom: 1.8px solid currentColor;
+
+  color: #e9cc91;
+  transform: rotate(45deg) translate(-1px, -1px);
+
+  transition: transform 0.25s ease;
+}
+
+.dashboard.dashboard-light .topbar-right .admin-avatar-chevron {
+  background: rgba(169, 128, 57, 0.10) !important;
+  border-color: rgba(169, 128, 57, 0.18) !important;
+}
+
+.dashboard.dashboard-light .topbar-right .admin-avatar-chevron::before {
+  color: #80602e;
+}
+
+/* Rotate icon when dropdown opens */
+.dashboard .topbar-right .admin-avatar[aria-expanded="true"] .admin-avatar-chevron::before {
+  transform: rotate(225deg) translate(-1px, -1px);
+}
+
+
+/* PROFILE BUTTON — FINAL ELEMENT ORDER FIX */
+
+.dashboard .topbar-right .admin-avatar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+}
+
+/* Initial — first */
+.dashboard .topbar-right .admin-avatar-letter {
+  order: 1 !important;
+}
+
+/* Profile text — second */
+.dashboard .topbar-right .admin-avatar::after {
+  content: "Profile" !important;
+  order: 2 !important;
+  flex: 1 !important;
+  display: block !important;
+  white-space: nowrap !important;
+}
+
+/* Arrow — last */
+.dashboard .topbar-right .admin-avatar-chevron {
+  order: 3 !important;
+  position: static !important;
+  flex-shrink: 0 !important;
+  font-size: 0 !important;
+  color: transparent !important;
+}
+
+/* Hide old V character and show only CSS arrow */
+.dashboard .topbar-right .admin-avatar-chevron::before {
+  content: "" !important;
+  display: block !important;
+  width: 7px !important;
+  height: 7px !important;
+  border-right: 1.8px solid currentColor !important;
+  border-bottom: 1.8px solid currentColor !important;
+  color: #e9cc91 !important;
+  transform: rotate(45deg) !important;
+}
+
+/* Light theme arrow */
+.dashboard.dashboard-light .topbar-right .admin-avatar-chevron::before {
+  color: #80602e !important;
+}
+
+/* Open dropdown */
+.dashboard .topbar-right .admin-avatar[aria-expanded="true"] .admin-avatar-chevron::before {
+  transform: rotate(225deg) !important;
+}
+
+
+
+/* ==========================================
+   BILLBOX — SINGLE CHEVRON FINAL FIX
+========================================== */
+
+/* Hide original V character completely */
+.dashboard .topbar-right .admin-avatar-chevron {
+  position: static !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+  transform: none !important;
+  overflow: hidden !important;
+}
+
+/* Remove any previously created extra arrow */
+.dashboard .topbar-right .admin-avatar-chevron::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Show only one CSS chevron */
+.dashboard .topbar-right .admin-avatar-chevron::before {
+  content: "" !important;
+  display: block !important;
+
+  width: 7px !important;
+  height: 7px !important;
+
+  border: 0 !important;
+  border-right: 2px solid #e9cc91 !important;
+  border-bottom: 2px solid #e9cc91 !important;
+
+  color: transparent !important;
+  transform: rotate(45deg) !important;
+  transition: transform 0.25s ease !important;
+}
+
+/* Light theme */
+.dashboard.dashboard-light .topbar-right .admin-avatar-chevron::before {
+  border-right-color: #80602e !important;
+  border-bottom-color: #80602e !important;
+}
+
+/* Rotate only the arrow, not the complete button */
+.dashboard .topbar-right .admin-avatar[aria-expanded="true"] .admin-avatar-chevron {
+  transform: none !important;
+}
+
+.dashboard .topbar-right .admin-avatar[aria-expanded="true"] .admin-avatar-chevron::before {
+  transform: rotate(225deg) !important;
+}
+
+/* ==========================================
+   BILLBOX — PREMIUM SHOP NAME
+========================================== */
+
+.dashboard .topbar-right .admin-info {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 48px;
+  margin-right: 5px;
+}
+
+.dashboard .topbar-right .admin-info strong {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  min-height: 38px;
+  padding: 0 14px;
+
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.35px;
+
+  color: #e8c982 !important;
+
+  background: linear-gradient(
+    135deg,
+    rgba(197, 160, 91, 0.13),
+    rgba(197, 160, 91, 0.035)
+  );
+
+  border: 1px solid rgba(197, 160, 91, 0.30);
+  border-radius: 9px;
+
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  transition: all 0.25s ease;
+}
+
+/* Light theme */
+.dashboard.dashboard-light .topbar-right .admin-info strong {
+  color: #795923 !important;
+
+  background: linear-gradient(
+    135deg,
+    #fffaf0,
+    #f3ead8
+  );
+
+  border-color: rgba(169, 128, 57, 0.30);
+
+  box-shadow: 0 2px 8px rgba(100, 75, 30, 0.06);
+}
+
+@media (max-width: 600px) {
+  .dashboard .topbar-right .admin-info strong {
+    max-width: 145px;
+    padding: 0 9px;
+    font-size: 12px !important;
+  }
+}
+
+
+/* Shop name — prevent unnecessary text cutting */
+
+.dashboard .topbar-right {
+  min-width: 0 !important;
+  gap: 12px;
+}
+
+.dashboard .topbar-right .admin-info {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.dashboard .topbar-right .admin-info strong {
+  max-width: min(35vw, 420px) !important;
+  width: auto !important;
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+  text-overflow: unset !important;
+  text-align: right !important;
+  line-height: 1.35 !important;
+  padding: 8px 12px !important;
+}
+
+@media (max-width: 700px) {
+  .dashboard .topbar-right .admin-info strong {
+    max-width: 38vw !important;
+    font-size: 11px !important;
+  }
+}
+
+
+/* ==========================================
+   BILLBOX — SHOP BRAND NAME STYLE
+========================================== */
+
+.dashboard .topbar-right .admin-info {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  margin-right: 10px !important;
+}
+
+.dashboard .topbar-right .admin-info strong {
+  display: block !important;
+  width: auto !important;
+  min-height: auto !important;
+
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+
+  color: #e7c783 !important;
+  font-family: inherit !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.45px !important;
+
+  max-width: min(35vw, 360px) !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  text-align: right !important;
+  line-height: 1.4 !important;
+}
+
+/* Small brand accent */
+.dashboard .topbar-right .admin-info strong::after {
+  content: "";
+  display: block;
+  width: 30px;
+  height: 2px;
+  margin-top: 5px;
+  margin-left: auto;
+  border-radius: 5px;
+  background: linear-gradient(90deg, transparent, #c5a05b);
+}
+
+/* Light theme */
+.dashboard.dashboard-light .topbar-right .admin-info strong {
+  color: #80602e !important;
+}
+
+.dashboard.dashboard-light .topbar-right .admin-info strong::after {
+  background: linear-gradient(90deg, transparent, #b38b46);
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .dashboard .topbar-right .admin-info strong {
+    max-width: 32vw !important;
+    font-size: 12px !important;
+  }
+}
+
+/* ==========================================
+   BILLBOX — PREMIUM BRAND TYPOGRAPHY
+========================================== */
+
+/* DARK THEME */
+.dashboard:not(.dashboard-light) .topbar-right .admin-info strong {
+  color: #f2e6cc !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.55px !important;
+
+  text-shadow:
+    0 1px 10px rgba(224, 192, 132, 0.12);
+}
+
+.dashboard:not(.dashboard-light) .topbar-right .admin-info strong::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #d7b77a,
+    #f1dfb5
+  ) !important;
+  width: 42px !important;
+  height: 2px !important;
+}
+
+/* LIGHT THEME */
+.dashboard.dashboard-light .topbar-right .admin-info strong {
+  color: #26364d !important;
+  font-size: 16px !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.55px !important;
+
+  text-shadow: none !important;
+}
+
+.dashboard.dashboard-light .topbar-right .admin-info strong::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #a77d38,
+    #d6b46f
+  ) !important;
+  width: 42px !important;
+  height: 2px !important;
+}
+
+/* BILLBOX — SHOP NAME PREMIUM COLOR FIX */
+
+.dashboard .topbar-right .admin-info strong {
+  color: #e8c98d !important;
+  -webkit-text-fill-color: #e8c98d !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.6px !important;
+  text-shadow: 0 2px 12px rgba(232, 201, 141, 0.25) !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Light theme */
+.dashboard.dashboard-light .topbar-right .admin-info strong {
+  color: #263b59 !important;
+  -webkit-text-fill-color: #263b59 !important;
+  text-shadow: 0 2px 8px rgba(38, 59, 89, 0.12) !important;
+}
+
+.dashboard .topbar-right .admin-info strong::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #d9b56e,
+    #f5dfac
+  ) !important;
+  width: 45px !important;
+  height: 2px !important;
+  border-radius: 10px !important;
+}
