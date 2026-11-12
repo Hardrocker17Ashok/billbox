@@ -7,6 +7,7 @@ import {
   doc,
   getDoc,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 
 import { auth, db } from "../firebase";
@@ -20,7 +21,9 @@ const DEFAULT_PROFILE = {
   alternatePhone: "",
   address: "",
   gstNumber: "",
+  gstRate: null,
   logoUrl: "",
+  tagline: "",
   language: "hi",
   theme: "dark",
 };
@@ -59,12 +62,12 @@ const TEXT = {
     rateAvailable: "इसकी दर पहले से उपलब्ध है।",
     addItem: "आइटम जोड़ें",
     addedItems: "बिल में जोड़े गए आभूषण",
-    addedItemsDesc: "समान आभूषण और समान कैरेट अपने आप एक साथ जुड़ते हैं।",
+    addedItemsDesc: "एक जैसी कीमत, चार्ज और टैक्स सेटिंग वाले समान आभूषण साथ जुड़ते हैं।",
     pieces: "नग",
     removeItem: "आइटम हटाएँ",
     billingDetails: "बिल की अतिरिक्त जानकारी",
     billingDetailsDesc: "बनाने का शुल्क और छूट पूरे बिल पर एक बार लागू होगी।",
-    making: "बनाने का शुल्क",
+    making: "मेकिंग चार्ज / नग (₹)",
     wholeBill: "पूरे बिल पर",
     offer: "छूट / ऑफर",
     addItemFirst: "पहले कम से कम एक आभूषण बिल में जोड़ें।",
@@ -111,6 +114,41 @@ const TEXT = {
     silverLabel: "चाँदी",
     noShopName: "दुकान का नाम",
     gstin: "GSTIN",
+    billType: "बिल का प्रकार",
+    estimateBill: "कच्चा बिल / अनुमान",
+    taxInvoice: "पक्का बिल / टैक्स इनवॉइस",
+    hsn: "HSN कोड",
+    sku: "आइटम कोड / SKU",
+    huid: "HUID / हॉलमार्क नंबर",
+    makingPlaceholder: "₹ प्रति नग",
+    otherCharges: "अन्य चार्ज / नग (₹)",
+    otherChargesPlaceholder: "₹ प्रति नग",
+    itemBreakup: "आइटम का मूल्य विवरण",
+    metalValue: "मेटल वैल्यू",
+    discount: "छूट",
+    tax: "GST",
+    otherTotal: "अन्य चार्ज कुल",
+    paid: "जमा राशि",
+    paidPlaceholder: "अभी प्राप्त राशि",
+    balance: "बाकी राशि",
+    paymentSummary: "भुगतान सारांश",
+    paymentStatus: "भुगतान स्थिति",
+    paidStatus: "भुगतान पूरा",
+    partialStatus: "आंशिक भुगतान",
+    dueStatus: "भुगतान बाकी",
+    invoiceEstimateNote: "अनुमान / टैक्स इनवॉइस नहीं",
+    taxInvoiceNote: "टैक्स इनवॉइस",
+    hsnOptional: "वैकल्पिक",
+    huidOptional: "हॉलमार्क होने पर",
+    lineTotal: "आइटम कुल",
+    makingTotal: "कुल मेकिंग",
+    gstTotal: "कुल GST",
+    otherChargesTotal: "कुल अन्य चार्ज",
+    amountReceived: "प्राप्त राशि",
+    invalidPaid: "जमा राशि कुल बिल से अधिक नहीं हो सकती।",
+    taxInvoiceGstinRequired: "पक्का GST टैक्स इनवॉइस बनाने के लिए दुकान का GSTIN आवश्यक है।",
+    taxInvoiceHsnRequired: "पक्का टैक्स इनवॉइस बनाने से पहले हर आइटम का HSN कोड दर्ज करें।",
+    discountInvalid: "छूट कुल राशि से अधिक नहीं हो सकती।",
   },
 
   en: {
@@ -146,12 +184,12 @@ const TEXT = {
     rateAvailable: "A previous rate is available for this selection.",
     addItem: "Add Item",
     addedItems: "Items Added to Bill",
-    addedItemsDesc: "Same jewellery and same carat are combined automatically.",
+    addedItemsDesc: "Matching items merge only when their price, charges and tax settings are identical.",
     pieces: "pcs",
     removeItem: "Remove item",
     billingDetails: "Additional Billing Details",
-    billingDetailsDesc: "Making charges and discount are applied once to the entire bill.",
-    making: "Making Charges",
+    billingDetailsDesc: "Offer is deducted once from the combined bill total. GST is calculated item-wise; making and other charges are fixed rupee amounts.",
+    making: "Making Charges / Piece (₹)",
     wholeBill: "Whole bill",
     offer: "Discount / Offer",
     addItemFirst: "Add at least one jewellery item to continue.",
@@ -198,6 +236,41 @@ const TEXT = {
     silverLabel: "Silver",
     noShopName: "Shop Name",
     gstin: "GSTIN",
+    billType: "Bill Type",
+    estimateBill: "Kachcha Bill / Estimate",
+    taxInvoice: "Pakka Bill / Tax Invoice",
+    hsn: "HSN Code",
+    sku: "Item Code / SKU",
+    huid: "HUID / Hallmark No.",
+    makingPlaceholder: "₹ per piece",
+    otherCharges: "Other Charges / Piece (₹)",
+    otherChargesPlaceholder: "₹ per piece",
+    itemBreakup: "Item Price Breakup",
+    metalValue: "Metal Value",
+    discount: "Discount",
+    tax: "GST",
+    otherTotal: "Other Charges Total",
+    paid: "Amount Paid",
+    paidPlaceholder: "Amount received now",
+    balance: "Balance Due",
+    paymentSummary: "Payment Summary",
+    paymentStatus: "Payment Status",
+    paidStatus: "Paid",
+    partialStatus: "Partially Paid",
+    dueStatus: "Payment Due",
+    invoiceEstimateNote: "Estimate / Not a Tax Invoice",
+    taxInvoiceNote: "Tax Invoice",
+    hsnOptional: "Optional",
+    huidOptional: "If hallmarked",
+    lineTotal: "Item Total",
+    makingTotal: "Total Making",
+    gstTotal: "Total GST",
+    otherChargesTotal: "Total Other Charges",
+    amountReceived: "Amount Received",
+    invalidPaid: "Amount paid cannot exceed the grand total.",
+    taxInvoiceGstinRequired: "Shop GSTIN is required for a GST tax invoice.",
+    taxInvoiceHsnRequired: "Enter an HSN code for every item before creating a tax invoice.",
+    discountInvalid: "Discount cannot exceed the bill amount.",
   },
 };
 
@@ -314,6 +387,11 @@ const formatMoney = (value, maximumFractionDigits = 2) =>
     maximumFractionDigits,
   });
 
+const toAmount = (value) => {
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount > 0 ? amount : 0;
+};
+
 const makeBillNumber = () => {
   const now = new Date();
 
@@ -357,13 +435,21 @@ function NewBill() {
   const [quantity, setQuantity] = useState(1);
   const [weight, setWeight] = useState("");
   const [rate, setRate] = useState("");
+  const [itemMaking, setItemMaking] = useState("");
+  const [itemOtherCharges, setItemOtherCharges] = useState("");
+  const [itemGstRate, setItemGstRate] = useState("");
+  const [gstDialogOpen, setGstDialogOpen] = useState(false);
+  const [gstDialogRate, setGstDialogRate] = useState("3");
+  const [gstSaving, setGstSaving] = useState(false);
+  const [continuePrintAfterGst, setContinuePrintAfterGst] = useState(false);
+  const [hsnCode, setHsnCode] = useState("");
+  const [skuCode, setSkuCode] = useState("");
+  const [huid, setHuid] = useState("");
   const [items, setItems] = useState([]);
 
-  const [making, setMaking] = useState("");
   const [offer, setOffer] = useState("");
-
-  const [gstEnabled, setGstEnabled] = useState(false);
-  const [gstRate, setGstRate] = useState(3);
+  const [paidAmount, setPaidAmount] = useState("");
+  const [billType, setBillType] = useState("estimate");
 
   const language = normalizeLanguage(shopProfile.language);
   const theme = normalizeTheme(shopProfile.theme);
@@ -412,14 +498,19 @@ function NewBill() {
 
         if (!shopSnapshot.exists()) {
           setShopProfile(DEFAULT_PROFILE);
+          setItemGstRate("");
           setProfileError("missing");
           return;
         }
 
         const data = shopSnapshot.data();
+        const savedGstRate = data.gstRate === null || data.gstRate === undefined || data.gstRate === ""
+          ? null
+          : Number(data.gstRate);
 
         setShopProfile({
           ...DEFAULT_PROFILE,
+          gstRate: Number.isFinite(savedGstRate) ? savedGstRate : null,
           shopName: data.shopName || DEFAULT_PROFILE.shopName,
           ownerName: data.ownerName || "",
           phone: data.phone || "",
@@ -428,9 +519,11 @@ function NewBill() {
           address: data.address || "",
           gstNumber: data.gstNumber || "",
           logoUrl: data.logoUrl || "",
+          tagline: data.tagline || "",
           language: normalizeLanguage(data.language),
           theme: normalizeTheme(data.theme),
         });
+        setItemGstRate(Number.isFinite(savedGstRate) ? String(savedGstRate) : "");
       } catch (error) {
         console.error("Shop profile fetch error:", error);
         if (isCurrent()) setProfileError("fetch");
@@ -508,7 +601,7 @@ function NewBill() {
   }, [theme, language]);
 
   // ============================================
-  // ITEM AMOUNT + BILL TOTALS
+  // ITEM AMOUNT + ITEM-WISE TAX + BILL TOTALS
   // ============================================
 
   const getItemAmount = useCallback((line) => {
@@ -520,25 +613,75 @@ function NewBill() {
       : (itemWeight * itemRate) / 1000;
   }, []);
 
+  const makingAmount = useMemo(
+    () => items.reduce((sum, line) => sum + toAmount(line.makingCharges) * (Number(line.quantity) || 0), 0),
+    [items]
+  );
+
+  const otherChargesAmount = useMemo(
+    () => items.reduce((sum, line) => sum + toAmount(line.otherCharges) * (Number(line.quantity) || 0), 0),
+    [items]
+  );
+
   const baseAmount = useMemo(
-    () =>
-      items.reduce(
-        (total, line) => total + getItemAmount(line),
-        0
-      ),
+    () => items.reduce((sum, line) => sum + getItemAmount(line), 0),
     [items, getItemAmount]
   );
 
-  const makingAmount = Math.max(0, Number(making) || 0);
-  const offerAmount = Math.max(0, Number(offer) || 0);
+  const preDiscountTotal = baseAmount + makingAmount + otherChargesAmount;
+  // Offer is deducted once from the combined bill amount; it is never allocated to individual items.
+  const offerAmount = Math.min(toAmount(offer), preDiscountTotal);
+  const subtotal = Math.max(0, preDiscountTotal - offerAmount);
 
-  const subtotal = baseAmount + makingAmount - offerAmount;
+  const lineDetails = useMemo(() => items.map((line) => {
+    const metalValue = getItemAmount(line);
+    const itemQuantity = Number(line.quantity) || 0;
+    const makingValue = toAmount(line.makingCharges) * itemQuantity;
+    const otherValue = toAmount(line.otherCharges) * itemQuantity;
+    const beforeTax = metalValue + makingValue + otherValue;
+    const lineGstRate = line.gstRate === null || line.gstRate === undefined || line.gstRate === ""
+      ? (shopProfile.gstRate === null || shopProfile.gstRate === undefined ? 0 : toAmount(shopProfile.gstRate))
+      : toAmount(line.gstRate);
+    const lineGstAmount = beforeTax * (lineGstRate / 100);
+    return {
+      id: line.id,
+      metalValue,
+      makingValue,
+      otherValue,
+      beforeTax,
+      gstRate: lineGstRate,
+      gstAmount: lineGstAmount,
+      total: beforeTax + lineGstAmount,
+    };
+  }), [items, getItemAmount, shopProfile.gstRate]);
 
-  const gstAmount = gstEnabled
-    ? (Math.max(0, subtotal) * (Number(gstRate) || 0)) / 100
-    : 0;
+  // GST is calculated separately for each item using that item's selected GST rate.
+  const gstRate = shopProfile.gstRate === null || shopProfile.gstRate === undefined
+    ? 0
+    : toAmount(shopProfile.gstRate);
+  const gstAmount = lineDetails.reduce((sum, detail) => sum + detail.gstAmount, 0);
+  const grandTotal = Math.max(0, subtotal + gstAmount);
+  const gstEnabled = gstAmount > 0;
 
-  const grandTotal = Math.max(0, subtotal) + gstAmount;
+  const getLineDetails = (line) =>
+    lineDetails.find((detail) => detail.id === line.id) || {
+      metalValue: getItemAmount(line),
+      makingValue: toAmount(line.makingCharges) * (Number(line.quantity) || 0),
+      otherValue: toAmount(line.otherCharges) * (Number(line.quantity) || 0),
+      gstRate: toAmount(line.gstRate || shopProfile.gstRate || 0),
+      gstAmount: 0,
+      beforeTax: getItemAmount(line) + toAmount(line.makingCharges) * (Number(line.quantity) || 0) + toAmount(line.otherCharges) * (Number(line.quantity) || 0),
+      total: getItemAmount(line) + toAmount(line.makingCharges) * (Number(line.quantity) || 0) + toAmount(line.otherCharges) * (Number(line.quantity) || 0),
+    };
+
+  const receivedAmount = Math.min(toAmount(paidAmount), grandTotal);
+  const balanceAmount = Math.max(0, grandTotal - receivedAmount);
+  const paymentStatus =
+    balanceAmount <= 0 && grandTotal > 0
+      ? "paid"
+      : receivedAmount > 0
+      ? "partial"
+      : "due";
 
   const rateKey =
     metal === "gold"
@@ -548,6 +691,33 @@ function NewBill() {
   const matchingRate = items.find(
     (line) => line.rateKey === rateKey
   )?.rate;
+
+  const saveGstRateAndContinue = async () => {
+    if (!user) return;
+    const selectedRate = Number(gstDialogRate);
+    if (gstDialogRate === "" || !Number.isFinite(selectedRate) || selectedRate < 0 || selectedRate > 100) {
+      window.alert(language === "hi" ? "कृपया सही GST दर चुनें।" : "Please select a valid GST rate.");
+      return;
+    }
+
+    setGstSaving(true);
+    try {
+      await updateDoc(doc(db, "shops", user.uid), {
+        gstRate: selectedRate,
+        gstRateUpdatedAt: serverTimestamp(),
+      });
+      setShopProfile((current) => ({ ...current, gstRate: selectedRate }));
+      setItems((current) => current.map((line) => (line.gstRate === "" || line.gstRate === null || line.gstRate === undefined ? { ...line, gstRate: selectedRate } : line)));
+      setItemGstRate(String(selectedRate));
+      setGstDialogOpen(false);
+      setContinuePrintAfterGst(true);
+    } catch (error) {
+      console.error("Unable to save shop GST rate:", error);
+      window.alert(language === "hi" ? "GST दर दुकान के डेटाबेस में सेव नहीं हो सकी। कृपया दोबारा प्रयास करें।" : "GST rate could not be saved to the shop database. Please try again.");
+    } finally {
+      setGstSaving(false);
+    }
+  };
 
   // ============================================
   // ITEM HANDLERS
@@ -560,6 +730,12 @@ function NewBill() {
     setWeight("");
     setQuantity(1);
     setRate("");
+    setItemMaking("");
+    setItemOtherCharges("");
+    setItemGstRate(shopProfile.gstRate === null || shopProfile.gstRate === undefined ? "" : String(shopProfile.gstRate));
+    setHsnCode("");
+    setSkuCode("");
+    setHuid("");
   };
 
   const handleCaratChange = (value) => {
@@ -615,12 +791,37 @@ function NewBill() {
         ? `gold-${carat}`
         : `silver-${item}`;
 
+    const newLine = {
+      itemKey: item,
+      itemName: getItemLabel(item, metal, language),
+      metal,
+      carat: metal === "gold" ? carat : "",
+      quantity: Number(quantity),
+      weight: Number(weight),
+      rate: Number(rate),
+      rateKey: selectedRateKey,
+      makingCharges: toAmount(itemMaking),
+      otherCharges: toAmount(itemOtherCharges),
+      gstRate: itemGstRate === "" ? (shopProfile.gstRate ?? null) : toAmount(itemGstRate),
+      hsnCode: hsnCode.trim(),
+      skuCode: skuCode.trim(),
+      huid: huid.trim(),
+    };
+
     setItems((previous) => {
-      const existingIndex = previous.findIndex(
-        (line) =>
-          (line.itemKey === item || line.itemName === getItemLabel(item, metal, "hi") || line.itemName === getItemLabel(item, metal, "en")) &&
-          line.metal === metal &&
-          line.carat === (metal === "gold" ? carat : "")
+      // Keep the historical auto-merge behaviour only when every pricing,
+      // tax and identification field is identical. Distinct HUIDs never merge.
+      const existingIndex = previous.findIndex((line) =>
+        line.itemKey === newLine.itemKey &&
+        line.metal === newLine.metal &&
+        line.carat === newLine.carat &&
+        Number(line.rate) === newLine.rate &&
+        Number(line.makingCharges || 0) === newLine.makingCharges &&
+        Number(line.otherCharges || 0) === newLine.otherCharges &&
+        Number(line.gstRate ?? shopProfile.gstRate ?? 0) === Number(newLine.gstRate) &&
+        String(line.hsnCode || "") === newLine.hsnCode &&
+        String(line.skuCode || "") === newLine.skuCode &&
+        String(line.huid || "") === newLine.huid
       );
 
       if (existingIndex !== -1) {
@@ -628,13 +829,9 @@ function NewBill() {
           index === existingIndex
             ? {
                 ...line,
-                itemKey: item,
-                itemName: getItemLabel(item, metal, language),
-                quantity:
-                  Number(line.quantity) + Number(quantity),
-                weight:
-                  Number(line.weight) + Number(weight),
-                rate: Number(rate),
+                quantity: Number(line.quantity) + newLine.quantity,
+                weight: Number(line.weight) + newLine.weight,
+                rate: newLine.rate,
                 rateKey: selectedRateKey,
               }
             : line
@@ -644,15 +841,8 @@ function NewBill() {
       return [
         ...previous,
         {
+          ...newLine,
           id: `${Date.now()}-${Math.random()}`,
-          itemKey: item,
-          itemName: getItemLabel(item, metal, language),
-          metal,
-          carat: metal === "gold" ? carat : "",
-          quantity: Number(quantity),
-          weight: Number(weight),
-          rate: Number(rate),
-          rateKey: selectedRateKey,
         },
       ];
     });
@@ -663,6 +853,12 @@ function NewBill() {
     setQuantity(1);
     setWeight("");
     setRate("");
+    setItemMaking("");
+    setItemOtherCharges("");
+    setItemGstRate(shopProfile.gstRate === null || shopProfile.gstRate === undefined ? "" : String(shopProfile.gstRate));
+    setHsnCode("");
+    setSkuCode("");
+    setHuid("");
   };
 
   const removeItem = (id) => {
@@ -675,7 +871,7 @@ function NewBill() {
   // PRINT + SAVE BILL
   // ============================================
 
-  const handlePrint = async () => {
+  const handlePrint = async (skipGstSetup = false) => {
     if (!user) {
       window.alert(t.loginRequired);
       return;
@@ -696,8 +892,29 @@ function NewBill() {
       return;
     }
 
-    if (offerAmount > baseAmount + makingAmount) {
-      window.alert(t.offerInvalid);
+    if (billType === "tax" && !String(shopProfile.gstNumber || "").trim()) {
+      window.alert(t.taxInvoiceGstinRequired);
+      return;
+    }
+
+    if (billType === "tax" && items.some((line) => !String(line.hsnCode || "").trim())) {
+      window.alert(t.taxInvoiceHsnRequired);
+      return;
+    }
+
+    if (billType === "tax" && !skipGstSetup && (shopProfile.gstRate === null || shopProfile.gstRate === undefined || shopProfile.gstRate === "")) {
+      setGstDialogRate("3");
+      setGstDialogOpen(true);
+      return;
+    }
+
+    if (toAmount(offer) > preDiscountTotal) {
+      window.alert(t.discountInvalid);
+      return;
+    }
+
+    if (toAmount(paidAmount) > grandTotal) {
+      window.alert(t.invalidPaid);
       return;
     }
 
@@ -708,18 +925,44 @@ function NewBill() {
     const now = new Date();
     const generatedBillNumber = makeBillNumber();
 
-    const billItems = items.map((line) => ({
-      itemName: line.itemKey
-        ? getItemLabel(line.itemKey, line.metal, language)
-        : line.itemName,
-      itemKey: line.itemKey || "",
-      metal: line.metal,
-      carat: line.metal === "gold" ? line.carat : "",
-      quantity: Number(line.quantity) || 0,
-      weight: Number(line.weight) || 0,
-      rate: Number(line.rate) || 0,
-      amount: getItemAmount(line),
-    }));
+    const billItems = items.map((line) => {
+      const detail = getLineDetails(line);
+      return {
+        itemName: line.itemKey
+          ? getItemLabel(line.itemKey, line.metal, language)
+          : line.itemName,
+        itemKey: line.itemKey || "",
+        metal: line.metal,
+        carat: line.metal === "gold" ? line.carat : "",
+        quantity: Number(line.quantity) || 0,
+        weight: Number(line.weight) || 0,
+        rate: Number(line.rate) || 0,
+        // Complete item-wise values are saved so Bill History can reproduce
+        // exactly the same row and calculation as the printed invoice.
+        amount: detail.metalValue,
+        makingCharges: detail.makingValue,
+        makingChargesPerPiece: toAmount(line.makingCharges),
+        otherCharges: detail.otherValue,
+        otherChargesPerPiece: toAmount(line.otherCharges),
+        chargesBreakdown: {
+          metalValue: detail.metalValue,
+          makingPerPiece: toAmount(line.makingCharges),
+          makingTotal: detail.makingValue,
+          otherPerPiece: toAmount(line.otherCharges),
+          otherTotal: detail.otherValue,
+        },
+        hsnCode: line.hsnCode || "",
+        skuCode: line.skuCode || "",
+        huid: line.huid || "",
+        gstRate: detail.gstRate,
+        gstAmount: detail.gstAmount,
+        discountShare: 0,
+        offerAllocatedToItem: false,
+        taxableAmount: detail.beforeTax,
+        totalAmount: detail.total,
+        lineTotal: detail.total,
+      };
+    });
 
     const billData = {
       ownerId: user.uid,
@@ -731,7 +974,9 @@ function NewBill() {
       shopAlternatePhone: shopProfile.alternatePhone,
       shopAddress: shopProfile.address,
       shopGstNumber: shopProfile.gstNumber,
+      shopGstRate: gstRate,
       shopLogoUrl: shopProfile.logoUrl,
+      shopTagline: shopProfile.tagline || "",
 
       billNumber: generatedBillNumber,
       invoiceNo: generatedBillNumber,
@@ -740,6 +985,17 @@ function NewBill() {
       customerMobile: customerMobile.trim(),
 
       items: billItems,
+      billType,
+      billTypeLabel: billType === "tax" ? t.taxInvoice : t.estimateBill,
+      payment: {
+        total: grandTotal,
+        paid: receivedAmount,
+        balance: balanceAmount,
+        status: paymentStatus,
+      },
+      paidAmount: receivedAmount,
+      balanceDue: balanceAmount,
+      paymentStatus,
 
       // Backward compatibility with existing BillHistory records.
       itemName: billItems[0]?.itemName || "",
@@ -750,12 +1006,20 @@ function NewBill() {
       rate: billItems[0]?.rate || 0,
 
       makingCharges: makingAmount,
+      otherCharges: otherChargesAmount,
       offer: offerAmount,
+      discount: offerAmount,
+      discountAppliedAtBillLevel: true,
+      preDiscountTotal,
       gstEnabled,
-      gstRate: gstEnabled ? Number(gstRate) || 0 : 0,
+      gstRate,
+      gstMode: "item-wise",
       gstAmount,
       subtotal,
       grandTotal,
+      totalAmount: grandTotal,
+      amountPaid: receivedAmount,
+      balanceAmount,
 
       createdAt: serverTimestamp(),
       printedAt: serverTimestamp(),
@@ -788,6 +1052,13 @@ function NewBill() {
       );
     }
   };
+
+  useEffect(() => {
+    if (continuePrintAfterGst && shopProfile.gstRate !== null && shopProfile.gstRate !== undefined) {
+      setContinuePrintAfterGst(false);
+      handlePrint(true);
+    }
+  }, [continuePrintAfterGst, shopProfile.gstRate]);
 
   // ============================================
   // LOADER
@@ -1077,6 +1348,73 @@ function NewBill() {
                 )}
               </div>
 
+              <div className="field">
+                <label>{t.making}</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder={t.makingPlaceholder}
+                  value={itemMaking}
+                  onChange={(event) => setItemMaking(event.target.value)}
+                />
+              </div>
+
+              <div className="field">
+                <label>{t.otherCharges}</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder={t.otherChargesPlaceholder}
+                  value={itemOtherCharges}
+                  onChange={(event) => setItemOtherCharges(event.target.value)}
+                />
+              </div>
+
+              <div className="field">
+                <label>{language === "hi" ? "इस आइटम पर GST (%)" : "GST on this item (%)"}</label>
+                <select value={itemGstRate} onChange={(event) => setItemGstRate(event.target.value)}>
+                  <option value="">{language === "hi" ? "दुकान की डिफॉल्ट दर" : "Shop default rate"}</option>
+                  {Array.from({ length: 101 }, (_, index) => index).map((value) => (
+                    <option value={value} key={value}>{value}%</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field">
+                <label>{t.hsn} <small>({t.hsnOptional})</small></label>
+                <input
+                  type="text"
+                  maxLength="8"
+                  placeholder="HSN"
+                  value={hsnCode}
+                  onChange={(event) => setHsnCode(event.target.value)}
+                />
+              </div>
+
+              <div className="field">
+                <label>{t.sku} <small>({t.hsnOptional})</small></label>
+                <input
+                  type="text"
+                  maxLength="40"
+                  placeholder="SKU / Item Code"
+                  value={skuCode}
+                  onChange={(event) => setSkuCode(event.target.value)}
+                />
+              </div>
+
+              <div className="field">
+                <label>{t.huid} <small>({t.huidOptional})</small></label>
+                <input
+                  type="text"
+                  maxLength="20"
+                  placeholder="HUID"
+                  value={huid}
+                  onChange={(event) => setHuid(event.target.value.toUpperCase())}
+                />
+              </div>
+
               <button
                 type="button"
                 className="print-bill add-item-button"
@@ -1100,146 +1438,103 @@ function NewBill() {
               </div>
 
               <div className="added-items-list">
-                {items.map((line, index) => (
-                  <div className="added-item-row" key={line.id}>
-                    <div>
-                      <strong>
-                        {String(index + 1).padStart(2, "0")} •{" "}
-                        {line.itemKey ? getItemLabel(line.itemKey, line.metal, language) : line.itemName}
-                      </strong>
-                      <span>
-                        {line.metal === "gold"
-                          ? `${t.gold} • ${line.carat}`
-                          : t.silver}
-                      </span>
-                    </div>
+                {items.map((line, index) => {
+                  const detail = getLineDetails(line);
+                  return (
+                    <article className="added-item-card" key={line.id}>
+                      <div className="added-item-card-head">
+                        <div className="added-item-title">
+                          <span className="added-item-index">{String(index + 1).padStart(2, "0")}</span>
+                          <div>
+                            <strong>{line.itemKey ? getItemLabel(line.itemKey, line.metal, language) : line.itemName}</strong>
+                            <small>
+                              {line.metal === "gold" ? `${t.gold} • ${line.carat}` : t.silver}
+                              {" • "}{line.quantity} {t.pieces}
+                              {" • "}{line.weight} {t.gram}
+                            </small>
+                          </div>
+                        </div>
+                        <div className="added-item-total">
+                          <span>{t.lineTotal}</span>
+                          <strong>₹ {formatMoney(detail.total)}</strong>
+                        </div>
+                        <button
+                          type="button"
+                          className="remove-item-button"
+                          onClick={() => removeItem(line.id)}
+                          aria-label={t.removeItem}
+                          title={t.removeItem}
+                        >
+                          ×
+                        </button>
+                      </div>
 
-                    <div>
-                      <strong>
-                        {line.quantity} {t.pieces}
-                      </strong>
-                      <span>
-                        {line.weight} {t.gram}
-                      </span>
-                    </div>
+                      <div className="added-item-breakup">
+                        <div><span>{t.metalValue}</span><strong>₹ {formatMoney(detail.metalValue)}</strong></div>
+                        <div><span>{t.making}</span><strong>₹ {formatMoney(detail.makingValue)}</strong></div>
+                        <div><span>{t.otherCharges}</span><strong>₹ {formatMoney(detail.otherValue)}</strong></div>
+                        {detail.gstRate > 0 && <div><span>{t.gst} ({detail.gstRate}%)</span><strong>₹ {formatMoney(detail.gstAmount)}</strong></div>}
+                        <div><span>{t.rate}</span><strong>₹ {formatMoney(line.rate, 0)}</strong></div>
+                      </div>
 
-                    <div>
-                      <strong>
-                        ₹ {formatMoney(getItemAmount(line))}
-                      </strong>
-                      <span>
-                        {t.rate} ₹ {formatMoney(line.rate, 0)}
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => removeItem(line.id)}
-                      aria-label={t.removeItem}
-                      title={t.removeItem}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
+                      {(line.hsnCode || line.skuCode || line.huid) && (
+                        <div className="added-item-codes">
+                          {line.hsnCode && <span>{t.hsn}: <b>{line.hsnCode}</b></span>}
+                          {line.skuCode && <span>{t.sku}: <b>{line.skuCode}</b></span>}
+                          {line.huid && <span>{t.huid}: <b>{line.huid}</b></span>}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
             </div>
           )}
         </section>
 
-        {/* BILLING DETAILS */}
+        {/* BILLING DETAILS + PAYMENT */}
 
         <section className="section-card">
           <div className="section-heading">
             <span>04</span>
             <div>
               <h3>{t.billingDetails}</h3>
-              <p>{t.billingDetailsDesc}</p>
+              <p>{language === "hi"
+                ? "ऑफर पूरे बिल से एक बार घटेगा। GST हर आइटम की चुनी हुई दर से लगेगा; मेकिंग और अन्य चार्ज रुपये में हैं।"
+                : "Offer is deducted once from the combined bill total. GST is calculated item-wise; making and other charges are fixed rupee amounts."}</p>
             </div>
           </div>
 
-          {items.length === 0 ? (
-            <div className="message">{t.addItemFirst}</div>
-          ) : (
-            <div className="billing-fields billing-extra-fields">
-              <div className="field">
-                <label>
-                  {t.making}
-                  <em>{t.wholeBill}</em>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="₹ 0"
-                  value={making}
-                  onChange={(event) =>
-                    setMaking(event.target.value)
-                  }
-                />
-              </div>
-
-              <div className="field">
-                <label>
-                  {t.offer}
-                  <em>{t.wholeBill}</em>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="₹ 0"
-                  value={offer}
-                  onChange={(event) =>
-                    setOffer(event.target.value)
-                  }
-                />
-              </div>
+          <div className="billing-fields billing-extra-fields">
+            <div className="field">
+              <label>{t.offer} <em>{t.wholeBill}</em></label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="₹ 0"
+                value={offer}
+                onChange={(event) => setOffer(event.target.value)}
+              />
             </div>
-          )}
-        </section>
-
-        {/* GST */}
-
-        <section className="gst-card">
-          <div className="gst-info">
-            <div className="gst-icon">%</div>
-            <div>
-              <h3>{t.gst}</h3>
-              <p>{t.applyGst}</p>
+            <div className="field">
+              <label>{t.paid}</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder={t.paidPlaceholder}
+                value={paidAmount}
+                onChange={(event) => setPaidAmount(event.target.value)}
+              />
             </div>
-          </div>
-
-          <div className="gst-control">
-            <button
-              type="button"
-              className={`gst-switch ${gstEnabled ? "active" : ""}`}
-              onClick={() => setGstEnabled((value) => !value)}
-              aria-label={t.gst}
-              aria-pressed={gstEnabled}
-            >
-              <span />
-            </button>
-
-            <strong>
-              {gstEnabled ? t.gstOn : t.gstOff}
-            </strong>
-
-            {gstEnabled && (
-              <div className="gst-rate">
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={gstRate}
-                  onChange={(event) =>
-                    setGstRate(event.target.value)
-                  }
-                />
-                <span>%</span>
-              </div>
-            )}
+            <div className="field">
+              <label>{t.billType}</label>
+              <select value={billType} onChange={(event) => setBillType(event.target.value)}>
+                <option value="estimate">{t.estimateBill}</option>
+                <option value="tax">{t.taxInvoice}</option>
+              </select>
+            </div>
           </div>
         </section>
 
@@ -1251,41 +1546,38 @@ function NewBill() {
               <span>{t.allItems}</span>
               <strong>₹ {formatMoney(baseAmount)}</strong>
             </div>
-
             {makingAmount > 0 && (
-              <div>
-                <span>{t.making}</span>
-                <strong>₹ {formatMoney(makingAmount)}</strong>
-              </div>
+              <div><span>{t.makingTotal}</span><strong>₹ {formatMoney(makingAmount)}</strong></div>
             )}
-
+            {otherChargesAmount > 0 && (
+              <div><span>{t.otherChargesTotal}</span><strong>₹ {formatMoney(otherChargesAmount)}</strong></div>
+            )}
             {offerAmount > 0 && (
-              <div>
-                <span>{t.offer}</span>
-                <strong className="discount">
-                  - ₹ {formatMoney(offerAmount)}
-                </strong>
-              </div>
+              <div><span>{t.offer}</span><strong className="discount">− ₹ {formatMoney(offerAmount)}</strong></div>
             )}
-
-            {gstEnabled && (
-              <div>
-                <span>GST ({gstRate}%)</span>
-                <strong>₹ {formatMoney(gstAmount)}</strong>
-              </div>
+            <div><span>{t.subtotal}</span><strong>₹ {formatMoney(subtotal)}</strong></div>
+            {gstAmount > 0 && (
+              <div><span>{t.gst} ({language === "hi" ? "आइटम अनुसार" : "Item-wise"})</span><strong>₹ {formatMoney(gstAmount)}</strong></div>
             )}
           </div>
 
-          <div className="final-total">
-            <span>{t.total}</span>
-            <strong>₹ {formatMoney(grandTotal)}</strong>
+          <div className="total-right">
+            <div className="final-total">
+              <span>{t.total}</span>
+              <strong>₹ {formatMoney(grandTotal)}</strong>
+            </div>
+            <div className="payment-summary">
+              <div><span>{t.paid}</span><strong>₹ {formatMoney(receivedAmount)}</strong></div>
+              <div className="balance-row"><span>{t.balance}</span><strong>₹ {formatMoney(balanceAmount)}</strong></div>
+              <small>{t.paymentStatus}: {paymentStatus === "paid" ? t.paidStatus : paymentStatus === "partial" ? t.partialStatus : t.dueStatus}</small>
+            </div>
           </div>
 
           <button
             type="button"
             className="print-bill"
             onClick={handlePrint}
-            disabled={isPrinting}
+            disabled={isPrinting || items.length === 0}
           >
             {isPrinting ? t.printing : t.print}
             <span>→</span>
@@ -1318,6 +1610,7 @@ function NewBill() {
             <div>
               <span>{t.billNumber}</span>
               <strong>{billNumber}</strong>
+              <small>{billType === "tax" ? t.taxInvoiceNote : t.invoiceEstimateNote}</small>
             </div>
 
             <div>
@@ -1369,10 +1662,6 @@ function NewBill() {
             <h3>{t.shopDetails}</h3>
             <strong>{shopProfile.shopName}</strong>
 
-            {shopProfile.address && (
-              <p>{shopProfile.address}</p>
-            )}
-
             {shopProfile.phone && (
               <p>
                 {shopProfile.phone}
@@ -1397,110 +1686,77 @@ function NewBill() {
         </div>
 
         <div className="print-items-list">
-          {items.map((line, index) => (
-            <div className="print-item-box" key={line.id}>
-              <div className="print-item-main">
-                <div className="print-item-number">
-                  {String(index + 1).padStart(2, "0")}
-                </div>
+          {items.map((line, index) => {
+            const detail = getLineDetails(line);
+            const itemName = (line.itemKey
+              ? getItemLabel(line.itemKey, line.metal, language)
+              : line.itemName) || t.item;
+            const codeParts = [
+              line.hsnCode ? `HSN ${line.hsnCode}` : "",
+              line.skuCode ? `SKU ${line.skuCode}` : "",
+              line.huid ? `HUID ${line.huid}` : "",
+            ].filter(Boolean);
 
-                <div>
-                  <h3>{(line.itemKey ? getItemLabel(line.itemKey, line.metal, language) : line.itemName) || t.item}</h3>
-                  <p>
-                    {line.metal === "gold"
-                      ? `${t.gold}${line.carat ? ` • ${line.carat}` : ""}`
-                      : t.silver}
-                  </p>
-                </div>
-              </div>
-
-              <div
-                className={`print-item-details ${
-                  line.metal === "gold"
-                    ? "gold-details"
-                    : "silver-details"
-                }`}
-              >
-                <div>
-                  <span>{t.quantity}</span>
-                  <strong>{line.quantity}</strong>
-                </div>
-
-                <div>
-                  <span>{t.weight}</span>
-                  <strong>
-                    {line.weight} {t.gram}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>{t.rate}</span>
-                  <strong>₹ {formatMoney(line.rate, 0)}</strong>
-                  <small>
-                    {line.metal === "gold"
-                      ? t.per10Gram
-                      : t.perKg}
-                  </small>
-                </div>
-
-                {line.metal === "gold" && (
-                  <div>
-                    <span>{t.purity}</span>
-                    <strong>{line.carat || "-"}</strong>
+            return (
+              <div className="print-item-box" key={line.id}>
+                <div className="print-item-main print-item-cell" title={itemName}>
+                  <span className="print-cell-label">{t.item}</span>
+                  <div className="print-item-name-wrap">
+                    <h3>{String(index + 1).padStart(2, "0")} · {itemName}</h3>
+                    <p>{line.metal === "gold" ? `${t.gold}${line.carat ? ` · ${line.carat}` : ""}` : t.silver}</p>
                   </div>
-                )}
-              </div>
+                </div>
 
-              <div className="print-item-line-total">
-                <span>{t.allItems}</span>
-                <strong>
-                  ₹ {formatMoney(getItemAmount(line))}
-                </strong>
+                <div className="print-item-cell"><span className="print-cell-label">{t.quantity}</span><strong>{line.quantity}</strong></div>
+                <div className="print-item-cell"><span className="print-cell-label">{t.weight}</span><strong>{line.weight}g</strong></div>
+                <div className="print-item-cell"><span className="print-cell-label">{t.rate}</span><strong>₹{formatMoney(line.rate, 0)}</strong></div>
+                {line.metal === "gold" && <div className="print-item-cell"><span className="print-cell-label">{t.purity}</span><strong>{line.carat}</strong></div>}
+                <div className="print-item-cell"><span className="print-cell-label">{t.metalValue}</span><strong>₹{formatMoney(detail.metalValue)}</strong></div>
+                {detail.makingValue > 0 && <div className="print-item-cell"><span className="print-cell-label">{t.making}</span><strong>₹{formatMoney(detail.makingValue)}</strong></div>}
+                {detail.otherValue > 0 && <div className="print-item-cell"><span className="print-cell-label">{t.otherCharges}</span><strong>₹{formatMoney(detail.otherValue)}</strong></div>}
+                {detail.gstRate > 0 && <div className="print-item-cell print-item-gst"><span className="print-cell-label">{t.gst} ({detail.gstRate}%)</span><strong>₹{formatMoney(detail.gstAmount)}</strong></div>}
+                {codeParts.length > 0 && <div className="print-item-cell print-item-codes" title={codeParts.join(" · ")}><span className="print-cell-label">{t.hsn} / SKU / HUID</span><strong>{codeParts.join(" · ")}</strong></div>}
+                <div className="print-item-line-total print-item-cell"><span className="print-cell-label">{t.lineTotal}</span><strong>₹{formatMoney(detail.total)}</strong></div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* AMOUNT SUMMARY */}
+        {/* AMOUNT + PAYMENT SUMMARY */}
 
-        <div className="print-amount-section">
-          <div className="print-amount-row">
-            <span>{t.allItems}</span>
-            <strong>₹ {formatMoney(baseAmount)}</strong>
+        <div className="print-summary-wrap">
+          <div className="print-charge-strip">
+            <div><span>{t.makingTotal}</span><strong>₹ {formatMoney(makingAmount)}</strong></div>
+            <div><span>{t.otherChargesTotal}</span><strong>₹ {formatMoney(otherChargesAmount)}</strong></div>
+            <div><span>{t.discount}</span><strong>− ₹ {formatMoney(offerAmount)}</strong></div>
+            {gstAmount > 0 && <div><span>{t.gstTotal}</span><strong>₹ {formatMoney(gstAmount)}</strong></div>}
           </div>
 
-          {makingAmount > 0 && (
+          <div className="print-amount-section">
             <div className="print-amount-row">
-              <span>{t.making}</span>
-              <strong>₹ {formatMoney(makingAmount)}</strong>
+              <span>{t.allItems}</span>
+              <strong>₹ {formatMoney(baseAmount)}</strong>
             </div>
-          )}
-
-          {offerAmount > 0 && (
-            <div className="print-amount-row discount-row">
-              <span>{t.offer}</span>
-              <strong>- ₹ {formatMoney(offerAmount)}</strong>
+            <div className="print-subtotal">
+              <span>{t.subtotal}</span>
+              <strong>₹ {formatMoney(subtotal)}</strong>
             </div>
-          )}
-
-          <div className="print-subtotal">
-            <span>{t.subtotal}</span>
-            <strong>₹ {formatMoney(subtotal)}</strong>
-          </div>
-
-          {gstEnabled && (
-            <div className="print-amount-row">
-              <span>GST ({gstRate}%)</span>
-              <strong>₹ {formatMoney(gstAmount)}</strong>
+            {gstAmount > 0 && (
+              <div className="print-amount-row">
+                <span>{t.gst} ({language === "hi" ? "आइटम अनुसार" : "Item-wise"})</span>
+                <strong>₹ {formatMoney(gstAmount)}</strong>
+              </div>
+            )}
+            <div className="print-grand-total">
+              <span>{t.total}</span>
+              <strong>₹ {formatMoney(grandTotal)}</strong>
             </div>
-          )}
-
-          <div className="print-grand-total">
-            <span>{t.total}</span>
-            <strong>₹ {formatMoney(grandTotal)}</strong>
+            <div className="print-payment-box">
+              <div><span>{t.paid}</span><strong>₹ {formatMoney(receivedAmount)}</strong></div>
+              <div><span>{t.balance}</span><strong>₹ {formatMoney(balanceAmount)}</strong></div>
+            </div>
           </div>
         </div>
-
         {/* FOOTER */}
 
         <div className="print-footer">
@@ -1518,6 +1774,10 @@ function NewBill() {
         <div className="print-bottom">
           <strong>{shopProfile.shopName}</strong>
 
+          {shopProfile.tagline && (
+            <span>{shopProfile.tagline}</span>
+          )}
+
           {shopProfile.address && (
             <span>{shopProfile.address}</span>
           )}
@@ -1534,10 +1794,42 @@ function NewBill() {
         </div>
       </div>
 
+      {gstDialogOpen && (
+        <div className="gst-setup-backdrop" role="presentation">
+          <div className="gst-setup-dialog" role="dialog" aria-modal="true" aria-labelledby="gst-setup-title">
+            <div className="gst-setup-icon">%</div>
+            <h2 id="gst-setup-title">{language === "hi" ? "दुकान की GST दर सेट करें" : "Set Shop GST Rate"}</h2>
+            <p>{language === "hi"
+              ? "इस दुकान में GST दर सेव नहीं है। पक्का बिल बनाने से पहले GST दर चुनें। यह दर दुकान के डेटाबेस में सेव होगी और अगले बिलों में अपने आप उपयोग होगी।"
+              : "No GST rate is saved for this shop. Select a rate before creating the tax invoice. It will be saved to the shop database and reused automatically for future bills."}</p>
+            <label htmlFor="bill-gst-rate">{language === "hi" ? "GST दर चुनें" : "Select GST Rate"}</label>
+            <select id="bill-gst-rate" value={gstDialogRate} onChange={(event) => setGstDialogRate(event.target.value)}>
+              {Array.from({ length: 101 }, (_, index) => index).map((value) => (
+                <option value={value} key={value}>{value}%</option>
+              ))}
+            </select>
+            <div className="gst-setup-actions">
+              <button type="button" className="gst-setup-cancel" onClick={() => setGstDialogOpen(false)} disabled={gstSaving}>
+                {language === "hi" ? "रद्द करें" : "Cancel"}
+              </button>
+              <button type="button" className="gst-setup-save" onClick={saveGstRateAndContinue} disabled={gstSaving}>
+                {gstSaving
+                  ? (language === "hi" ? "सेव हो रहा है..." : "Saving...")
+                  : (language === "hi" ? "सेव करें और बिल प्रिंट करें" : "Save & Print Invoice")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SCREEN FOOTER */}
 
       <footer className="shop-footer">
         <strong>{shopProfile.shopName}</strong>
+
+        {shopProfile.tagline && (
+          <span>{shopProfile.tagline}</span>
+        )}
 
         {shopProfile.address && (
           <span>{shopProfile.address}</span>

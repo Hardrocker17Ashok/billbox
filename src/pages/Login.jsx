@@ -337,10 +337,6 @@ export default function Login() {
     }
   };
 
-  // --------------------------------------------------
-  // SHOP REGISTRATION
-  // --------------------------------------------------
-
   const handleRegister = async (event) => {
     event.preventDefault();
 
@@ -459,29 +455,8 @@ export default function Login() {
         createdAt: serverTimestamp(),
       });
 
-      // Send registration notification to BillBox admin
-      try {
-        const idToken = await createdUser.getIdToken();
 
-        const response = await fetch("/api/send-registration-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${idToken}`,
-          },
-          body: JSON.stringify({}),
-        });
 
-        const result = await response.json();
-
-        if (!response.ok) {
-          console.error("Registration email failed:", result);
-        } else {
-          console.log("Registration email sent successfully");
-        }
-      } catch (emailError) {
-        console.error("Email notification error:", emailError);
-      }
 
       // Step 4: Sign out after successful registration
       await signOut(auth);

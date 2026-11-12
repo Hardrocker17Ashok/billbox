@@ -3110,3 +3110,1017 @@ button {
     display: none !important;
   }
 }
+
+/* =========================================================
+   BILLBOX UPDATE — ITEM-WISE BILLING, PAYMENT & PRINT
+   Appended overrides: existing theme and print rules retained.
+========================================================= */
+
+/* Wider, flexible input grid for item-level charges and tax fields */
+.new-bill-page .billing-fields {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+  gap: 15px;
+}
+
+.new-bill-page .billing-fields .field {
+  min-width: 0;
+}
+
+.new-bill-page .billing-fields .print-bill {
+  width: 100%;
+  min-width: 130px;
+}
+
+.new-bill-page .tax-note {
+  margin: 14px 0 0;
+  color: var(--nb-muted, #85817a);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.bill-theme-light .tax-note {
+  color: #777064;
+}
+
+/* Premium item cards: no hidden columns and no clipped information */
+.new-bill-page .added-items-list {
+  display: grid;
+  gap: 12px;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+}
+
+.new-bill-page .added-item-card {
+  min-width: 0;
+  padding: 17px 18px;
+  border: 1px solid rgba(181, 138, 58, 0.19);
+  border-radius: 15px;
+  background: linear-gradient(145deg, #171715, #111110);
+  box-shadow: 0 9px 26px rgba(0, 0, 0, 0.14);
+}
+
+.new-bill-page .added-item-card-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 34px;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+}
+
+.new-bill-page .added-item-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.new-bill-page .added-item-index {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(181, 138, 58, 0.28);
+  border-radius: 10px;
+  background: rgba(181, 138, 58, 0.11);
+  color: #d4af63;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.new-bill-page .added-item-title > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.new-bill-page .added-item-title strong {
+  overflow-wrap: anywhere;
+  color: #f0ece4;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.new-bill-page .added-item-title small {
+  color: #8e8980;
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.new-bill-page .added-item-total {
+  min-width: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.new-bill-page .added-item-total span {
+  color: #8d887f;
+  font-size: 9px;
+}
+
+.new-bill-page .added-item-total strong {
+  color: #e0bd72;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.new-bill-page .remove-item-button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(209, 111, 111, 0.18);
+  border-radius: 9px;
+  background: rgba(178, 58, 58, 0.10);
+  color: #d98282;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.new-bill-page .remove-item-button:hover {
+  background: rgba(178, 58, 58, 0.2);
+}
+
+.new-bill-page .added-item-breakup {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 15px;
+  padding: 14px 0 2px;
+}
+
+.new-bill-page .added-item-breakup > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.new-bill-page .added-item-breakup span {
+  color: #89847b;
+  font-size: 9px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.new-bill-page .added-item-breakup strong {
+  color: #e3ded5;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.new-bill-page .added-item-breakup .item-discount {
+  color: #d98282;
+}
+
+.new-bill-page .added-item-codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 16px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.09);
+}
+
+.new-bill-page .added-item-codes span {
+  color: #9a9489;
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+
+.new-bill-page .added-item-codes b {
+  color: #d0ad69;
+  font-weight: 700;
+}
+
+/* Payment summary */
+.new-bill-page .total-card {
+  grid-template-columns: minmax(0, 1.2fr) minmax(250px, 0.8fr);
+  align-items: stretch;
+}
+
+.new-bill-page .total-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.new-bill-page .total-right .final-total {
+  min-height: 94px;
+}
+
+.new-bill-page .payment-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 13px 15px;
+  border: 1px solid rgba(181, 138, 58, 0.17);
+  border-radius: 12px;
+  background: rgba(181, 138, 58, 0.045);
+}
+
+.new-bill-page .payment-summary > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.new-bill-page .payment-summary span {
+  color: #aaa397;
+  font-size: 10px;
+}
+
+.new-bill-page .payment-summary strong {
+  color: #e8e2d7;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.new-bill-page .payment-summary .balance-row strong {
+  color: #e0bd72;
+  font-size: 14px;
+}
+
+.new-bill-page .payment-summary small {
+  padding-top: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  color: #a69d8e;
+  font-size: 9px;
+}
+
+.bill-theme-light .added-item-card {
+  background: linear-gradient(145deg, #ffffff, #f8f5ee);
+  border-color: rgba(150, 110, 45, 0.2);
+  box-shadow: 0 9px 25px rgba(45, 35, 20, 0.05);
+}
+
+.bill-theme-light .added-item-title strong {
+  color: #302b24;
+}
+
+.bill-theme-light .added-item-title small,
+.bill-theme-light .added-item-breakup span {
+  color: #777064;
+}
+
+.bill-theme-light .added-item-breakup strong {
+  color: #383229;
+}
+
+.bill-theme-light .added-item-total span {
+  color: #777064;
+}
+
+.bill-theme-light .added-item-total strong {
+  color: #805c20;
+}
+
+.bill-theme-light .added-item-codes {
+  border-top-color: rgba(40, 35, 25, 0.11);
+}
+
+.bill-theme-light .added-item-codes span {
+  color: #777064;
+}
+
+.bill-theme-light .added-item-codes b {
+  color: #805c20;
+}
+
+.bill-theme-light .payment-summary {
+  background: rgba(181, 138, 58, 0.055);
+  border-color: rgba(150, 110, 45, 0.18);
+}
+
+.bill-theme-light .payment-summary span {
+  color: #777064;
+}
+
+.bill-theme-light .payment-summary strong {
+  color: #302b24;
+}
+
+.bill-theme-light .payment-summary .balance-row strong {
+  color: #805c20;
+}
+
+.bill-theme-light .payment-summary small {
+  border-top-color: rgba(40, 35, 25, 0.1);
+  color: #777064;
+}
+
+/* Print summary layout */
+@media print {
+  .print-invoice {
+    min-height: 281mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .print-header,
+  .print-info-grid,
+  .print-section-title,
+  .print-items-list,
+  .print-summary-wrap,
+  .print-footer,
+  .print-bottom {
+    flex-shrink: 0 !important;
+  }
+
+  .print-item-box {
+    grid-template-columns: minmax(39mm, 1.15fr) minmax(80mm, 2fr) minmax(27mm, 0.7fr) !important;
+    gap: 2mm !important;
+    min-height: 15mm !important;
+    padding: 2.2mm 1.5mm !important;
+  }
+
+  .print-item-main h3 {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .print-item-details {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 1.5mm !important;
+    flex-wrap: wrap;
+  }
+
+  .print-item-details > div {
+    min-width: 0;
+  }
+
+  .print-item-details span,
+  .print-item-details strong {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .print-summary-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3mm;
+    margin-top: 4mm;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-charge-strip {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2mm;
+    padding: 2.5mm 3mm;
+    border: 0.6px solid #e3d8c4;
+    border-radius: 1.5mm;
+    background: #fcfaf6;
+    page-break-inside: avoid;
+  }
+
+  .print-charge-strip > div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1mm;
+  }
+
+  .print-charge-strip span {
+    color: #6e675d !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .print-charge-strip strong {
+    color: #29251f !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .print-amount-section {
+    width: 100%;
+    max-width: 76mm;
+    margin: 0 0 0 auto !important;
+  }
+
+  .print-payment-box {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5mm;
+    margin-top: 2mm;
+    padding: 2.5mm 3mm;
+    border: 0.7px solid #d8c8a9;
+    border-radius: 1.5mm;
+    background: #fbf8f1;
+    page-break-inside: avoid;
+  }
+
+  .print-payment-box > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4mm;
+  }
+
+  .print-payment-box span {
+    color: #514a40 !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+  }
+
+  .print-payment-box strong {
+    color: #25211b !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+  }
+
+  .print-footer {
+    margin-top: auto !important;
+  }
+
+  .print-bottom {
+    margin-top: 3mm !important;
+  }
+}
+
+/* Responsive item grid and payment card */
+@media (max-width: 900px) {
+  .new-bill-page .billing-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .new-bill-page .added-item-breakup {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .new-bill-page .total-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .new-bill-page .billing-fields {
+    grid-template-columns: 1fr 1fr;
+    gap: 13px 10px;
+  }
+
+  .new-bill-page .added-item-card {
+    padding: 14px 12px;
+  }
+
+  .new-bill-page .added-item-card-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .new-bill-page .added-item-total {
+    grid-column: 1 / 2;
+    grid-row: 2;
+    align-items: flex-start;
+    min-width: 0;
+    padding-left: 45px;
+  }
+
+  .new-bill-page .remove-item-button {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .new-bill-page .added-item-breakup {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px 12px;
+  }
+
+  .new-bill-page .total-card {
+    padding: 18px 14px;
+  }
+
+  .new-bill-page .final-total strong {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 380px) {
+  .new-bill-page .billing-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .new-bill-page .added-item-breakup {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+/* =========================================================
+   BILLBOX PRINT FIX — ONE JEWELLERY ITEM = ONE HORIZONTAL ROW
+   All item charges, GST and optional codes stay on the same row.
+========================================================= */
+@media print {
+  .print-invoice {
+    width: 194mm !important;
+    max-width: 194mm !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .print-items-list {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    overflow: visible !important;
+  }
+
+  .print-item-box {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: 1.45fr .38fr .52fr .72fr .43fr .72fr .68fr .68fr .58fr .72fr .72fr .72fr 1.05fr .88fr !important;
+    align-items: center !important;
+    column-gap: 1.1mm !important;
+    row-gap: 0 !important;
+    min-height: 11mm !important;
+    padding: 1.5mm .7mm !important;
+    border-top: 0 !important;
+    border-right: 0 !important;
+    border-left: 0 !important;
+    border-bottom: .55px solid #ded8ce !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-item-box:first-child {
+    border-top: .55px solid #ded8ce !important;
+  }
+
+  .print-item-cell {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    gap: .45mm !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+  }
+
+  .print-cell-label {
+    display: block !important;
+    max-width: 100% !important;
+    color: #8b8172 !important;
+    font-size: 4.4pt !important;
+    line-height: 1 !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+  }
+
+  .print-item-cell strong {
+    display: block !important;
+    max-width: 100% !important;
+    color: #28241f !important;
+    font-size: 5.1pt !important;
+    line-height: 1.12 !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+  }
+
+  .print-item-main {
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: .5mm !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-item-name-wrap {
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .print-item-main h3 {
+    display: block !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    color: #24211d !important;
+    font-size: 5.4pt !important;
+    line-height: 1.1 !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .print-item-main p {
+    margin: .35mm 0 0 !important;
+    color: #766c5e !important;
+    font-size: 4.6pt !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  .print-item-codes strong {
+    font-size: 4.3pt !important;
+  }
+
+  .print-item-line-total {
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    text-align: right !important;
+    overflow: hidden !important;
+  }
+
+  .print-item-line-total .print-cell-label {
+    width: 100% !important;
+    text-align: right !important;
+  }
+
+  .print-item-line-total strong {
+    color: #805b1d !important;
+    font-size: 5.5pt !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+  }
+
+  /* Do not let a row split between printed pages. */
+  .print-item-box,
+  .print-item-box > * {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+
+/* GST defaults: save once in the shop profile and reuse on future bills */
+.new-bill-page .gst-defaults-action {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(181, 138, 58, 0.22);
+  border-radius: 12px;
+  background: rgba(181, 138, 58, 0.055);
+}
+
+.new-bill-page .gst-defaults-action p {
+  margin: 0;
+  color: var(--nb-muted, #aaa59c);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.new-bill-page .gst-defaults-action button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(181, 138, 58, 0.42);
+  border-radius: 9px;
+  background: rgba(181, 138, 58, 0.13);
+  color: #dfbd78;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.new-bill-page .gst-defaults-action button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.bill-theme-light .gst-defaults-action {
+  background: #fbf7ed;
+  border-color: rgba(150, 110, 45, 0.2);
+}
+
+.bill-theme-light .gst-defaults-action p {
+  color: #71695d;
+}
+
+.bill-theme-light .gst-defaults-action button {
+  color: #76551f;
+  background: #f3e8cf;
+  border-color: rgba(150, 110, 45, 0.35);
+}
+
+@media (max-width: 640px) {
+  .new-bill-page .gst-defaults-action {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .new-bill-page .gst-defaults-action button {
+    width: 100%;
+  }
+}
+
+/* GST setup dialog shown only when a tax invoice is requested without a saved shop GST rate. */
+.new-bill-page .gst-setup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(8, 12, 20, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.new-bill-page .gst-setup-dialog {
+  width: min(100%, 440px);
+  padding: 28px;
+  border: 1px solid rgba(181, 138, 58, 0.28);
+  border-radius: 20px;
+  background: var(--nb-card, #171a22);
+  color: var(--nb-text, #f5f3ee);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36);
+}
+
+.new-bill-page .gst-setup-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: rgba(181, 138, 58, 0.14);
+  color: #c49a50;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.new-bill-page .gst-setup-dialog h2 {
+  margin: 0 0 9px;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.new-bill-page .gst-setup-dialog p {
+  margin: 0 0 20px;
+  color: var(--nb-muted, #aaa59c);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.new-bill-page .gst-setup-dialog label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.new-bill-page .gst-setup-dialog select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid var(--nb-border, rgba(255,255,255,.14));
+  border-radius: 10px;
+  outline: none;
+  background: var(--nb-input, #10141c);
+  color: inherit;
+  font: inherit;
+}
+
+.new-bill-page .gst-setup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.new-bill-page .gst-setup-actions button {
+  min-height: 42px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.new-bill-page .gst-setup-actions button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.new-bill-page .gst-setup-cancel {
+  background: rgba(128, 128, 128, .15);
+  color: inherit;
+}
+
+.new-bill-page .gst-setup-save {
+  background: #b58a3a;
+  color: #17130b;
+}
+
+@media (max-width: 520px) {
+  .new-bill-page .gst-setup-dialog { padding: 22px 18px; }
+  .new-bill-page .gst-setup-actions { flex-direction: column-reverse; }
+  .new-bill-page .gst-setup-actions button { width: 100%; }
+}
+
+/* Final invoice layout: one physical item remains one horizontal row. The name
+   may wrap inside its own wider cell instead of being clipped or creating a new row. */
+@media print {
+  .print-invoice .print-items-list {
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .print-invoice .print-item-box {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(29mm, 1.75fr) minmax(8mm, .42fr) minmax(9mm, .48fr) minmax(12mm, .66fr) minmax(9mm, .42fr) minmax(14mm, .75fr) minmax(13mm, .68fr) minmax(13mm, .68fr) minmax(21mm, 1.12fr) minmax(16mm, .84fr) !important;
+    column-gap: 1mm !important;
+    row-gap: 0 !important;
+    align-items: center !important;
+    min-height: 12mm !important;
+    height: auto !important;
+    padding: 1.5mm .8mm !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-invoice .print-item-main,
+  .print-invoice .print-item-cell {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .print-invoice .print-item-main h3 {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    text-overflow: clip !important;
+    line-height: 1.12 !important;
+    max-height: 2.25em !important;
+  }
+
+  .print-invoice .print-item-main p {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .print-invoice .print-item-codes strong {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+
+  .print-invoice .print-item-box,
+  .print-invoice .print-item-box > * {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+
+/* BillBox refinement: center section 04 billing controls without shifting the section heading. */
+.new-bill-page .billing-extra-fields {
+  width: min(100%, 820px) !important;
+  margin: 0 auto !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(180px, 1fr)) !important;
+  justify-content: center !important;
+  align-items: end !important;
+  gap: 16px !important;
+}
+@media (max-width: 700px) {
+  .new-bill-page .billing-extra-fields {
+    width: 100% !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 480px) {
+  .new-bill-page .billing-extra-fields {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Final print layout: optional fields disappear instead of printing empty dashes.
+   Each physical jewellery item stays in one horizontal grid row; the name can wrap. */
+@media print {
+  .print-invoice .print-items-list { width: 100% !important; overflow: visible !important; }
+  .print-invoice .print-item-box {
+    display: grid !important;
+    grid-template-columns: minmax(30mm, 1.9fr) repeat(auto-fit, minmax(10mm, 1fr)) !important;
+    grid-auto-flow: row !important;
+    align-items: center !important;
+    gap: 1mm !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 11mm !important;
+    padding: 1.5mm .8mm !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .print-invoice .print-item-cell { min-width: 0 !important; max-width: 100% !important; overflow: hidden !important; }
+  .print-invoice .print-item-main { min-width: 0 !important; overflow: hidden !important; }
+  .print-invoice .print-item-main h3 {
+    white-space: normal !important;
+    overflow: visible !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    text-overflow: clip !important;
+    max-height: 2.3em !important;
+    line-height: 1.12 !important;
+    font-size: 5.2pt !important;
+  }
+  .print-invoice .print-item-main p { white-space: normal !important; overflow-wrap: anywhere !important; }
+  .print-invoice .print-item-cell strong {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    font-size: 4.8pt !important;
+  }
+  .print-invoice .print-item-codes strong { font-size: 4.1pt !important; }
+  .print-invoice .print-item-line-total { text-align: right !important; }
+  .print-invoice .print-item-line-total .print-cell-label { text-align: right !important; }
+  .print-invoice .print-item-box, .print-invoice .print-item-box > * {
+    page-break-inside: avoid !important; break-inside: avoid !important;
+  }
+}
+
+
+
+/* ===== FIX: ALL SECTION HEADINGS LEFT ALIGNMENT ===== */
+
+.section-heading,
+.section-title,
+.form-section-heading,
+.billing-section-heading,
+.item-section-heading,
+.print-section-heading {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  padding-left: 0 !important;
+  gap: 10px !important;
+}
+
+/* Section number */
+.section-heading span:first-child,
+.section-title span:first-child,
+.form-section-heading span:first-child,
+.billing-section-heading span:first-child,
+.item-section-heading span:first-child,
+.print-section-heading span:first-child {
+  flex: 0 0 auto !important;
+}
+
+/* Heading text */
+.section-heading h2,
+.section-heading h3,
+.section-title h2,
+.section-title h3,
+.form-section-heading h2,
+.form-section-heading h3,
+.billing-section-heading h2,
+.billing-section-heading h3 {
+  text-align: left !important;
+  margin: 0 !important;
+  flex: 0 1 auto !important;
+}
