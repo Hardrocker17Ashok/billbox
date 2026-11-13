@@ -798,3 +798,323 @@
     scroll-behavior: auto !important;
   }
 }
+
+
+/* =====================================================
+   BILLBOX — UNIFIED JEWELLERY DESIGN SYSTEM
+   Header + typography aligned with Jewellery / New Bill
+===================================================== */
+
+.today-sales-page,
+.today-sales-page * {
+  font-family: "DM Sans", "Noto Sans Devanagari", system-ui, sans-serif;
+  font-synthesis: none;
+}
+
+/* ---------------- HEADER ---------------- */
+
+.today-sales-page .sales-header {
+  min-height: 82px !important;
+  height: auto !important;
+  padding: 0 5% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 20px !important;
+}
+
+/* Left-side shop identity: logo + shop name */
+.today-sales-page .sales-header .sales-brand {
+  min-width: 0 !important;
+  display: flex !important;
+  flex: 0 1 auto !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 14px !important;
+  text-align: left !important;
+}
+
+/* Shop logo */
+.today-sales-page .sales-header .sales-brand > img,
+.today-sales-page .sales-header .sales-brand > .sales-brand-fallback {
+  display: block !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  flex: 0 0 48px !important;
+  object-fit: contain !important;
+  border-radius: 10px !important;
+}
+
+/* Text wrapper next to logo */
+.today-sales-page .sales-header .sales-brand > div:not(.sales-brand-fallback) {
+  min-width: 0 !important;
+  display: flex !important;
+  flex: 0 1 auto !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  text-align: left !important;
+}
+
+/* Small brand/descriptor line */
+.today-sales-page .sales-header .sales-brand > div > span {
+  display: block !important;
+  max-width: 260px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: var(--sales-gold) !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 1.5px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Actual shop name */
+.today-sales-page .sales-header .sales-brand > div > strong {
+  display: block !important;
+  max-width: 280px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: var(--sales-heading) !important;
+  font-size: 17px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0.2px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Fallback logo */
+.today-sales-page .sales-header .sales-brand > .sales-brand-fallback {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--sales-gold-text) !important;
+  font-size: 20px !important;
+  font-weight: 500 !important;
+}
+
+/* Header action */
+.today-sales-page .sales-header .sales-back {
+  flex: 0 0 auto !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+}
+
+/* ---------------- MAIN PAGE TITLE ---------------- */
+
+.today-sales-page .sales-title h1 {
+  margin: 9px 0 7px !important;
+  font-size: 36px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.5px !important;
+}
+
+.today-sales-page .sales-title > div > span {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 1.6px !important;
+}
+
+.today-sales-page .sales-title p {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+}
+
+/* ---------------- SECTION HEADINGS ---------------- */
+
+.today-sales-page .sales-filter-heading h2,
+.today-sales-page .today-bills-heading h2 {
+  font-size: 22px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.3px !important;
+}
+
+.today-sales-page .sales-filter-heading span,
+.today-sales-page .today-bills-heading span {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 1.5px !important;
+}
+
+/* ---------------- BODY TYPOGRAPHY ---------------- */
+
+.today-sales-page .sales-stat span {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+}
+
+.today-sales-page .sales-stat strong {
+  font-weight: 500 !important;
+}
+
+.today-sales-page .sales-bill span {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+}
+
+.today-sales-page .sales-bill strong {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+.today-sales-page .sales-bill small {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+}
+
+/* ---------------- HINDI ---------------- */
+
+.today-sales-page:lang(hi),
+.today-sales-page [lang="hi"] {
+  font-family: "Noto Sans Devanagari", "DM Sans", sans-serif !important;
+  letter-spacing: normal;
+  line-height: 1.6;
+}
+
+.today-sales-page:lang(hi) .sales-title h1,
+.today-sales-page:lang(hi) .sales-filter-heading h2,
+.today-sales-page:lang(hi) .today-bills-heading h2 {
+  letter-spacing: normal !important;
+  line-height: 1.45 !important;
+}
+
+/* ---------------- TABLET ---------------- */
+
+@media (max-width: 700px) {
+  .today-sales-page .sales-header {
+    min-height: 72px !important;
+    padding: 0 18px !important;
+  }
+
+  .today-sales-page .sales-header .sales-brand {
+    gap: 12px !important;
+  }
+
+  .today-sales-page .sales-title h1 {
+    font-size: 32px !important;
+  }
+
+  .today-sales-page .sales-filter-heading h2,
+  .today-sales-page .today-bills-heading h2 {
+    font-size: 20px !important;
+  }
+}
+
+/* ---------------- MOBILE ---------------- */
+
+@media (max-width: 480px) {
+  .today-sales-page .sales-header {
+    min-height: 72px !important;
+    padding: 0 14px !important;
+  }
+
+  .today-sales-page .sales-header .sales-brand {
+    gap: 10px !important;
+  }
+
+  .today-sales-page .sales-header .sales-brand > img,
+  .today-sales-page .sales-header .sales-brand > .sales-brand-fallback {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    flex-basis: 40px !important;
+  }
+
+  .today-sales-page .sales-header .sales-brand > div > span {
+    max-width: 155px !important;
+    font-size: 9px !important;
+    letter-spacing: 1px !important;
+  }
+
+  .today-sales-page .sales-header .sales-brand > div > strong {
+    max-width: 170px !important;
+    font-size: 15px !important;
+  }
+
+  .today-sales-page .sales-back {
+    padding: 9px 10px !important;
+    font-size: 11px !important;
+  }
+
+  .today-sales-page .sales-title h1 {
+    font-size: 29px !important;
+  }
+
+  .today-sales-page .sales-title p {
+    font-size: 12px !important;
+  }
+
+  .today-sales-page .sales-filter-heading h2,
+  .today-sales-page .today-bills-heading h2 {
+    font-size: 19px !important;
+  }
+}
+
+
+/* =====================================================
+   FINAL HEADER HIERARCHY — MATCH REQUESTED BILLBOX DESIGN
+   Owner name = larger main line
+   Page/shop title = smaller gold line
+   Only top-left brand text hierarchy is changed
+===================================================== */
+
+.today-sales-page .sales-header .sales-brand > div:not(.sales-brand-fallback) {
+  gap: 3px !important;
+}
+
+/* Larger line — OWNER NAME */
+.today-sales-page .sales-header .sales-brand > div > span {
+  order: 1 !important;
+  color: var(--sales-heading) !important;
+  font-size: 17px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0.2px !important;
+  text-transform: none !important;
+  max-width: 280px !important;
+}
+
+/* Smaller gold line — PAGE / SHOP TITLE */
+.today-sales-page .sales-header .sales-brand > div > strong {
+  order: 2 !important;
+  color: var(--sales-gold) !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  max-width: 260px !important;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .today-sales-page .sales-header .sales-brand > div > span {
+    font-size: 15px !important;
+    max-width: 170px !important;
+  }
+
+  .today-sales-page .sales-header .sales-brand > div > strong {
+    font-size: 9px !important;
+    letter-spacing: 1px !important;
+    max-width: 155px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .today-sales-page .sales-header .sales-brand > div > span {
+    font-size: 13px !important;
+    max-width: 115px !important;
+  }
+}

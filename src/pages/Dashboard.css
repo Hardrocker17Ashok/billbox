@@ -2943,3 +2943,530 @@ button {
   height: 2px !important;
   border-radius: 10px !important;
 }
+
+
+/* ===== SUMMARY & RECENT SECTION RIGHT ALIGNMENT ===== */
+
+/* Today's Overview - Today badge on right */
+.summary-section > .section-heading {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.summary-section > .section-heading .today-date {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  flex-shrink: 0 !important;
+  text-align: right !important;
+}
+
+/* Recent Bills - View All button on right */
+.recent-section > .section-heading {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.recent-section > .section-heading .view-all {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  flex-shrink: 0 !important;
+  text-align: right !important;
+}
+
+
+
+/* ==========================================================
+   BILLBOX — FINAL UNIFIED TYPOGRAPHY SYSTEM
+   Match New Bill, Today Sales and Jewellery pages
+   Existing dashboard colours, layout, cards and effects retained
+========================================================== */
+
+/* Global dashboard font */
+.dashboard,
+.dashboard *,
+.profile-menu,
+.profile-menu *,
+.shop-profile-modal,
+.shop-profile-modal *,
+.shop-settings-modal,
+.shop-settings-modal * {
+  font-family: "DM Sans", "Noto Sans Devanagari", system-ui, sans-serif !important;
+  font-synthesis: none;
+}
+
+/* ---------------- TOP HEADER IDENTITY ----------------
+   Small line = owner / secondary information
+   Large line = shop name
+   Same hierarchy as Today Sales and Jewellery
+------------------------------------------------------ */
+
+.dashboard .topbar {
+  min-height: 82px;
+}
+
+.dashboard .topbar-right {
+  gap: 16px;
+}
+
+.dashboard .topbar-right .admin-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+/* Shop name — larger line */
+.dashboard .topbar-right .admin-info strong {
+  display: block;
+  max-width: 260px;
+  margin: 0;
+  color: var(--white);
+  font-size: 17px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: none !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+/* Owner name / secondary line — smaller line */
+.dashboard .topbar-right .admin-info span {
+  display: block;
+  max-width: 260px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0.2px !important;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Keep avatar proportion consistent */
+.dashboard .admin-avatar {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  font-size: 16px;
+}
+
+/* ---------------- PAGE TITLE ---------------- */
+
+.dashboard .welcome-label {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 1.6px !important;
+}
+
+.dashboard .welcome h1 {
+  font-family: inherit !important;
+  font-size: 36px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.5px !important;
+}
+
+.dashboard .welcome h1 em {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  font-style: normal !important;
+}
+
+.dashboard .welcome p {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  letter-spacing: 0 !important;
+}
+
+/* ---------------- SECTION TITLES ---------------- */
+
+.dashboard .section-heading > div:first-child span {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 1.6px !important;
+}
+
+.dashboard .section-heading h2 {
+  font-family: inherit !important;
+  font-size: 22px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.3px !important;
+}
+
+.dashboard .today-date,
+.dashboard .view-all {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+/* ---------------- QUICK ACTION CARDS ---------------- */
+
+.dashboard .action-content h2 {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+}
+
+.dashboard .action-content p {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+}
+
+/* ---------------- SUMMARY CARDS ---------------- */
+
+.dashboard .summary-title {
+  font-size: 12px !important;
+  font-weight: 400 !important;
+}
+
+.dashboard .summary-card strong {
+  font-size: 28px !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+}
+
+.dashboard .summary-card p {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+}
+
+/* ---------------- RECENT BILLS TABLE ---------------- */
+
+.dashboard .table-header {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.8px !important;
+}
+
+.dashboard .table-row {
+  font-size: 12px !important;
+  font-weight: 400 !important;
+}
+
+.dashboard .table-row strong {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+/* ---------------- METAL RATES ---------------- */
+
+.dashboard .metal-rates-label,
+.dashboard .metal-rates-live {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+}
+
+.dashboard .metal-rates-header h3 {
+  font-family: inherit !important;
+  font-size: 22px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+}
+
+.dashboard .rates-last-update,
+.dashboard .metal-rate-item small {
+  font-size: 10px !important;
+  font-weight: 400 !important;
+}
+
+.dashboard .metal-rate-item > span {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+}
+
+.dashboard .metal-rate-item strong {
+  font-size: 22px !important;
+  font-weight: 500 !important;
+}
+
+/* ---------------- PROFILE MENU & SETTINGS ---------------- */
+
+.dashboard .profile-menu-header strong,
+.dashboard .shop-logo-upload-row strong,
+.dashboard .shop-settings-logo-control strong {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+.dashboard .profile-menu-header span,
+.dashboard .profile-setting-row,
+.dashboard .profile-action-button,
+.dashboard .logout-button {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+}
+
+.dashboard .setting-chip {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+.dashboard .shop-profile-eyebrow,
+.dashboard .shop-settings-eyebrow {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  letter-spacing: 1.6px !important;
+}
+
+.dashboard .shop-profile-heading h2,
+.dashboard .shop-settings-heading h2 {
+  font-size: 22px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+}
+
+.dashboard .shop-profile-heading p,
+.dashboard .shop-logo-upload-row p,
+.dashboard .shop-settings-logo-control small {
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+}
+
+.dashboard .shop-profile-form > label,
+.dashboard .shop-settings-field > span {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.dashboard .shop-profile-form input:not([type="file"]),
+.dashboard .shop-profile-form textarea,
+.dashboard .shop-settings-field input,
+.dashboard .shop-settings-field textarea,
+.dashboard .shop-settings-field select {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+}
+
+.dashboard .shop-profile-footer button,
+.dashboard .shop-settings-actions button {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+/* ---------------- FOOTER ---------------- */
+
+.dashboard .dashboard-footer {
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.8px !important;
+}
+
+.dashboard .dashboard-footer small {
+  font-size: 10px !important;
+  letter-spacing: 0 !important;
+}
+
+/* Hindi text: natural letter spacing and readable line height */
+.dashboard:lang(hi),
+.dashboard:lang(hi) * {
+  letter-spacing: normal;
+  line-height: 1.55;
+}
+
+/* ---------------- TABLET ---------------- */
+
+@media (max-width: 700px) {
+  .dashboard .topbar {
+    min-height: 72px;
+  }
+
+  .dashboard .topbar-right .admin-info strong {
+    font-size: 15px !important;
+  }
+
+  .dashboard .topbar-right .admin-info span {
+    font-size: 9px !important;
+  }
+
+  .dashboard .welcome h1 {
+    font-size: 32px !important;
+  }
+
+  .dashboard .section-heading h2,
+  .dashboard .metal-rates-header h3 {
+    font-size: 20px !important;
+  }
+}
+
+/* ---------------- MOBILE ---------------- */
+
+@media (max-width: 520px) {
+  .dashboard .welcome h1 {
+    font-size: 29px !important;
+  }
+
+  .dashboard .section-heading h2,
+  .dashboard .metal-rates-header h3 {
+    font-size: 19px !important;
+  }
+
+  .dashboard .summary-card strong {
+    font-size: 25px !important;
+  }
+
+  .dashboard .metal-rate-item strong {
+    font-size: 17px !important;
+  }
+}
+
+/* ---------------- SMALL MOBILE ---------------- */
+
+@media (max-width: 380px) {
+  .dashboard .topbar-right .admin-info strong {
+    max-width: 145px;
+    font-size: 13px !important;
+  }
+
+  .dashboard .topbar-right .admin-info span {
+    max-width: 145px;
+    font-size: 9px !important;
+  }
+}
+
+/* Keep reduced-motion preferences respected */
+@media (prefers-reduced-motion: reduce) {
+  .dashboard *,
+  .dashboard *::before,
+  .dashboard *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+
+
+/* ==========================================
+   BILLBOX HELP & SUPPORT CENTRE
+========================================== */
+.dashboard .profile-help-button { color: var(--gold-light); }
+.dashboard .profile-help-button:hover { background: rgba(197,160,91,.11); }
+.dashboard .help-page-content { padding-top: 34px; }
+.dashboard .help-hero {
+  position: relative; overflow: hidden; padding: clamp(25px,4vw,48px);
+  border: 1px solid var(--gold-border); border-radius: 18px;
+  background: radial-gradient(circle at 88% 10%, rgba(197,160,91,.18), transparent 34%), linear-gradient(135deg,#201b12,#10100e 68%);
+}
+.dashboard .help-back-button {
+  display: inline-flex; align-items: center; gap: 9px; padding: 8px 0;
+  border: 0; background: transparent; color: var(--gold-light); cursor: pointer; font-size: 12px;
+}
+.dashboard .help-back-button span { font-size: 19px; }
+.dashboard .help-hero-copy { margin-top: 30px; }
+.dashboard .help-eyebrow, .dashboard .help-card-kicker {
+  display: block; color: var(--gold); font-size: 9px; font-weight: 800; letter-spacing: 2px;
+}
+.dashboard .help-hero h1 {
+  margin: 12px 0 9px; color: #f5f2ea; font-family: Georgia,"Times New Roman",serif;
+  font-size: clamp(30px,4vw,48px); font-weight: 400; line-height: 1.15;
+}
+.dashboard .help-hero-copy p { margin: 0; color: #c4c0b7; font-size: 13px; line-height: 1.7; }
+.dashboard .help-search-box {
+  width: min(100%,650px); min-height: 52px; margin-top: 25px; padding: 0 16px;
+  display: flex; align-items: center; gap: 12px; border: 1px solid rgba(223,199,143,.3);
+  border-radius: 9px; background: rgba(255,255,255,.07); color: var(--gold-light);
+}
+.dashboard .help-search-box > span { font-size: 24px; }
+.dashboard .help-search-box input { width: 100%; border: 0; outline: 0; background: transparent; color: #fff; font-size: 13px; }
+.dashboard .help-search-box input::placeholder { color: #a9a295; }
+.dashboard .help-contact-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin: 22px 0 48px; }
+.dashboard .help-contact-card {
+  min-width: 0; padding: 23px; display: flex; flex-direction: column; align-items: flex-start;
+  border: 1px solid var(--border); border-radius: 13px; background: var(--surface);
+}
+.dashboard .help-whatsapp-card { border-color: rgba(91,180,117,.35); }
+.dashboard .help-contact-icon {
+  width: 42px; height: 42px; margin-bottom: 18px; display: grid; place-items: center;
+  border: 1px solid var(--gold-border); border-radius: 11px; background: rgba(197,160,91,.1);
+  color: var(--gold-light); font-size: 23px;
+}
+.dashboard .help-whatsapp-card .help-contact-icon { border-color: rgba(91,180,117,.35); background: rgba(37,177,91,.1); color: #63c783; }
+.dashboard .help-problem-icon { color: #e7b66e; }
+.dashboard .help-contact-card h2 { margin: 8px 0; color: var(--white); font-size: 18px; font-weight: 600; }
+.dashboard .help-contact-card p { margin: 0 0 20px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.dashboard .help-contact-card > button, .dashboard .help-problem-form > button,
+.dashboard .help-bottom-cta > button, .dashboard .help-no-results button {
+  min-height: 41px; margin-top: auto; padding: 0 15px; display: inline-flex; align-items: center; gap: 12px;
+  border: 1px solid var(--gold); border-radius: 7px; background: var(--gold); color: #17140d;
+  font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.dashboard .help-contact-card > .help-secondary-button { border-color: var(--gold-border); background: transparent; color: var(--gold-light); }
+.dashboard .help-problem-panel, .dashboard .help-faq-section { margin: 0 0 48px; }
+.dashboard .help-section-heading { margin-bottom: 19px; }
+.dashboard .help-section-heading h2 { margin: 9px 0 7px; color: var(--white); font-family: Georgia,"Times New Roman",serif; font-size: clamp(23px,2.7vw,31px); font-weight: 400; }
+.dashboard .help-section-heading p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.dashboard .help-problem-panel { padding: 25px; border: 1px solid var(--gold-border); border-radius: 13px; background: var(--surface); }
+.dashboard .help-problem-form { display: grid; gap: 15px; }
+.dashboard .help-problem-form label { display: grid; gap: 7px; color: var(--text); font-size: 12px; font-weight: 600; }
+.dashboard .help-problem-form select, .dashboard .help-problem-form textarea {
+  width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;
+  outline: 0; background: var(--bg); color: var(--white); font: inherit; font-size: 13px;
+}
+.dashboard .help-problem-form select:focus, .dashboard .help-problem-form textarea:focus { border-color: var(--gold); }
+.dashboard .help-problem-form textarea { resize: vertical; line-height: 1.6; }
+.dashboard .help-problem-form > button { justify-self: start; margin-top: 0; }
+.dashboard .help-problem-form > button:disabled { opacity: .45; cursor: not-allowed; }
+.dashboard .help-category-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.dashboard .help-category-list button {
+  min-height: 35px; padding: 0 12px; border: 1px solid var(--border); border-radius: 20px;
+  background: transparent; color: var(--text); font-size: 11px; cursor: pointer;
+}
+.dashboard .help-category-list button.active { border-color: var(--gold); background: rgba(197,160,91,.12); color: var(--gold-light); }
+.dashboard .help-faq-list { overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.dashboard .help-faq-item + .help-faq-item { border-top: 1px solid var(--border); }
+.dashboard .help-faq-question {
+  width: 100%; min-height: 59px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 15px;
+  border: 0; background: transparent; color: var(--white); text-align: left; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.dashboard .help-faq-question:hover, .dashboard .help-faq-item.is-open .help-faq-question { color: var(--gold-light); }
+.dashboard .help-faq-chevron { flex: 0 0 auto; color: var(--gold-light); font-size: 22px; font-weight: 400; }
+.dashboard .help-faq-answer { padding: 0 18px 18px; }
+.dashboard .help-faq-answer p { margin: 0; color: var(--text); font-size: 12px; line-height: 1.85; }
+.dashboard .help-faq-answer button { margin-top: 13px; padding: 0; border: 0; background: transparent; color: var(--gold-light); font-size: 11px; cursor: pointer; }
+.dashboard .help-no-results { padding: 28px; text-align: center; }
+.dashboard .help-no-results strong { color: var(--white); font-size: 14px; }
+.dashboard .help-no-results p { color: var(--muted); font-size: 12px; }
+.dashboard .help-bottom-cta {
+  padding: 25px; display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  border: 1px solid var(--gold-border); border-radius: 13px; background: linear-gradient(110deg,rgba(197,160,91,.12),rgba(197,160,91,.025));
+}
+.dashboard .help-bottom-cta h2 { margin: 8px 0 6px; color: var(--white); font-family: Georgia,"Times New Roman",serif; font-size: 22px; font-weight: 400; }
+.dashboard .help-bottom-cta p { margin: 0; color: var(--muted); font-size: 11px; }
+.dashboard .help-bottom-cta > button { flex-shrink: 0; margin: 0; }
+:root[data-theme="light"] .dashboard .help-hero { background: radial-gradient(circle at 88% 10%,rgba(197,160,91,.2),transparent 34%),linear-gradient(135deg,#fffaf0,#f0ece2 68%); }
+:root[data-theme="light"] .dashboard .help-hero h1 { color: #191814; }
+:root[data-theme="light"] .dashboard .help-hero-copy p { color: #5e594f; }
+:root[data-theme="light"] .dashboard .help-search-box { background: rgba(255,255,255,.7); }
+:root[data-theme="light"] .dashboard .help-search-box input { color: #191814; }
+:root[data-theme="light"] .dashboard .help-search-box input::placeholder { color: #777166; }
+:root[data-theme="light"] .dashboard .help-faq-question { color: #25231e; }
+:root[data-theme="light"] .dashboard .help-contact-card h2,
+:root[data-theme="light"] .dashboard .help-bottom-cta h2 { color: #191814; }
+@media (max-width: 700px) {
+  .dashboard .help-contact-grid { grid-template-columns: 1fr; }
+  .dashboard .help-bottom-cta { align-items: flex-start; flex-direction: column; }
+  .dashboard .help-page-content { padding-top: 20px; }
+}

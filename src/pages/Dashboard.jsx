@@ -185,11 +185,123 @@ const TEXT = {
   },
 };
 
+// Add your official WhatsApp number with country code, without + or spaces.
+// Example: 919876543210. Keep empty until the official support number is confirmed.
+const SUPPORT_WHATSAPP_NUMBER = "917597201594";
+
+const HELP_FAQS = [
+  {
+    category: "GST & Billing",
+    q: "GST details save nahi ho rahi hain, kya karein?",
+    a: "Shop Profile & Settings open karein. GST number ko carefully enter karein aur shop details verify karke Save Settings par click karein. GSTIN mein extra spaces na hon. Agar phir bhi save nahi hota, error ka screenshot lekar Report a Problem se team ko bhejein.",
+    qEn: "GST details are not saving. What should I do?",
+    aEn: "Open Shop Profile & Settings, carefully enter your GST number, verify the shop details and click Save Settings. Remove any extra spaces from the GSTIN. If it still fails, send an error screenshot using Report a Problem.",
+  },
+  {
+    category: "GST & Billing",
+    q: "Pakka bill generate karne se pehle GST kaise save karein?",
+    a: "Pehle Profile menu → Shop Profile & Settings mein jaakar GST Number fill karein aur Save Settings par click karein. Save hone ke baad settings dobara open karke GSTIN verify karein. Phir New Bill par jaakar bill banayein. GST applicability aur tax rate apne transaction ke hisaab se verify karein.",
+    qEn: "How do I save GST details before generating a tax invoice?",
+    aEn: "Go to Profile → Shop Profile & Settings, enter the GST number and click Save Settings. Reopen the settings to verify the GSTIN, then create the bill from New Bill. Confirm tax applicability and rates for the transaction before issuing the invoice.",
+  },
+  {
+    category: "GST & Billing",
+    q: "Kya GST ke bina bill bana sakte hain?",
+    a: "BillBox mein GST details optional profile field ho sakti hain, lekin iska matlab yeh nahi ki har transaction GST-free hai. Agar aapki sale par GST applicable hai, toh invoice aur tax compliance ke liye applicable rules follow karein.",
+    qEn: "Can I create a bill without GST details?",
+    aEn: "GST may be optional as a shop-profile field in BillBox, but that does not mean every transaction is GST-free. If GST applies to your sale, follow the applicable invoicing and tax requirements.",
+  },
+  {
+    category: "GST & Billing",
+    q: "Bill mein GST amount galat aa raha hai?",
+    a: "Bill save/issue karne se pehle item price, taxable value, GST rate aur making charges check karein. Agar values sahi hone ke baad bhi calculation galat hai, bill number aur screenshot ke saath support ko report karein.",
+    qEn: "The GST amount on my bill looks incorrect.",
+    aEn: "Before saving or issuing the bill, check the item price, taxable value, GST rate and making charges. If the calculation still looks wrong, report it with the bill number and a screenshot.",
+  },
+  {
+    category: "Bills & Printing",
+    q: "Bill print nahi ho raha hai, kya karein?",
+    a: "Printer connection, power, paper aur selected printer check karein. Browser print window mein correct printer aur paper size select karein. Zarurat ho toh bill ko PDF mein save karke print karein.",
+    qEn: "My bill is not printing. What should I do?",
+    aEn: "Check the printer connection, power, paper and selected printer. In the browser print window, select the correct printer and paper size. If needed, save the bill as a PDF and print it.",
+  },
+  {
+    category: "Bills & Printing",
+    q: "Purana bill kaise dekhein?",
+    a: "Dashboard se Bill History page open karein. Wahan available search/filter options ka use karke bill number, customer ya date ke through bill dhoondhein.",
+    qEn: "How can I find an old bill?",
+    aEn: "Open Bill History from the dashboard. Use the available search or filters to find a bill by bill number, customer or date.",
+  },
+  {
+    category: "Bills & Printing",
+    q: "Galat bill ban gaya hai. Kya use delete kar doon?",
+    a: "Agar bill customer ko issue ho chuka hai, toh bina records aur tax impact check kiye use delete ya edit na karein. Correction/cancellation ke liye apne applicable accounting process ko follow karein aur zarurat par BillBox support se guidance lein.",
+    qEn: "I created an incorrect bill. Should I delete it?",
+    aEn: "If the bill has already been issued to a customer, do not delete or edit it without checking the records and tax impact. Follow your applicable correction or cancellation process and contact BillBox support if you need product guidance.",
+  },
+  {
+    category: "Bills & Printing",
+    q: "A4 paper par bill kaise print karein?",
+    a: "Bill preview se Print option select karein. Print dialog mein paper size A4 set karein, preview check karein aur phir print karein.",
+    qEn: "How do I print a bill on A4 paper?",
+    aEn: "Choose Print from the bill preview. Set the paper size to A4 in the print dialog, check the preview and then print.",
+  },
+  {
+    category: "Shop Profile & Settings",
+    q: "Shop ka logo kaise change karein?",
+    a: "Profile menu → Shop Profile & Settings open karein. Choose Logo se image upload karein. Image 5 MB se chhoti honi chahiye. Upload complete hone ke baad logo save ho jayega.",
+    qEn: "How do I change my shop logo?",
+    aEn: "Open Profile → Shop Profile & Settings and upload an image using Choose Logo. The image must be smaller than 5 MB. The logo is saved after the upload completes.",
+  },
+  {
+    category: "Shop Profile & Settings",
+    q: "Shop ka address, phone ya owner name kaise update karein?",
+    a: "Profile menu se Shop Profile & Settings open karein. Required details update karke Save Settings par click karein.",
+    qEn: "How do I update my shop address, phone or owner name?",
+    aEn: "Open Shop Profile & Settings from the profile menu, update the required details and click Save Settings.",
+  },
+  {
+    category: "Shop Profile & Settings",
+    q: "Hindi/English ya Dark/Light mode kaise change karein?",
+    a: "Profile menu → Shop Profile & Settings mein Language aur Theme select karein. Save Settings par click karein. Aapki preference save ho jayegi.",
+    qEn: "How do I change language or dark/light mode?",
+    aEn: "Open Profile → Shop Profile & Settings, choose your Language and Theme, then click Save Settings. Your preferences will be saved.",
+  },
+  {
+    category: "Account & Support",
+    q: "Login nahi ho raha hai, kya karein?",
+    a: "Username/email aur password check karein, internet connection verify karein aur page reload karke dobara try karein. Problem continue ho toh Report a Problem se support ko contact karein. Password kisi ke saath share na karein.",
+    qEn: "I cannot log in. What should I do?",
+    aEn: "Check your username/email and password, verify your internet connection and reload the page before trying again. If the issue continues, contact support using Report a Problem. Never share your password.",
+  },
+  {
+    category: "Account & Support",
+    q: "Registration ke baad account activate nahi hua?",
+    a: "Agar account pending/inactive status mein hai, toh BillBox team ki activation process complete hone ka wait karein. Status check karwane ke liye registered shop name aur phone number ke saath support ko message karein.",
+    qEn: "My account has not been activated after registration.",
+    aEn: "If your account is pending or inactive, wait for the BillBox team's activation process. Message support with your registered shop name and phone number to check the status.",
+  },
+  {
+    category: "Account & Support",
+    q: "Technical problem report kaise karein?",
+    a: "Help & Support page par Report a Problem open karein, category select karein aur problem detail mein likhein. Send on WhatsApp par click karein. WhatsApp khulne ke baad screenshot attach karke message send karein.",
+    qEn: "How do I report a technical problem?",
+    aEn: "Open Report a Problem on this Help & Support page, select a category and describe the issue. Click Send on WhatsApp. Once WhatsApp opens, attach a screenshot and send the message.",
+  },
+];
+
 function Dashboard() {
   const navigate = useNavigate();
   const user = auth.currentUser;
 
   const [showMenu, setShowMenu] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [helpSearch, setHelpSearch] = useState("");
+  const [helpCategory, setHelpCategory] = useState("All");
+  const [expandedFaq, setExpandedFaq] = useState(0);
+  const [showProblemForm, setShowProblemForm] = useState(false);
+  const [problemCategory, setProblemCategory] = useState("Billing issue");
+  const [problemDescription, setProblemDescription] = useState("");
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const profileWrapperRef = useRef(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -789,6 +901,58 @@ function Dashboard() {
     };
   }, [user]);
 
+  const openHelpCentre = () => {
+    setShowMenu(false);
+    setShowSettings(false);
+    setShowHelp(true);
+    setHelpSearch("");
+    setHelpCategory("All");
+    setExpandedFaq(0);
+    setShowProblemForm(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const openWhatsAppSupport = (message) => {
+    if (!SUPPORT_WHATSAPP_NUMBER) {
+      window.alert("Please add the official BillBox WhatsApp support number in Dashboard.jsx (SUPPORT_WHATSAPP_NUMBER) before using this option.");
+      return;
+    }
+
+    const url = `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const startGeneralSupport = () => {
+    const message = `Hello BillBox Support Team,\n\nI need help with my BillBox account.\nShop: ${shopName}\nOwner: ${ownerName}\nRegistered phone: ${profile.phone || "Not added"}\n\nPlease assist me.\nThank you.`;
+    openWhatsAppSupport(message);
+  };
+
+  const submitProblemReport = (event) => {
+    event.preventDefault();
+    if (!problemDescription.trim()) return;
+
+    const message = `Hello BillBox Support Team,\n\nI want to report a problem.\n\nShop: ${shopName}\nOwner: ${ownerName}\nRegistered phone: ${profile.phone || "Not added"}\nCategory: ${problemCategory}\nProblem details: ${problemDescription.trim()}\n\nI will attach a screenshot if required. Please help me resolve this issue.\nThank you.`;
+    openWhatsAppSupport(message);
+  };
+
+  const helpCategories = [
+    { value: "All", label: language === "en" ? "All topics" : "सभी विषय" },
+    { value: "GST & Billing", label: language === "en" ? "GST & Billing" : "GST और बिलिंग" },
+    { value: "Bills & Printing", label: language === "en" ? "Bills & Printing" : "बिल और प्रिंटिंग" },
+    { value: "Shop Profile & Settings", label: language === "en" ? "Shop Profile" : "शॉप प्रोफाइल" },
+    { value: "Account & Support", label: language === "en" ? "Account & Support" : "अकाउंट और सपोर्ट" },
+  ];
+
+  const filteredHelpFaqs = HELP_FAQS.filter((faq) => {
+    const question = language === "en" ? faq.qEn : faq.q;
+    const answer = language === "en" ? faq.aEn : faq.a;
+    const matchesCategory = helpCategory === "All" || faq.category === helpCategory;
+    const search = helpSearch.trim().toLowerCase();
+    const matchesSearch = !search ||
+      `${question} ${answer} ${faq.category}`.toLowerCase().includes(search);
+    return matchesCategory && matchesSearch;
+  });
+
   const handleLogout = () => {
     setShowMenu(false);
     setShowLogoutConfirm(true);
@@ -906,6 +1070,15 @@ function Dashboard() {
 
                 <button
                   type="button"
+                  className="profile-action-button profile-help-button"
+                  onClick={openHelpCentre}
+                >
+                  <span aria-hidden="true">?</span>
+                  <span>{language === "en" ? "Help & Support" : "हेल्प और सपोर्ट"}</span>
+                </button>
+
+                <button
+                  type="button"
                   className="logout-button"
                   onClick={handleLogout}
                 >
@@ -941,7 +1114,146 @@ function Dashboard() {
         </div>
       )}
 
-      <main className="dashboard-content">
+      {showHelp ? (
+        <main className="dashboard-content help-page-content">
+          <section className="help-hero">
+            <button type="button" className="help-back-button" onClick={() => setShowHelp(false)}>
+              <span aria-hidden="true">←</span>
+              {language === "en" ? "Back to Dashboard" : "डैशबोर्ड पर वापस जाएँ"}
+            </button>
+            <div className="help-hero-copy">
+              <span className="help-eyebrow">BILLBOX CUSTOMER CARE</span>
+              <h1>{language === "en" ? "How can we help you?" : "हम आपकी कैसे मदद कर सकते हैं?"}</h1>
+              <p>{language === "en" ? "Find quick answers or connect with our support team." : "अपने सवालों के जवाब पाएँ या हमारी सपोर्ट टीम से जुड़ें।"}</p>
+            </div>
+            <label className="help-search-box">
+              <span aria-hidden="true">⌕</span>
+              <input
+                type="search"
+                value={helpSearch}
+                onChange={(event) => setHelpSearch(event.target.value)}
+                placeholder={language === "en" ? "Search questions, e.g. GST, printing..." : "सवाल खोजें, जैसे GST, प्रिंटिंग..."}
+              />
+            </label>
+          </section>
+
+          <section className="help-contact-grid">
+            <article className="help-contact-card help-whatsapp-card">
+              <div className="help-contact-icon">◉</div>
+              <div>
+                <span className="help-card-kicker">{language === "en" ? "TALK TO OUR TEAM" : "हमारी टीम से बात करें"}</span>
+                <h2>{language === "en" ? "WhatsApp Support" : "WhatsApp सपोर्ट"}</h2>
+                <p>{language === "en" ? "Get assistance for your account, billing and setup." : "अकाउंट, बिलिंग और सेटअप के लिए सहायता पाएँ।"}</p>
+              </div>
+              <button type="button" onClick={startGeneralSupport}>
+                {language === "en" ? "Chat on WhatsApp" : "WhatsApp पर चैट करें"} <span>↗</span>
+              </button>
+            </article>
+
+            <article className="help-contact-card">
+              <div className="help-contact-icon help-problem-icon">!</div>
+              <div>
+                <span className="help-card-kicker">{language === "en" ? "NEED TECHNICAL HELP?" : "तकनीकी सहायता चाहिए?"}</span>
+                <h2>{language === "en" ? "Report a Problem" : "समस्या की रिपोर्ट करें"}</h2>
+                <p>{language === "en" ? "Describe the issue and send it directly to our team." : "अपनी समस्या लिखें और सीधे हमारी टीम को भेजें।"}</p>
+              </div>
+              <button type="button" className="help-secondary-button" onClick={() => setShowProblemForm((value) => !value)}>
+                {showProblemForm ? (language === "en" ? "Close form" : "फॉर्म बंद करें") : (language === "en" ? "Report an issue" : "समस्या भेजें")} <span>→</span>
+              </button>
+            </article>
+          </section>
+
+          {showProblemForm && (
+            <section className="help-problem-panel">
+              <div className="help-section-heading">
+                <span className="help-eyebrow">SUPPORT REQUEST</span>
+                <h2>{language === "en" ? "Tell us what went wrong" : "हमें बताएं कि क्या समस्या आई"}</h2>
+                <p>{language === "en" ? "Your shop details will be added automatically. You can attach a screenshot after WhatsApp opens." : "आपकी शॉप की जानकारी अपने आप जुड़ जाएगी। WhatsApp खुलने के बाद screenshot भी attach कर सकते हैं।"}</p>
+              </div>
+              <form onSubmit={submitProblemReport} className="help-problem-form">
+                <label>
+                  <span>{language === "en" ? "Problem category" : "समस्या की श्रेणी"}</span>
+                  <select value={problemCategory} onChange={(event) => setProblemCategory(event.target.value)}>
+                    <option value="Billing issue">Billing issue / बिलिंग</option>
+                    <option value="GST issue">GST issue / GST</option>
+                    <option value="Printing issue">Printing issue / प्रिंटिंग</option>
+                    <option value="Login or account">Login or account / लॉगिन</option>
+                    <option value="Shop profile or settings">Shop profile / शॉप प्रोफाइल</option>
+                    <option value="Other technical issue">Other technical issue / अन्य</option>
+                  </select>
+                </label>
+                <label>
+                  <span>{language === "en" ? "Describe your problem" : "अपनी समस्या विस्तार से लिखें"}</span>
+                  <textarea rows="4" value={problemDescription} onChange={(event) => setProblemDescription(event.target.value)} placeholder={language === "en" ? "Tell us what happened and what you were trying to do..." : "बताएं कि क्या हुआ और आप क्या करने की कोशिश कर रहे थे..."} required />
+                </label>
+                <button type="submit" disabled={!problemDescription.trim()}>
+                  {language === "en" ? "Send on WhatsApp" : "WhatsApp पर भेजें"} <span>↗</span>
+                </button>
+              </form>
+            </section>
+          )}
+
+          <section className="help-faq-section">
+            <div className="help-section-heading">
+              <span className="help-eyebrow">KNOWLEDGE CENTRE</span>
+              <h2>{language === "en" ? "Frequently Asked Questions" : "अक्सर पूछे जाने वाले सवाल"}</h2>
+              <p>{language === "en" ? "Helpful answers to common BillBox questions." : "BillBox से जुड़े आम सवालों के आसान जवाब।"}</p>
+            </div>
+
+            <div className="help-category-list">
+              {helpCategories.map((category) => (
+                <button
+                  type="button"
+                  key={category.value}
+                  className={helpCategory === category.value ? "active" : ""}
+                  onClick={() => { setHelpCategory(category.value); setExpandedFaq(0); }}
+                >
+                  {category.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="help-faq-list">
+              {filteredHelpFaqs.length ? filteredHelpFaqs.map((faq) => {
+                const originalIndex = HELP_FAQS.indexOf(faq);
+                const isOpen = expandedFaq === originalIndex;
+                return (
+                  <article className={`help-faq-item ${isOpen ? "is-open" : ""}`} key={faq.qEn}>
+                    <button type="button" className="help-faq-question" onClick={() => setExpandedFaq(isOpen ? -1 : originalIndex)} aria-expanded={isOpen}>
+                      <span>{language === "en" ? faq.qEn : faq.q}</span>
+                      <span className="help-faq-chevron">{isOpen ? "−" : "+"}</span>
+                    </button>
+                    {isOpen && (
+                      <div className="help-faq-answer">
+                        <p>{language === "en" ? faq.aEn : faq.a}</p>
+                        <button type="button" onClick={startGeneralSupport}>
+                          {language === "en" ? "Still need help? Contact support" : "फिर भी मदद चाहिए? सपोर्ट से संपर्क करें"} ↗
+                        </button>
+                      </div>
+                    )}
+                  </article>
+                );
+              }) : (
+                <div className="help-no-results">
+                  <strong>{language === "en" ? "No matching questions found" : "कोई मिलता-जुलता सवाल नहीं मिला"}</strong>
+                  <p>{language === "en" ? "Try another keyword or contact our support team." : "दूसरा शब्द खोजें या हमारी सपोर्ट टीम से संपर्क करें।"}</p>
+                  <button type="button" onClick={startGeneralSupport}>{language === "en" ? "Contact Support" : "सपोर्ट से संपर्क करें"}</button>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="help-bottom-cta">
+            <div>
+              <span className="help-eyebrow">BILLBOX SUPPORT</span>
+              <h2>{language === "en" ? "We're here when you need us." : "जब भी जरूरत हो, हम आपकी मदद के लिए हैं।"}</h2>
+              <p>{language === "en" ? "Couldn't find your answer? Send our team a message." : "जवाब नहीं मिला? हमारी टीम को मैसेज भेजें।"}</p>
+            </div>
+            <button type="button" onClick={startGeneralSupport}>{language === "en" ? "Contact our team" : "हमारी टीम से संपर्क करें"} ↗</button>
+          </section>
+        </main>
+      ) : (
+        <main className="dashboard-content">
         <section className="welcome">
           <div>
             <span className="welcome-label">
@@ -1253,7 +1565,8 @@ function Dashboard() {
               ))}
           </div>
         </section>
-      </main>
+        </main>
+      )}
 
       <footer className="dashboard-footer">
         <span>{t.trust}</span>

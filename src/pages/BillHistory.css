@@ -1533,3 +1533,382 @@
 .bill-history-light .history-footer small {
   color: #8a929d;
 }
+
+
+/* =========================================================
+   BILLBOX — SHARED TYPOGRAPHY STANDARD
+   Matches Dashboard / Today Sales / Jewellery / New Bill.
+   Existing colors, components, filters, modal, themes,
+   responsive behavior and billing functionality are kept.
+========================================================= */
+
+.bill-history-page,
+.bill-history-page *,
+.bill-details-overlay,
+.bill-details-overlay * {
+  font-family:
+    "DM Sans",
+    "Noto Sans Devanagari",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+/* Header and brand hierarchy */
+.bill-history-page .history-header {
+  min-height: 82px;
+}
+
+.bill-history-page .history-brand {
+  gap: 14px;
+}
+
+.bill-history-page .history-brand img,
+.bill-history-page .history-brand-fallback {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+}
+
+/* Smaller owner / secondary line */
+.bill-history-page .history-brand span {
+  order: 1;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.4px;
+  text-transform: none;
+}
+
+/* Larger shop name */
+.bill-history-page .history-brand strong {
+  order: 2;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.1px;
+}
+
+/* Main page title — shared scale */
+.bill-history-page .history-heading h1 {
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.bill-history-page .history-heading > div:first-child > span {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.6px;
+}
+
+.bill-history-page .history-heading p {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* Section titles */
+.bill-history-page .filter-top h2,
+.bill-history-page .list-heading h2 {
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.2px;
+}
+
+.bill-history-page .filter-eyebrow,
+.bill-history-page .list-heading > div > span {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+}
+
+/* Summary and filter typography */
+.bill-history-page .history-summary span,
+.bill-history-page .filter-field label,
+.bill-history-page .result-count {
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.bill-history-page .history-summary strong {
+  font-size: 21px;
+  font-weight: 500;
+}
+
+.bill-history-page .filter-field input,
+.bill-history-page .filter-field select {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* Bill list readability */
+.bill-history-page .bill-main span {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.7px;
+}
+
+.bill-history-page .bill-main strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.bill-history-page .bill-main small {
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.bill-history-page .bill-amount strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Modal headings use the same font family, retain existing colors */
+.bill-details-modal .details-modal-heading h2,
+.bill-details-modal .identity-brand strong,
+.bill-details-modal .details-section-heading h3,
+.bill-details-modal .details-shop-card > strong {
+  font-family:
+    "DM Sans",
+    "Noto Sans Devanagari",
+    system-ui,
+    sans-serif;
+}
+
+.bill-details-modal .details-modal-heading h2 {
+  font-size: 21px;
+  font-weight: 500;
+}
+
+.bill-details-modal .identity-brand strong {
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.bill-details-modal .details-section-heading h3 {
+  font-size: 19px;
+  font-weight: 500;
+}
+
+.bill-details-modal .details-shop-card > strong {
+  font-size: 19px;
+  font-weight: 500;
+}
+
+/* Responsive shared scale */
+@media (max-width: 760px) {
+  .bill-history-page .history-heading h1 {
+    font-size: 32px;
+  }
+
+  .bill-history-page .filter-top h2,
+  .bill-history-page .list-heading h2 {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 500px) {
+  .bill-history-page .history-brand img,
+  .bill-history-page .history-brand-fallback {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .bill-history-page .history-brand strong {
+    font-size: 15px;
+  }
+
+  .bill-history-page .history-brand span {
+    font-size: 9px;
+  }
+
+  .bill-history-page .history-heading h1 {
+    font-size: 29px;
+  }
+
+  .bill-history-page .filter-top h2,
+  .bill-history-page .list-heading h2 {
+    font-size: 19px;
+  }
+}
+
+/* Keep Hindi text natural and legible */
+.bill-history-page:lang(hi),
+.bill-history-page:lang(hi) *,
+.bill-details-modal:lang(hi),
+.bill-details-modal:lang(hi) * {
+  letter-spacing: normal;
+  line-height: 1.55;
+}
+
+
+/* =========================================================
+   BILLBOX — BILL HISTORY HEADER
+   MATCHES JEWELLERY PAGE TOP-LEFT BRAND DESIGN
+   Owner / descriptor = small gold line
+   Shop name = larger main line
+   Existing layout, themes and functionality preserved
+========================================================= */
+
+.bill-history-page .history-header {
+  min-height: 82px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.bill-history-page .history-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  min-width: 0 !important;
+}
+
+.bill-history-page .history-brand img,
+.bill-history-page .history-brand-fallback {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  flex: 0 0 48px !important;
+  object-fit: contain !important;
+}
+
+.bill-history-page .history-brand > div {
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  text-align: left !important;
+}
+
+/* Small line — owner name / descriptor */
+.bill-history-page .history-brand span {
+  display: block !important;
+  order: 1 !important;
+  max-width: 260px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: var(--gold) !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Large line — shop name */
+.bill-history-page .history-brand strong {
+  display: block !important;
+  order: 2 !important;
+  max-width: 280px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: var(--text-strong) !important;
+  font-size: 17px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0.2px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Mobile — same Jewellery proportions */
+@media (max-width: 500px) {
+  .bill-history-page .history-brand {
+    gap: 10px !important;
+  }
+
+  .bill-history-page .history-brand img,
+  .bill-history-page .history-brand-fallback {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    flex-basis: 40px !important;
+  }
+
+  .bill-history-page .history-brand span {
+    max-width: 155px !important;
+    font-size: 9px !important;
+    letter-spacing: 1px !important;
+  }
+
+  .bill-history-page .history-brand strong {
+    max-width: 170px !important;
+    font-size: 15px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .bill-history-page .history-brand strong {
+    max-width: 115px !important;
+    font-size: 13px !important;
+  }
+}
+
+
+/* =========================================================
+   FINAL CORRECTION — REVERSE BILL HISTORY BRAND HIERARCHY
+   Owner name (strong) = larger main line
+   Page/secondary title (span) = smaller gold line
+========================================================= */
+
+.bill-history-page .history-brand > div {
+  gap: 3px !important;
+}
+
+/* Larger line — owner name */
+.bill-history-page .history-brand strong {
+  order: 1 !important;
+  color: var(--text-strong) !important;
+  font-size: 17px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0.2px !important;
+}
+
+/* Smaller gold line — page / secondary title */
+.bill-history-page .history-brand span {
+  order: 2 !important;
+  color: var(--gold) !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+}
+
+@media (max-width: 500px) {
+  .bill-history-page .history-brand strong {
+    font-size: 15px !important;
+  }
+
+  .bill-history-page .history-brand span {
+    font-size: 9px !important;
+    letter-spacing: 1px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .bill-history-page .history-brand strong {
+    font-size: 13px !important;
+  }
+}
+
+/* Bill History — logo rounded corners */
+.bill-history-page .history-brand img {
+  border-radius: 10px !important;
+  object-fit: contain !important;
+  overflow: hidden;
+}

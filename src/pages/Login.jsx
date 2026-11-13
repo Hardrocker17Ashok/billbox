@@ -92,6 +92,8 @@ export default function Login() {
 
   // Registration fields
   const [shopName, setShopName] = useState("");
+  const [ownerName, setOwnerName] = useState("");
+  const [gstNumber, setGstNumber] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
   const [address, setAddress] = useState("");
   const [logoFile, setLogoFile] = useState(null);
@@ -348,12 +350,20 @@ export default function Login() {
 
     const cleanUsername = registerUsername.trim().toLowerCase();
     const cleanShopName = shopName.trim();
+    const cleanOwnerName = ownerName.trim();
+    const cleanGstNumber = gstNumber.trim().toUpperCase();
     const cleanEmail = ownerEmail.trim().toLowerCase();
     const cleanAddress = address.trim();
 
     // Required fields
-    if (!cleanShopName || !cleanEmail || !cleanAddress) {
+    if (!cleanShopName || !cleanOwnerName || !cleanEmail || !cleanAddress) {
       setError("Please complete all required shop details.");
+      return;
+    }
+
+    // GST number is optional. Validate its format only when provided.
+    if (cleanGstNumber && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(cleanGstNumber)) {
+      setError("Please enter a valid 15-character GSTIN, or leave the field blank.");
       return;
     }
 
@@ -440,6 +450,8 @@ export default function Login() {
       await setDoc(doc(db, "shops", createdUser.uid), {
         uid: createdUser.uid,
         shopName: cleanShopName,
+        ownerName: cleanOwnerName,
+        gstNumber: cleanGstNumber,
         shopNameLower: cleanShopName
           .trim()
           .toLowerCase()
@@ -463,6 +475,8 @@ export default function Login() {
 
       // Step 5: Clear registration fields
       setShopName("");
+      setOwnerName("");
+      setGstNumber("");
       setOwnerEmail("");
       setAddress("");
       setLogoFile(null);
@@ -919,6 +933,46 @@ export default function Login() {
                       required
                     />
                   </div>
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="register-owner-name">
+                    Owner name *
+                  </label>
+
+                  <div className="form-input">
+                    <input
+                      id="register-owner-name"
+                      type="text"
+                      placeholder="Enter owner / contact person name"
+                      value={ownerName}
+                      onChange={(event) => setOwnerName(event.target.value)}
+                      autoComplete="name"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="register-gst-number">
+                    GST number (optional)
+                  </label>
+
+                  <div className="form-input">
+                    <input
+                      id="register-gst-number"
+                      type="text"
+                      placeholder="Enter 15-character GSTIN (if available)"
+                      value={gstNumber}
+                      onChange={(event) => setGstNumber(event.target.value.toUpperCase().replace(/\s/g, ""))}
+                      maxLength={15}
+                      autoCapitalize="characters"
+                      spellCheck="false"
+                    />
+                  </div>
+                  <small className="register-hint">
+                    You can leave this blank if your shop does not have a GST number.
+                  </small>
                 </div>
 
                 <div className="form-field">

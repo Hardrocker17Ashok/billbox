@@ -1142,21 +1142,106 @@
 
 
 /* =====================================================
-   MATCH BILL HISTORY TYPOGRAPHY
+   BILLBOX — UNIFIED TYPOGRAPHY & BRAND SYSTEM
+   Consistent with New Bill and Today Sales
+   Original colours, layout, cards and responsive design preserved
 ===================================================== */
 
 .jewellery-page {
-  font-family: inherit;
+  font-family: "DM Sans", "Noto Sans Devanagari", system-ui, sans-serif !important;
+  font-synthesis: none;
 }
 
-.jewellery-page *:not(.jewellery-logo):not(.no-image) {
+.jewellery-page *:not(.jewellery-logo):not(.no-image),
+.jewellery-page *:not(.jewellery-logo):not(.no-image)::before,
+.jewellery-page *:not(.jewellery-logo):not(.no-image)::after {
   font-family: inherit !important;
+  font-synthesis: none;
 }
 
+/* ---------------- HEADER — EXACT TODAY SALES HIERARCHY ---------------- */
 
+.jewellery-page .jewellery-topbar {
+  min-height: 82px !important;
+  height: auto !important;
+  padding: 0 5% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 20px !important;
+}
 
-/* DASHBOARD BUTTON — MATCH BILL HISTORY */
+.jewellery-page .jewellery-brand {
+  min-width: 0 !important;
+  display: flex !important;
+  flex: 0 1 auto !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 14px !important;
+  text-align: left !important;
+}
 
+.jewellery-page .jewellery-logo {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  flex: 0 0 48px !important;
+  overflow: hidden !important;
+  border-radius: 10px !important;
+}
+
+.jewellery-page .jewellery-logo img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+.jewellery-page .brand-text {
+  min-width: 0 !important;
+  display: flex !important;
+  flex: 0 1 auto !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  text-align: left !important;
+}
+
+/* Small line — owner / descriptor */
+.jewellery-page .brand-text span {
+  display: block !important;
+  max-width: 260px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: var(--j-gold) !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 1.5px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Large line — shop name */
+.jewellery-page .brand-text strong {
+  display: block !important;
+  max-width: 280px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: var(--j-heading) !important;
+  font-size: 17px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0.2px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Dashboard button — retain the established understated gold style */
 .jewellery-page .jewellery-dashboard-button {
   padding: 11px 17px;
   border: 1px solid rgba(197, 160, 91, 0.35);
@@ -1164,12 +1249,237 @@
   color: var(--j-gold);
   border-radius: 5px;
   cursor: pointer;
-  font: inherit;
+  font-family: inherit !important;
   font-size: 13px;
+  font-weight: 500;
   transition: 0.2s ease;
 }
 
 .jewellery-page .jewellery-dashboard-button:hover {
   background: rgba(197, 160, 91, 0.09);
   border-color: var(--j-gold);
+}
+
+/* Main page heading */
+.jewellery-page .jewellery-intro h1 {
+  font-size: 36px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.5px !important;
+}
+
+.jewellery-page .jewellery-intro h1 em {
+  font-size: inherit !important;
+  font-weight: inherit !important;
+}
+
+/* Eyebrow and page description */
+.jewellery-page .jewellery-eyebrow {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 1.6px !important;
+}
+
+.jewellery-page .jewellery-intro p {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+}
+
+/* Collection heading */
+.jewellery-page .collection-heading h2 {
+  font-size: 22px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.3px !important;
+}
+
+.jewellery-page .collection-heading span {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  letter-spacing: 1.6px !important;
+}
+
+.jewellery-page .collection-heading p {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+}
+
+/* Collection statistics */
+.jewellery-page .collection-stat span {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+}
+
+.jewellery-page .collection-stat strong {
+  font-size: 24px !important;
+  font-weight: 500 !important;
+}
+
+/* Search and filters */
+.jewellery-page .search-box input {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+}
+
+.jewellery-page .metal-filter {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+/* Jewellery cards */
+.jewellery-page .item-number {
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  letter-spacing: 1px !important;
+}
+
+.jewellery-page .jewellery-card-content h3 {
+  font-size: 19px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+}
+
+.jewellery-page .card-bottom > span:first-child,
+.jewellery-page .active-status {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+}
+
+/* Empty and error states */
+.jewellery-page .empty-jewellery h3 {
+  font-size: 21px !important;
+  font-weight: 500 !important;
+}
+
+.jewellery-page .empty-jewellery p {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+}
+
+.jewellery-page .jewellery-error h3 {
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+/* Hindi text — avoid excessive tracking and maintain readability */
+.jewellery-page:lang(hi),
+.jewellery-page:lang(hi) * {
+  letter-spacing: normal;
+  line-height: 1.55;
+}
+
+/* Tablet */
+@media (max-width: 700px) {
+  .jewellery-page .jewellery-intro h1 {
+    font-size: 32px !important;
+  }
+
+  .jewellery-page .collection-heading h2 {
+    font-size: 20px !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 520px) {
+  .jewellery-page .jewellery-topbar {
+    min-height: 72px;
+  }
+
+  .jewellery-page .jewellery-brand {
+    gap: 10px;
+  }
+
+  .jewellery-page .jewellery-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 18px;
+  }
+
+  .jewellery-page .brand-text strong {
+    max-width: 155px;
+    font-size: 15px !important;
+  }
+
+  .jewellery-page .brand-text span {
+    font-size: 9px !important;
+    letter-spacing: 1px !important;
+  }
+
+  .jewellery-page .jewellery-intro h1 {
+    font-size: 29px !important;
+  }
+
+  .jewellery-page .collection-heading h2 {
+    font-size: 19px !important;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 360px) {
+  .jewellery-page .brand-text strong {
+    max-width: 115px;
+    font-size: 13px !important;
+  }
+}
+
+
+/* =====================================================
+   FINAL HEADER OVERRIDE — SAME AS TODAY SALES
+===================================================== */
+@media (min-width: 521px) {
+  .jewellery-page .brand-text span { font-size: 10px !important; }
+  .jewellery-page .brand-text strong { font-size: 17px !important; }
+}
+
+@media (max-width: 700px) {
+  .jewellery-page .jewellery-topbar {
+    min-height: 72px !important;
+    padding: 0 18px !important;
+  }
+  .jewellery-page .jewellery-brand { gap: 12px !important; }
+  .jewellery-page .jewellery-intro h1 { font-size: 32px !important; }
+  .jewellery-page .collection-heading h2 { font-size: 20px !important; }
+}
+
+@media (max-width: 520px) {
+  .jewellery-page .jewellery-topbar {
+    min-height: 72px !important;
+    padding: 0 14px !important;
+  }
+  .jewellery-page .jewellery-brand { gap: 10px !important; }
+  .jewellery-page .jewellery-logo {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    flex-basis: 40px !important;
+    border-radius: 10px !important;
+  }
+  .jewellery-page .brand-text span {
+    max-width: 155px !important;
+    font-size: 9px !important;
+    letter-spacing: 1px !important;
+  }
+  .jewellery-page .brand-text strong {
+    max-width: 170px !important;
+    font-size: 15px !important;
+  }
+  .jewellery-page .jewellery-dashboard-button {
+    min-height: 36px !important;
+    padding: 0 10px !important;
+    font-size: 11px !important;
+  }
+  .jewellery-page .jewellery-intro h1 { font-size: 29px !important; }
+  .jewellery-page .collection-heading h2 { font-size: 19px !important; }
+}
+
+@media (max-width: 360px) {
+  .jewellery-page .brand-text strong {
+    max-width: 115px !important;
+    font-size: 13px !important;
+  }
 }
