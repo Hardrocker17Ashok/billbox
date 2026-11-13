@@ -1912,3 +1912,372 @@
   object-fit: contain !important;
   overflow: hidden;
 }
+
+/* =========================================================
+   BILL HISTORY — PROFESSIONAL PER-BILL DELETE ACTION
+   Additive styles only; existing card layout and themes remain intact.
+========================================================= */
+
+.bill-card::after {
+  left: 20px;
+  right: auto;
+}
+
+.bill-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 20px 14px;
+}
+
+.bill-delete-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 35px;
+  padding: 0 14px;
+  border: 1px solid rgba(190, 75, 75, 0.38);
+  border-radius: 6px;
+  background: rgba(164, 55, 55, 0.075);
+  color: #d98780;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bill-delete-button:hover {
+  color: #fff;
+  background: #a83f3f;
+  border-color: #c65b58;
+  box-shadow: 0 5px 16px rgba(168, 63, 63, 0.2);
+  transform: translateY(-1px);
+}
+
+.bill-delete-button:focus-visible {
+  outline: 2px solid #d98780;
+  outline-offset: 3px;
+}
+
+.bill-delete-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.bill-history-page[data-theme="light"] .bill-delete-button {
+  color: #a43e3e;
+  background: rgba(164, 55, 55, 0.045);
+  border-color: rgba(164, 55, 55, 0.24);
+}
+
+.bill-history-page[data-theme="light"] .bill-delete-button:hover {
+  color: #fff;
+  background: #a83f3f;
+  border-color: #a83f3f;
+}
+
+/* Delete confirmation — premium modal */
+.bill-delete-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(3, 3, 3, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: billDeleteOverlayIn 0.18s ease;
+}
+
+.bill-delete-dialog {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 20px;
+  width: min(510px, 100%);
+  box-sizing: border-box;
+  padding: 28px;
+  border: 1px solid rgba(190, 75, 75, 0.3);
+  border-radius: 15px;
+  background: #171614;
+  color: #f3eee5;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.55);
+  animation: billDeleteDialogIn 0.22s cubic-bezier(.2,.8,.2,1);
+}
+
+.bill-delete-dialog-icon {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(208, 91, 85, 0.4);
+  border-radius: 50%;
+  background: rgba(168, 63, 63, 0.13);
+  color: #e58a83;
+}
+
+.bill-delete-dialog-icon span {
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.bill-delete-dialog-content {
+  min-width: 0;
+}
+
+.bill-delete-eyebrow {
+  display: block;
+  margin: 2px 0 8px;
+  color: #d08b82;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.7px;
+}
+
+.bill-delete-dialog-content h2 {
+  margin: 0 0 9px;
+  color: #f5eee3;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.bill-delete-dialog-content > p {
+  margin: 0;
+  color: #aaa39a;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.bill-delete-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.bill-delete-summary > div {
+  min-width: 0;
+}
+
+.bill-delete-summary > div:last-child {
+  grid-column: 1 / -1;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bill-delete-summary span {
+  display: block;
+  margin-bottom: 5px;
+  color: #898279;
+  font-size: 9px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.bill-delete-summary strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #eee5d6;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bill-delete-error {
+  margin-top: 12px !important;
+  color: #ef9b94 !important;
+}
+
+.bill-delete-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 22px;
+}
+
+.bill-delete-dialog-actions button {
+  min-height: 39px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.bill-delete-dialog-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.bill-delete-cancel {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: #d0c8bc;
+}
+
+.bill-delete-cancel:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.bill-delete-confirm {
+  border: 1px solid #a94743;
+  background: #a13f3b;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(161, 63, 59, 0.2);
+}
+
+.bill-delete-confirm:hover:not(:disabled) {
+  border-color: #c35b55;
+  background: #b44a45;
+  transform: translateY(-1px);
+}
+
+@keyframes billDeleteOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes billDeleteDialogIn {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 520px) {
+  .bill-card-actions {
+    padding: 0 14px 13px;
+  }
+
+  .bill-card::after {
+    left: 14px;
+    bottom: 24px;
+    font-size: 7px;
+  }
+
+  .bill-delete-button {
+    min-height: 34px;
+    padding: 0 11px;
+    font-size: 10px;
+  }
+
+  .bill-delete-dialog {
+    grid-template-columns: 1fr;
+    gap: 13px;
+    padding: 22px 18px;
+  }
+
+  .bill-delete-dialog-icon {
+    width: 45px;
+    height: 45px;
+  }
+
+  .bill-delete-dialog-content h2 {
+    font-size: 18px;
+  }
+
+  .bill-delete-dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .bill-delete-dialog-actions button {
+    width: 100%;
+    min-height: 42px;
+  }
+}
+
+
+/* =========================================================
+   COMPLETE PRINTED-INVOICE DETAILS (ADDITIVE)
+   ========================================================= */
+
+.details-item-extra {
+  grid-column: 2 / -1;
+  min-width: 0;
+  padding-top: 9px;
+  border-top: 1px dashed #e0d5c3;
+  display: grid;
+  gap: 8px;
+}
+
+.details-extra-codes,
+.details-extra-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 14px;
+}
+
+.details-extra-codes span,
+.details-extra-values span {
+  color: #756b5d;
+  font-size: 9px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.details-extra-codes b,
+.details-extra-values b {
+  color: #352f25;
+  font-weight: 750;
+}
+
+.details-payment-row {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #e7dece;
+}
+
+.details-balance-row strong {
+  color: #986f2e !important;
+}
+
+.details-payment-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #d9c8a8;
+  border-radius: 7px;
+  background: #f8f2e6;
+  color: #76603b;
+  font-size: 10px;
+}
+
+.details-payment-status strong {
+  color: #6d5122;
+  font-size: 11px;
+}
+
+@media (max-width: 760px) {
+  .details-item-extra {
+    grid-column: 1 / -1;
+  }
+
+  .details-extra-codes,
+  .details-extra-values {
+    gap: 6px 10px;
+  }
+}

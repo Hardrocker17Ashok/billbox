@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import {
@@ -425,9 +425,16 @@ function NewBill() {
   const [billNumber, setBillNumber] = useState("INV-0000");
   const [printDateTime, setPrintDateTime] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [pendingPrintConfirmation, setPendingPrintConfirmation] = useState(false);
+  const [pendingBillData, setPendingBillData] = useState(null);
+  const [isSavingBill, setIsSavingBill] = useState(false);
+  const [savedBill, setSavedBill] = useState(null);
+  const [showWhatsAppShare, setShowWhatsAppShare] = useState(false);
+  const saveLockRef = useRef(false);
 
   const [customerName, setCustomerName] = useState("");
   const [customerMobile, setCustomerMobile] = useState("");
+  const [customerErrors, setCustomerErrors] = useState({ name: "", mobile: "" });
 
   const [metal, setMetal] = useState("");
   const [item, setItem] = useState("");
@@ -871,21 +878,36 @@ function NewBill() {
   // PRINT + SAVE BILL
   // ============================================
 
+  const validateCustomerDetails = () => {
+    const cleanName = customerName.trim().replace(/\s+/g, " ");
+    const digits = customerMobile.replace(/\D/g, "");
+    const normalizedMobile = digits.startsWith("91") && digits.length === 12
+      ? digits.slice(2)
+      : digits.startsWith("0") && digits.length === 11
+        ? digits.slice(1)
+        : digits;
+    const nameValid = cleanName.length >= 2 && cleanName.length <= 60 && /^[\p{L}\p{M}][\p{L}\p{M} .'-]*$/u.test(cleanName);
+    const mobileValid = /^[6-9]\d{9}$/.test(normalizedMobile);
+    const errors = {
+      name: nameValid ? "" : (language === "hi"
+        ? "ग्राहक का नाम 2–60 अक्षरों का होना चाहिए। केवल अक्षर, स्पेस, डॉट, हाइफन और apostrophe मान्य हैं।"
+        : "Enter a valid name (2–60 characters). Numbers and special symbols are not allowed."),
+      mobile: mobileValid ? "" : (language === "hi"
+        ? "मान्य भारतीय मोबाइल नंबर दर्ज करें (10 अंक, 6–9 से शुरू)। +91 या 0 prefix भी स्वीकार है।"
+        : "Enter a valid Indian mobile number: 10 digits starting with 6–9. +91 or leading 0 is also accepted."),
+    };
+    setCustomerErrors(errors);
+    return { valid: !errors.name && !errors.mobile, normalizedMobile };
+  };
+
   const handlePrint = async (skipGstSetup = false) => {
     if (!user) {
       window.alert(t.loginRequired);
       return;
     }
 
-    if (!customerName.trim()) {
-      window.alert(t.customerRequired);
-      return;
-    }
-
-    if (!customerMobile.trim()) {
-      window.alert(t.mobileRequired);
-      return;
-    }
+    const customerValidation = validateCustomerDetails();
+    if (!customerValidation.valid) return;
 
     if (items.length === 0) {
       window.alert(t.itemRequired);
@@ -981,8 +1003,8 @@ function NewBill() {
       billNumber: generatedBillNumber,
       invoiceNo: generatedBillNumber,
 
-      customerName: customerName.trim(),
-      customerMobile: customerMobile.trim(),
+      customerName: customerName.trim().replace(/\s+/g, " "),
+      customerMobile: customerValidation.normalizedMobile,
 
       items: billItems,
       billType,
@@ -1021,36 +1043,99 @@ function NewBill() {
       amountPaid: receivedAmount,
       balanceAmount,
 
-      createdAt: serverTimestamp(),
-      printedAt: serverTimestamp(),
     };
 
     try {
-      // Save first so a printed invoice is not silently missing from Firestore.
-      await addDoc(collection(db, "bills"), billData);
-
+      // Do not write to Firestore before the print dialog is completed.
+      // afterprint fires for both Print and Cancel, so ask the owner to
+      // explicitly confirm successful printing before saving.
       setBillNumber(generatedBillNumber);
       setPrintDateTime(now);
+      setPendingBillData(billData);
 
-      // Allow React to render the generated invoice details before printing.
       window.setTimeout(() => {
         window.print();
-        setIsPrinting(false);
       }, 150);
     } catch (error) {
-      console.error(
-        "Bill save error:",
-        error?.code,
-        error?.message,
-        error
-      );
-
+      console.error("Unable to open print dialog:", error);
       setIsPrinting(false);
-
-      window.alert(
-        `${t.saveError} ${error?.code || error?.message || ""}`
-      );
+      setPendingBillData(null);
+      window.alert(t.printError);
     }
+  };
+
+  // The browser fires afterprint for both a successful print and a
+  // cancelled dialog. Never save automatically from this event.
+  useEffect(() => {
+    const handleAfterPrint = () => {
+      setIsPrinting(false);
+      if (pendingBillData) setPendingPrintConfirmation(true);
+    };
+
+    window.addEventListener("afterprint", handleAfterPrint);
+    return () => window.removeEventListener("afterprint", handleAfterPrint);
+  }, [pendingBillData]);
+
+  const cancelPrintConfirmation = () => {
+    setPendingPrintConfirmation(false);
+    setPendingBillData(null);
+    setBillNumber("INV-0000");
+    setPrintDateTime(null);
+  };
+
+  const confirmPrintedAndSave = async () => {
+    if (!pendingBillData || saveLockRef.current) return;
+
+    saveLockRef.current = true;
+    setIsSavingBill(true);
+
+    try {
+      // The only bill write happens after explicit print confirmation.
+      const savedRef = await addDoc(collection(db, "bills"), {
+        ...pendingBillData,
+        createdAt: serverTimestamp(),
+        printedAt: serverTimestamp(),
+      });
+
+      setSavedBill({
+        id: savedRef.id,
+        billNumber: pendingBillData.billNumber,
+        customerName: pendingBillData.customerName,
+        customerMobile: pendingBillData.customerMobile,
+        shopName: pendingBillData.shopName,
+        grandTotal: pendingBillData.grandTotal,
+      });
+      setPendingPrintConfirmation(false);
+      setPendingBillData(null);
+      setShowWhatsAppShare(true);
+    } catch (error) {
+      console.error("Bill save error:", error?.code, error?.message, error);
+      window.alert(`${t.saveError} ${error?.code || error?.message || ""}`);
+    } finally {
+      saveLockRef.current = false;
+      setIsSavingBill(false);
+    }
+  };
+
+  const openCustomerWhatsApp = () => {
+    if (!savedBill) return;
+
+    const digits = String(savedBill.customerMobile || "").replace(/\\D/g, "");
+    const whatsappNumber = digits.length === 10 ? `91${digits}` : digits;
+    const amount = formatMoney(savedBill.grandTotal);
+    const message = language === "hi"
+      ? `नमस्ते ${savedBill.customerName} जी! 🙏\\n\\n${savedBill.shopName} में खरीदारी करने के लिए आपका बहुत-बहुत धन्यवाद।\\n\\nआपका बिल सफलतापूर्वक तैयार हो गया है।\\nबिल नंबर: ${savedBill.billNumber}\\nकुल राशि: ₹${amount}\\n\\nहम आपके विश्वास की सराहना करते हैं। आपसे दोबारा मिलने की प्रतीक्षा रहेगी।\\n\\nसादर,\\n${savedBill.shopName}`
+      : `Dear ${savedBill.customerName},\\n\\nThank you for shopping with ${savedBill.shopName}. Your bill has been generated successfully.\\n\\nBill No: ${savedBill.billNumber}\\nGrand Total: ₹${amount}\\n\\nWe truly appreciate your trust and look forward to serving you again.\\n\\nRegards,\\n${savedBill.shopName}`;
+
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    setShowWhatsAppShare(false);
+    setSavedBill(null);
+  };
+
+  const closeWhatsAppShare = () => {
+    setShowWhatsAppShare(false);
+    setSavedBill(null);
   };
 
   useEffect(() => {
@@ -1183,10 +1268,15 @@ function NewBill() {
                 type="text"
                 placeholder={t.customerNamePlaceholder}
                 value={customerName}
-                onChange={(event) =>
-                  setCustomerName(event.target.value)
-                }
+                maxLength={60}
+                autoComplete="name"
+                aria-invalid={Boolean(customerErrors.name)}
+                onChange={(event) => {
+                  setCustomerName(event.target.value);
+                  if (customerErrors.name) setCustomerErrors((prev) => ({ ...prev, name: "" }));
+                }}
               />
+              {customerErrors.name && <small className="billbox-customer-error">{customerErrors.name}</small>}
             </div>
 
             <div className="field">
@@ -1196,10 +1286,16 @@ function NewBill() {
                 inputMode="numeric"
                 placeholder={t.mobilePlaceholder}
                 value={customerMobile}
-                onChange={(event) =>
-                  setCustomerMobile(event.target.value)
-                }
+                maxLength={16}
+                autoComplete="tel"
+                aria-invalid={Boolean(customerErrors.mobile)}
+                onChange={(event) => {
+                  const nextValue = event.target.value.replace(/[^0-9+\s()-]/g, "").slice(0, 16);
+                  setCustomerMobile(nextValue);
+                  if (customerErrors.mobile) setCustomerErrors((prev) => ({ ...prev, mobile: "" }));
+                }}
               />
+              {customerErrors.mobile && <small className="billbox-customer-error">{customerErrors.mobile}</small>}
             </div>
           </div>
         </section>
@@ -1793,6 +1889,82 @@ function NewBill() {
           )}
         </div>
       </div>
+
+      {pendingPrintConfirmation && (
+        <div className="billbox-share-backdrop" role="presentation">
+          <section className="billbox-share-dialog" role="dialog" aria-modal="true" aria-labelledby="billbox-print-confirm-title">
+            <div className="billbox-share-success-icon">?</div>
+            <span className="billbox-share-eyebrow">BILLBOX • PRINT CONFIRMATION</span>
+            <h2 id="billbox-print-confirm-title">
+              {language === "hi" ? "क्या बिल सफलतापूर्वक प्रिंट हुआ?" : "Was the bill printed successfully?"}
+            </h2>
+            <p>
+              {language === "hi"
+                ? "अगर आपने Print दबाया और बिल प्रिंट हो गया है, तभी सेव करें। अगर Print dialog Cancel किया था, तो नीचे रद्द करें — डेटाबेस में कोई बिल सेव नहीं होगा।"
+                : "Save only if the invoice was printed successfully. If you cancelled the print dialog, choose Cancel. No bill will be stored."}
+            </p>
+            <div className="billbox-share-summary">
+              <span>{language === "hi" ? "बिल नंबर" : "Bill number"}</span>
+              <strong>{billNumber}</strong>
+              <span>{language === "hi" ? "ग्राहक" : "Customer"}</span>
+              <strong>{customerName}</strong>
+              <span>{language === "hi" ? "कुल राशि" : "Grand total"}</span>
+              <strong>₹ {formatMoney(grandTotal)}</strong>
+            </div>
+            <div className="billbox-share-actions">
+              <button type="button" className="billbox-share-cancel" onClick={cancelPrintConfirmation} disabled={isSavingBill}>
+                {language === "hi" ? "प्रिंट नहीं हुआ / रद्द करें" : "Not printed / Cancel"}
+              </button>
+              <button type="button" className="billbox-share-primary" onClick={confirmPrintedAndSave} disabled={isSavingBill}>
+                {isSavingBill
+                  ? (language === "hi" ? "सेव हो रहा है..." : "Saving...")
+                  : (language === "hi" ? "प्रिंट हुआ — बिल सेव करें" : "Printed — Save Bill")}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {showWhatsAppShare && savedBill && (
+        <div className="billbox-share-backdrop" role="presentation">
+          <section className="billbox-share-dialog" role="dialog" aria-modal="true" aria-labelledby="billbox-whatsapp-title">
+            <div className="billbox-share-success-icon billbox-whatsapp-success">✓</div>
+            <span className="billbox-share-eyebrow">BILLBOX • BILL SAVED</span>
+            <h2 id="billbox-whatsapp-title">
+              {language === "hi" ? "बिल सेव हो गया!" : "Bill saved successfully!"}
+            </h2>
+            <p>
+              {language === "hi"
+                ? "अब ग्राहक को दुकान के WhatsApp अकाउंट से बिल की जानकारी भेजें।"
+                : "Now share the bill details with your customer using your shop's WhatsApp account."}
+            </p>
+            <div className="billbox-share-summary">
+              <span>{language === "hi" ? "ग्राहक" : "Customer"}</span>
+              <strong>{savedBill.customerName}</strong>
+              <span>{language === "hi" ? "मोबाइल नंबर" : "Mobile number"}</span>
+              <strong>{savedBill.customerMobile}</strong>
+              <span>{language === "hi" ? "बिल नंबर" : "Bill number"}</span>
+              <strong>{savedBill.billNumber}</strong>
+              <span>{language === "hi" ? "कुल राशि" : "Grand total"}</span>
+              <strong>₹ {formatMoney(savedBill.grandTotal)}</strong>
+            </div>
+            <div className="billbox-share-actions">
+              <button type="button" className="billbox-share-cancel" onClick={closeWhatsAppShare}>
+                {language === "hi" ? "अभी नहीं" : "Not now"}
+              </button>
+              <button type="button" className="billbox-share-whatsapp" onClick={openCustomerWhatsApp}>
+                <span aria-hidden="true">●</span>
+                {language === "hi" ? "WhatsApp पर भेजें" : "Send on WhatsApp"}
+              </button>
+            </div>
+            <small className="billbox-share-note">
+              {language === "hi"
+                ? "WhatsApp खुलेगा और संदेश तैयार मिलेगा। भेजने के लिए WhatsApp में Send दबाएँ।"
+                : "WhatsApp will open with a prepared message. Press Send inside WhatsApp to deliver it."}
+            </small>
+          </section>
+        </div>
+      )}
 
       {gstDialogOpen && (
         <div className="gst-setup-backdrop" role="presentation">

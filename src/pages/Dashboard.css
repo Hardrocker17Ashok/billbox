@@ -3470,3 +3470,222 @@ button {
   .dashboard .help-bottom-cta { align-items: flex-start; flex-direction: column; }
   .dashboard .help-page-content { padding-top: 20px; }
 }
+
+
+/* Dashboard top-left logo with owner name */
+.topbar .brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand-owner-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* Fix: Keep owner name immediately beside the logo */
+.topbar .brand {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  flex: 0 0 auto !important;
+}
+
+.topbar .brand img,
+.topbar .brand .brand-fallback {
+  flex-shrink: 0 !important;
+}
+
+.topbar .brand .brand-owner-name {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: none !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* Fix actual logo image width and owner name spacing */
+.topbar .brand {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  width: auto !important;
+  flex: 0 0 auto !important;
+}
+
+.topbar .brand img {
+  width: 82px !important;
+  height: 82px !important;
+  min-width: 82px !important;
+  max-width: 82px !important;
+  object-fit: contain !important;
+  flex: 0 0 82px !important;
+}
+
+.topbar .brand .brand-owner-name {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  white-space: nowrap !important;
+  flex: 0 0 auto !important;
+}
+
+/* Compact circular dashboard logo */
+.topbar .brand img {
+  width: 58px !important;
+  height: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
+  flex: 0 0 58px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  background: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.topbar .brand {
+  gap: 12px !important;
+}
+/* Compact logo with rounded square corners */
+.topbar .brand img {
+  width: 58px !important;
+  height: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
+  flex: 0 0 58px !important;
+
+  border-radius: 10px !important;
+  object-fit: cover !important;
+  object-position: center !important;
+
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+/* ==========================================
+   BILLBOX — PREMIUM LEFT BRAND IDENTITY
+========================================== */
+
+/* Logo and shop name alignment */
+.dashboard .topbar .brand {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 11px !important;
+  width: auto !important;
+  max-width: calc(100% - 90px) !important;
+  flex: 0 1 auto !important;
+  overflow: visible !important;
+}
+
+/* Compact premium logo */
+.dashboard .topbar .brand img {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  flex: 0 0 48px !important;
+
+  border-radius: 10px !important;
+  object-fit: cover !important;
+  object-position: center !important;
+
+  background: #fff;
+  border: 1px solid rgba(197, 160, 91, 0.35);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.16);
+}
+
+/* Shop name — premium typography */
+.dashboard .topbar .brand .brand-owner-name {
+  display: block !important;
+  width: auto !important;
+  max-width: 260px !important;
+  margin: 0 !important;
+  padding: 0 0 6px !important;
+
+  font-family: "DM Sans", sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.6px !important;
+  line-height: 1.4 !important;
+
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  text-overflow: unset !important;
+  overflow: visible !important;
+
+  position: relative;
+}
+
+/* Premium golden underline */
+.dashboard .topbar .brand .brand-owner-name::after {
+  content: "";
+  display: block;
+  width: 45px;
+  height: 2px;
+  margin-top: 5px;
+  margin-left: 0;
+
+  border-radius: 10px;
+  background: linear-gradient(
+    90deg,
+    #d9b56e,
+    #f5dfac,
+    transparent
+  );
+}
+
+/* DARK THEME */
+.dashboard:not(.dashboard-light) .topbar .brand .brand-owner-name {
+  color: #e8c98d !important;
+  -webkit-text-fill-color: #e8c98d !important;
+  text-shadow: 0 2px 12px rgba(232, 201, 141, 0.25) !important;
+}
+
+/* LIGHT THEME */
+.dashboard.dashboard-light .topbar .brand .brand-owner-name {
+  color: #263b59 !important;
+  -webkit-text-fill-color: #263b59 !important;
+  text-shadow: 0 2px 8px rgba(38, 59, 89, 0.12) !important;
+}
+
+/* Mobile sizing */
+@media (max-width: 700px) {
+  .dashboard .topbar .brand img {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+    flex-basis: 42px !important;
+  }
+
+  .dashboard .topbar .brand {
+    gap: 9px !important;
+  }
+
+  .dashboard .topbar .brand .brand-owner-name {
+    font-size: 13px !important;
+    max-width: 190px !important;
+  }
+}

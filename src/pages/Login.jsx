@@ -93,6 +93,7 @@ export default function Login() {
   // Registration fields
   const [shopName, setShopName] = useState("");
   const [ownerName, setOwnerName] = useState("");
+  const [phone, setPhone] = useState("");
   const [gstNumber, setGstNumber] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
   const [address, setAddress] = useState("");
@@ -351,13 +352,18 @@ export default function Login() {
     const cleanUsername = registerUsername.trim().toLowerCase();
     const cleanShopName = shopName.trim();
     const cleanOwnerName = ownerName.trim();
+    const cleanPhone = phone.trim();
     const cleanGstNumber = gstNumber.trim().toUpperCase();
     const cleanEmail = ownerEmail.trim().toLowerCase();
     const cleanAddress = address.trim();
 
     // Required fields
-    if (!cleanShopName || !cleanOwnerName || !cleanEmail || !cleanAddress) {
+    if (!cleanShopName || !cleanOwnerName || !cleanEmail || !cleanPhone || !cleanAddress) {
       setError("Please complete all required shop details.");
+      return;
+    }
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      setError("Please enter a valid 10-digit business mobile number.");
       return;
     }
 
@@ -458,6 +464,7 @@ export default function Login() {
           .replace(/\s+/g, " "),
         username: cleanUsername,
         email: cleanEmail,
+        phone: cleanPhone,
         address: cleanAddress,
         logoUrl: logoUrl || "",
         theme: "dark",
@@ -476,6 +483,7 @@ export default function Login() {
       // Step 5: Clear registration fields
       setShopName("");
       setOwnerName("");
+      setPhone("");
       setGstNumber("");
       setOwnerEmail("");
       setAddress("");
@@ -952,6 +960,43 @@ export default function Login() {
                     />
                   </div>
                 </div>
+
+
+
+              
+                {/* Business Mobile Number - PASTE HERE */}
+                <div className="form-field">
+                  <label htmlFor="register-phone">
+                    Business mobile number *
+                  </label>
+
+                  <div className="form-input">
+                    <input
+                      id="register-phone"
+                      type="tel"
+                      placeholder="Enter 10-digit business mobile number"
+                      value={phone}
+                      onChange={(event) =>
+                        setPhone(
+                          event.target.value.replace(/\D/g, "").slice(0, 10)
+                        )
+                      }
+                      maxLength={10}
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      required
+                    />
+                  </div>
+
+                  <small className="register-hint">
+                    This number will be saved as your shop's contact number.
+                  </small>
+                </div>
+
+             
+
+
+
 
                 <div className="form-field">
                   <label htmlFor="register-gst-number">

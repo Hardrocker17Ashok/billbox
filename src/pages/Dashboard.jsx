@@ -35,6 +35,15 @@ const DEFAULT_PROFILE = {
   theme: "dark",
 };
 
+
+const GSTIN_REGEX =
+  /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+
+const isValidGSTIN = (value) => {
+  if (!value) return true;
+  return GSTIN_REGEX.test(value.trim().toUpperCase());
+};
+
 const TEXT = {
   hi: {
     admin: "व्यवस्थापक",
@@ -108,6 +117,9 @@ const TEXT = {
     logoSize: "लोगो का साइज 5 MB से कम होना चाहिए।",
     gold: "सोना",
     silver: "चाँदी",
+    gstInvalid: "कृपया सही 15 अंकों का GSTIN दर्ज करें।",
+    gstValid: "GSTIN का फॉर्मेट सही है।",
+    gstLength: "GSTIN में कुल 15 अक्षर होने चाहिए।",
   },
 
   en: {
@@ -182,6 +194,9 @@ const TEXT = {
     logoSize: "Logo must be smaller than 5 MB.",
     gold: "Gold",
     silver: "Silver",
+    gstInvalid: "Please enter a valid GSTIN format.",
+    gstValid: "GSTIN format is valid.",
+    gstLength: "GSTIN must contain exactly 15 characters.",
   },
 };
 
@@ -552,6 +567,13 @@ function Dashboard() {
       setNoticeError(true);
       return;
     }
+    const gstin = draft.gstNumber.trim().toUpperCase();
+
+    if (!isValidGSTIN(gstin)) {
+      setNotice(TEXT[language].gstInvalid);
+      setNoticeError(true);
+      return;
+    }
 
     setSaving(true);
     setNotice("");
@@ -563,10 +585,11 @@ function Dashboard() {
         ownerName: draft.ownerName.trim(),
         phone: draft.phone.trim(),
         address: draft.address.trim(),
-        gstNumber: draft.gstNumber.trim(),
+        gstNumber: gstin,
         logoUrl: draft.logoUrl || "",
         language: draft.language === "hi" ? "hi" : "en",
         theme: draft.theme === "light" ? "light" : "dark",
+
       };
 
       // Update the existing shop document only.
@@ -1020,15 +1043,17 @@ function Dashboard() {
             <img src={profile.logoUrl} alt={shopName} />
           ) : (
             <div className="brand-fallback">
-              {shopName}
+              {shopName.trim().charAt(0).toUpperCase()}
             </div>
           )}
+
+          <span className="brand-owner-name">
+            {shopName}
+          </span>
         </div>
 
         <div className="topbar-right">
-          <div className="admin-info">
-            <strong>{shopName}</strong>
-          </div>
+
 
           <div className="profile-wrapper" ref={profileWrapperRef}>
             <button
@@ -1254,317 +1279,317 @@ function Dashboard() {
         </main>
       ) : (
         <main className="dashboard-content">
-        <section className="welcome">
-          <div>
-            <span className="welcome-label">
-              {shopName}
-            </span>
-
-            <h1>
-              {t.welcome} <em>{ownerName}</em>
-            </h1>
-
-            <p>{t.welcomeText}</p>
-          </div>
-        </section>
-
-        <section className="metal-rates-card">
-          <div className="metal-rates-header">
+          <section className="welcome">
             <div>
-              <span className="metal-rates-label">
-                {t.market}
+              <span className="welcome-label">
+                {shopName}
               </span>
 
-              <h3>{t.goldSilver}</h3>
+              <h1>
+                {t.welcome} <em>{ownerName}</em>
+              </h1>
 
-              {ratesUpdatedAt && (
-                <small className="rates-last-update">
-                  {t.lastUpdated}{" "}
-                  {new Date(
-                    ratesUpdatedAt
-                  ).toLocaleString(
-                    language === "hi"
-                      ? "hi-IN"
-                      : "en-IN",
-                    {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }
-                  )}
-                </small>
-              )}
+              <p>{t.welcomeText}</p>
             </div>
+          </section>
 
-            <span className="metal-rates-live">
-              ● {t.live}
-            </span>
-          </div>
+          <section className="metal-rates-card">
+            <div className="metal-rates-header">
+              <div>
+                <span className="metal-rates-label">
+                  {t.market}
+                </span>
 
-          {ratesLoading ? (
-            <div className="rates-loading">
-              {t.loadingRates}
-            </div>
-          ) : ratesError ? (
-            <div className="rates-error">
-              {ratesError}
-            </div>
-          ) : (
-            <div className="metal-rates-grid">
-              <div className="metal-rate-item">
-                <span>{t.gold24}</span>
+                <h3>{t.goldSilver}</h3>
 
-                <strong>
-                  ₹{" "}
-                  {metalRates.gold24 != null
-                    ? Number(
-                      metalRates.gold24 * 10
-                    ).toLocaleString("en-IN")
-                    : "--"}
-                </strong>
-
-                <small>{t.per10g}</small>
+                {ratesUpdatedAt && (
+                  <small className="rates-last-update">
+                    {t.lastUpdated}{" "}
+                    {new Date(
+                      ratesUpdatedAt
+                    ).toLocaleString(
+                      language === "hi"
+                        ? "hi-IN"
+                        : "en-IN",
+                      {
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
+                    )}
+                  </small>
+                )}
               </div>
 
-              <div className="metal-rate-item">
-                <span>{t.gold22}</span>
-
-                <strong>
-                  ₹{" "}
-                  {metalRates.gold22 != null
-                    ? Number(
-                      metalRates.gold22 * 10
-                    ).toLocaleString("en-IN")
-                    : "--"}
-                </strong>
-
-                <small>{t.per10g}</small>
-              </div>
-
-              <div className="metal-rate-item">
-                <span>{t.gold18}</span>
-
-                <strong>
-                  ₹{" "}
-                  {metalRates.gold18 != null
-                    ? Number(
-                      metalRates.gold18 * 10
-                    ).toLocaleString("en-IN")
-                    : "--"}
-                </strong>
-
-                <small>{t.per10g}</small>
-              </div>
-
-              <div className="metal-rate-item">
-                <span>{t.silver999}</span>
-
-                <strong>
-                  ₹{" "}
-                  {metalRates.silver999 != null
-                    ? Number(
-                      metalRates.silver999
-                    ).toLocaleString("en-IN")
-                    : "--"}
-                </strong>
-
-                <small>{t.perKg}</small>
-              </div>
-            </div>
-          )}
-        </section>
-        <section className="actions">
-          <button
-            type="button"
-            className="action-card main-action"
-            onClick={() => navigate("/new-bill")}
-          >
-            <div className="action-icon">+</div>
-
-            <div className="action-content">
-              <h2>{t.newBill}</h2>
-              <p>{t.newBillText}</p>
-            </div>
-
-            <span className="action-arrow">→</span>
-          </button>
-
-          <button
-            type="button"
-            className="action-card"
-            onClick={() => navigate("/jewellery")}
-          >
-            <div className="action-icon">◇</div>
-
-            <div className="action-content">
-              <h2>{t.jewellery}</h2>
-              <p>{t.jewelleryText}</p>
-            </div>
-
-            <span className="action-arrow">→</span>
-          </button>
-
-          <button
-            type="button"
-            className="action-card"
-            onClick={() => navigate("/today-sales")}
-          >
-            <div className="action-icon">₹</div>
-
-            <div className="action-content">
-              <h2>{t.sales}</h2>
-              <p>{t.salesText}</p>
-            </div>
-
-            <span className="action-arrow">→</span>
-          </button>
-
-          <button
-            type="button"
-            className="action-card"
-            onClick={() => navigate("/bill-history")}
-          >
-            <div className="action-icon">▤</div>
-
-            <div className="action-content">
-              <h2>{t.billHistory}</h2>
-              <p>{t.billHistoryText}</p>
-            </div>
-
-            <span className="action-arrow">→</span>
-          </button>
-        </section>
-
-        <section className="summary-section">
-          <div className="section-heading">
-            <div>
-              <span>{t.summary}</span>
-              <h2>{t.todayDetails}</h2>
-            </div>
-
-            <div className="today-date">
-              {t.today}
-            </div>
-          </div>
-
-          <div className="summary-grid">
-            <div className="summary-card">
-              <span className="summary-title">
-                {t.todayBills}
+              <span className="metal-rates-live">
+                ● {t.live}
               </span>
-
-              <strong>{todayBillsCount}</strong>
-
-              <p>{t.billsCreated}</p>
             </div>
 
-            <div className="summary-card">
-              <span className="summary-title">
-                {t.todaySales}
-              </span>
+            {ratesLoading ? (
+              <div className="rates-loading">
+                {t.loadingRates}
+              </div>
+            ) : ratesError ? (
+              <div className="rates-error">
+                {ratesError}
+              </div>
+            ) : (
+              <div className="metal-rates-grid">
+                <div className="metal-rate-item">
+                  <span>{t.gold24}</span>
 
-              <strong>₹{money(todaySales)}</strong>
+                  <strong>
+                    ₹{" "}
+                    {metalRates.gold24 != null
+                      ? Number(
+                        metalRates.gold24 * 10
+                      ).toLocaleString("en-IN")
+                      : "--"}
+                  </strong>
 
-              <p>{t.totalTodaySales}</p>
-            </div>
+                  <small>{t.per10g}</small>
+                </div>
 
-            <div className="summary-card">
-              <span className="summary-title">
-                {t.thisMonth}
-              </span>
+                <div className="metal-rate-item">
+                  <span>{t.gold22}</span>
 
-              <strong>
-                {formatMonthlySales(monthlySales)}
-              </strong>
+                  <strong>
+                    ₹{" "}
+                    {metalRates.gold22 != null
+                      ? Number(
+                        metalRates.gold22 * 10
+                      ).toLocaleString("en-IN")
+                      : "--"}
+                  </strong>
 
-              <p>{t.monthSales}</p>
-            </div>
-          </div>
-        </section>
+                  <small>{t.per10g}</small>
+                </div>
 
-        <section className="recent-section">
-          <div className="section-heading">
-            <div>
-              <span>{t.activity}</span>
-              <h2>{t.recentBills}</h2>
-            </div>
+                <div className="metal-rate-item">
+                  <span>{t.gold18}</span>
+
+                  <strong>
+                    ₹{" "}
+                    {metalRates.gold18 != null
+                      ? Number(
+                        metalRates.gold18 * 10
+                      ).toLocaleString("en-IN")
+                      : "--"}
+                  </strong>
+
+                  <small>{t.per10g}</small>
+                </div>
+
+                <div className="metal-rate-item">
+                  <span>{t.silver999}</span>
+
+                  <strong>
+                    ₹{" "}
+                    {metalRates.silver999 != null
+                      ? Number(
+                        metalRates.silver999
+                      ).toLocaleString("en-IN")
+                      : "--"}
+                  </strong>
+
+                  <small>{t.perKg}</small>
+                </div>
+              </div>
+            )}
+          </section>
+          <section className="actions">
+            <button
+              type="button"
+              className="action-card main-action"
+              onClick={() => navigate("/new-bill")}
+            >
+              <div className="action-icon">+</div>
+
+              <div className="action-content">
+                <h2>{t.newBill}</h2>
+                <p>{t.newBillText}</p>
+              </div>
+
+              <span className="action-arrow">→</span>
+            </button>
 
             <button
               type="button"
-              className="view-all"
+              className="action-card"
+              onClick={() => navigate("/jewellery")}
+            >
+              <div className="action-icon">◇</div>
+
+              <div className="action-content">
+                <h2>{t.jewellery}</h2>
+                <p>{t.jewelleryText}</p>
+              </div>
+
+              <span className="action-arrow">→</span>
+            </button>
+
+            <button
+              type="button"
+              className="action-card"
+              onClick={() => navigate("/today-sales")}
+            >
+              <div className="action-icon">₹</div>
+
+              <div className="action-content">
+                <h2>{t.sales}</h2>
+                <p>{t.salesText}</p>
+              </div>
+
+              <span className="action-arrow">→</span>
+            </button>
+
+            <button
+              type="button"
+              className="action-card"
               onClick={() => navigate("/bill-history")}
             >
-              {t.viewAll} →
-            </button>
-          </div>
+              <div className="action-icon">▤</div>
 
-          <div className="recent-table">
-            <div className="table-header">
-              <span>{t.billNumber}</span>
-              <span>{t.customer}</span>
-              <span>{t.item}</span>
-              <span>{t.amount}</span>
+              <div className="action-content">
+                <h2>{t.billHistory}</h2>
+                <p>{t.billHistoryText}</p>
+              </div>
+
+              <span className="action-arrow">→</span>
+            </button>
+          </section>
+
+          <section className="summary-section">
+            <div className="section-heading">
+              <div>
+                <span>{t.summary}</span>
+                <h2>{t.todayDetails}</h2>
+              </div>
+
+              <div className="today-date">
+                {t.today}
+              </div>
             </div>
 
-            {recentBillsLoading && (
-              <div className="table-row">
-                <span>{t.loading}</span>
-              </div>
-            )}
+            <div className="summary-grid">
+              <div className="summary-card">
+                <span className="summary-title">
+                  {t.todayBills}
+                </span>
 
-            {!recentBillsLoading &&
-              recentBills.length === 0 && (
+                <strong>{todayBillsCount}</strong>
+
+                <p>{t.billsCreated}</p>
+              </div>
+
+              <div className="summary-card">
+                <span className="summary-title">
+                  {t.todaySales}
+                </span>
+
+                <strong>₹{money(todaySales)}</strong>
+
+                <p>{t.totalTodaySales}</p>
+              </div>
+
+              <div className="summary-card">
+                <span className="summary-title">
+                  {t.thisMonth}
+                </span>
+
+                <strong>
+                  {formatMonthlySales(monthlySales)}
+                </strong>
+
+                <p>{t.monthSales}</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="recent-section">
+            <div className="section-heading">
+              <div>
+                <span>{t.activity}</span>
+                <h2>{t.recentBills}</h2>
+              </div>
+
+              <button
+                type="button"
+                className="view-all"
+                onClick={() => navigate("/bill-history")}
+              >
+                {t.viewAll} →
+              </button>
+            </div>
+
+            <div className="recent-table">
+              <div className="table-header">
+                <span>{t.billNumber}</span>
+                <span>{t.customer}</span>
+                <span>{t.item}</span>
+                <span>{t.amount}</span>
+              </div>
+
+              {recentBillsLoading && (
                 <div className="table-row">
-                  <span>{t.noBills}</span>
+                  <span>{t.loading}</span>
                 </div>
               )}
 
-            {!recentBillsLoading &&
-              recentBills.map((bill) => (
-                <div
-                  className="table-row"
-                  key={bill.id}
-                >
-                  <span className="bill-no">
-                    #
-                    {bill.billNumber ||
-                      bill.id.slice(0, 7)}
-                  </span>
+              {!recentBillsLoading &&
+                recentBills.length === 0 && (
+                  <div className="table-row">
+                    <span>{t.noBills}</span>
+                  </div>
+                )}
 
-                  <span>
-                    {bill.customerName || t.customer}
-                  </span>
+              {!recentBillsLoading &&
+                recentBills.map((bill) => (
+                  <div
+                    className="table-row"
+                    key={bill.id}
+                  >
+                    <span className="bill-no">
+                      #
+                      {bill.billNumber ||
+                        bill.id.slice(0, 7)}
+                    </span>
 
-                  <span className="item-name">
-                    {bill.itemName || t.jewellery}
+                    <span>
+                      {bill.customerName || t.customer}
+                    </span>
 
-                    {bill.metal && (
-                      <>
-                        {" • "}
+                    <span className="item-name">
+                      {bill.itemName || t.jewellery}
 
-                        {String(bill.metal).toLowerCase() ===
-                          "gold"
-                          ? t.gold
-                          : String(
-                            bill.metal
-                          ).toLowerCase() === "silver"
-                            ? t.silver
-                            : bill.metal}
-                      </>
-                    )}
-                  </span>
+                      {bill.metal && (
+                        <>
+                          {" • "}
 
-                  <strong>
-                    ₹
-                    {Number(
-                      bill.grandTotal || 0
-                    ).toLocaleString("en-IN")}
-                  </strong>
-                </div>
-              ))}
-          </div>
-        </section>
+                          {String(bill.metal).toLowerCase() ===
+                            "gold"
+                            ? t.gold
+                            : String(
+                              bill.metal
+                            ).toLowerCase() === "silver"
+                              ? t.silver
+                              : bill.metal}
+                        </>
+                      )}
+                    </span>
+
+                    <strong>
+                      ₹
+                      {Number(
+                        bill.grandTotal || 0
+                      ).toLocaleString("en-IN")}
+                    </strong>
+                  </div>
+                ))}
+            </div>
+          </section>
         </main>
       )}
 
@@ -1746,20 +1771,57 @@ function Dashboard() {
                   />
                 </label>
 
+
                 <label className="shop-settings-field">
                   <span>{t.gst}</span>
 
                   <input
                     type="text"
                     value={draft.gstNumber}
+                    maxLength={15}
+                    autoComplete="off"
+                    placeholder="22AAAAA0000A1Z5"
+                    style={{
+                      textTransform: "uppercase",
+                      borderColor:
+                        draft.gstNumber.trim() &&
+                          !isValidGSTIN(draft.gstNumber)
+                          ? "#ef4444"
+                          : draft.gstNumber.trim()
+                            ? "#22c55e"
+                            : undefined,
+                    }}
                     onChange={(event) =>
                       updateDraft(
                         "gstNumber",
                         event.target.value
+                          .toUpperCase()
+                          .replace(/[^A-Z0-9]/g, "")
+                          .slice(0, 15)
                       )
                     }
                   />
+
+                  {draft.gstNumber.trim() && (
+                    <small
+                      style={{
+                        display: "block",
+                        marginTop: "6px",
+                        fontSize: "12px",
+                        color: isValidGSTIN(draft.gstNumber)
+                          ? "#22c55e"
+                          : "#ef4444",
+                      }}
+                    >
+                      {draft.gstNumber.length < 15
+                        ? t.gstLength
+                        : isValidGSTIN(draft.gstNumber)
+                          ? t.gstValid
+                          : t.gstInvalid}
+                    </small>
+                  )}
                 </label>
+
 
                 <label className="shop-settings-field shop-settings-field-full">
                   <span>{t.address}</span>

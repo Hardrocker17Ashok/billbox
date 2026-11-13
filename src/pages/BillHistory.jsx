@@ -8,6 +8,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  deleteDoc,
   query,
   where,
 } from "firebase/firestore";
@@ -76,6 +77,26 @@ const TEXT = {
     separateItems: "अलग-अलग आइटम",
     totalWeight: "कुल वजन",
     allItemsWeight: "सभी आभूषणों का वजन",
+    billType: "बिल का प्रकार",
+    taxInvoice: "पक्का बिल / टैक्स इनवॉइस",
+    estimateInvoice: "कच्चा बिल / अनुमान",
+    owner: "मालिक",
+    alternatePhone: "वैकल्पिक फोन",
+    tagline: "टैगलाइन",
+    hsn: "HSN कोड",
+    sku: "आइटम कोड / SKU",
+    huid: "HUID / हॉलमार्क नंबर",
+    metalValue: "सोने / चाँदी की कीमत",
+    otherCharges: "अन्य शुल्क",
+    gstRate: "GST दर",
+    taxableAmount: "कर योग्य राशि",
+    lineTotal: "आइटम कुल",
+    amountPaid: "प्राप्त राशि",
+    balanceDue: "बाकी राशि",
+    paymentStatus: "भुगतान स्थिति",
+    paidStatus: "भुगतान पूरा",
+    partialStatus: "आंशिक भुगतान",
+    dueStatus: "भुगतान बाकी",
     items: "आभूषण",
     purchasedItems: "खरीदे गए आभूषण",
     itemCount: "आइटम",
@@ -103,6 +124,14 @@ const TEXT = {
     gstin: "GSTIN",
     phoneLabel: "फोन",
     noShopProfile: "शॉप प्रोफाइल उपलब्ध नहीं है।",
+    deleteBill: "बिल हटाएँ",
+    confirmDeleteTitle: "बिल हटाने की पुष्टि करें",
+    confirmDeleteMessage: "क्या आप यह बिल स्थायी रूप से हटाना चाहते हैं? यह कार्रवाई वापस नहीं की जा सकती।",
+    confirmDelete: "हाँ, बिल हटाएँ",
+    cancelDelete: "रद्द करें",
+    deleting: "हटाया जा रहा है...",
+    deleteSuccess: "बिल सफलतापूर्वक हटा दिया गया।",
+    deleteError: "बिल हटाया नहीं जा सका। कृपया दोबारा प्रयास करें।",
   },
 
   en: {
@@ -154,6 +183,26 @@ const TEXT = {
     separateItems: "Separate items",
     totalWeight: "Total weight",
     allItemsWeight: "Weight of all jewellery",
+    billType: "Bill type",
+    taxInvoice: "Tax Invoice",
+    estimateInvoice: "Estimate / Non-tax invoice",
+    owner: "Owner",
+    alternatePhone: "Alternate phone",
+    tagline: "Tagline",
+    hsn: "HSN code",
+    sku: "Item code / SKU",
+    huid: "HUID / Hallmark number",
+    metalValue: "Metal value",
+    otherCharges: "Other charges",
+    gstRate: "GST rate",
+    taxableAmount: "Taxable amount",
+    lineTotal: "Item total",
+    amountPaid: "Amount received",
+    balanceDue: "Balance due",
+    paymentStatus: "Payment status",
+    paidStatus: "Paid",
+    partialStatus: "Partially paid",
+    dueStatus: "Payment due",
     items: "JEWELLERY",
     purchasedItems: "Purchased items",
     itemCount: "items",
@@ -181,6 +230,14 @@ const TEXT = {
     gstin: "GSTIN",
     phoneLabel: "Phone",
     noShopProfile: "Shop profile is unavailable.",
+    deleteBill: "Remove bill",
+    confirmDeleteTitle: "Confirm bill deletion",
+    confirmDeleteMessage: "Are you sure you want to permanently delete this bill? This action cannot be undone.",
+    confirmDelete: "Yes, delete bill",
+    cancelDelete: "Cancel",
+    deleting: "Deleting...",
+    deleteSuccess: "Bill deleted successfully.",
+    deleteError: "Could not delete the bill. Please try again.",
   },
 };
 
@@ -204,6 +261,9 @@ function BillHistory() {
   const [metalFilter, setMetalFilter] = useState("all");
 
   const [selectedBill, setSelectedBill] = useState(null);
+  const [deleteConfirmBill, setDeleteConfirmBill] = useState(null);
+  const [deletingBillId, setDeletingBillId] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   const language =
     shopProfile.language === "en" ? "en" : "hi";
@@ -577,6 +637,47 @@ function BillHistory() {
 
   const closeBillDetails = () => setSelectedBill(null);
 
+  const requestBillDelete = (event, bill) => {
+    event.stopPropagation();
+    setDeleteError("");
+    setDeleteConfirmBill(bill);
+  };
+
+  const cancelBillDelete = () => {
+    if (deletingBillId) return;
+    setDeleteConfirmBill(null);
+    setDeleteError("");
+  };
+
+  const confirmBillDelete = async () => {
+    if (!deleteConfirmBill?.id || !user?.uid || deletingBillId) return;
+
+    const billToDelete = deleteConfirmBill;
+    setDeletingBillId(billToDelete.id);
+    setDeleteError("");
+
+    try {
+      // The bill list is already scoped to the signed-in owner's UID.
+      // Delete the exact Firestore document only after explicit confirmation.
+      await deleteDoc(doc(db, "bills", billToDelete.id));
+
+      setBills((currentBills) =>
+        currentBills.filter((bill) => bill.id !== billToDelete.id)
+      );
+
+      if (selectedBill?.id === billToDelete.id) {
+        setSelectedBill(null);
+      }
+
+      setDeleteConfirmBill(null);
+    } catch (deleteErr) {
+      console.error("Bill delete error:", deleteErr);
+      setDeleteError(t.deleteError);
+    } finally {
+      setDeletingBillId("");
+    }
+  };
+
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === "Escape") {
@@ -603,17 +704,47 @@ function BillHistory() {
   );
 
   const selectedMaking = Number(
-    selectedBill?.makingCharges || 0
+    selectedBill?.makingCharges ??
+      selectedItems.reduce((total, item) => total + Number(item.makingCharges || item.chargesBreakdown?.makingTotal || 0), 0)
+  );
+
+  const selectedOtherCharges = Number(
+    selectedBill?.otherCharges ??
+      selectedItems.reduce((total, item) => total + Number(item.otherCharges || item.chargesBreakdown?.otherTotal || 0), 0)
   );
 
   const selectedOffer = Number(
-    selectedBill?.offer || 0
+    selectedBill?.offer ?? selectedBill?.discount ?? 0
   );
+
+  const selectedPaid = Number(
+    selectedBill?.paidAmount ?? selectedBill?.amountPaid ?? selectedBill?.payment?.paid ?? 0
+  );
+
+  const selectedBalance = Number(
+    selectedBill?.balanceDue ?? selectedBill?.balanceAmount ?? selectedBill?.payment?.balance ??
+      Math.max(0, Number(selectedBill?.grandTotal || 0) - selectedPaid)
+  );
+
+  const rawPaymentStatus = String(
+    selectedBill?.paymentStatus || selectedBill?.payment?.status || ""
+  ).toLowerCase();
+
+  const selectedPaymentStatus =
+    rawPaymentStatus.includes("partial") || rawPaymentStatus.includes("आंशिक")
+      ? "partial"
+      : rawPaymentStatus.includes("paid") || rawPaymentStatus.includes("भुगतान पूरा")
+        ? "paid"
+        : selectedBalance <= 0
+          ? "paid"
+          : selectedPaid > 0
+            ? "partial"
+            : "due";
 
   const selectedSubtotal =
     selectedBill?.subtotal !== undefined
       ? Number(selectedBill.subtotal || 0)
-      : selectedBaseAmount + selectedMaking - selectedOffer;
+      : selectedBaseAmount + selectedMaking + selectedOtherCharges - selectedOffer;
 
   const selectedGst = Number(
     selectedBill?.gstAmount || 0
@@ -906,6 +1037,18 @@ function BillHistory() {
                             </strong>
                           </div>
                         </div>
+
+                        <div className="bill-card-actions">
+                          <button
+                            type="button"
+                            className="bill-delete-button"
+                            onClick={(event) => requestBillDelete(event, bill)}
+                            aria-label={`${t.deleteBill} #${bill.billNumber || bill.id.slice(0, 7)}`}
+                          >
+                            <span className="bill-delete-icon" aria-hidden="true">⌫</span>
+                            {t.deleteBill}
+                          </button>
+                        </div>
                       </article>
                     );
                   })}
@@ -958,20 +1101,20 @@ function BillHistory() {
             <div className="details-identity">
               <div className="identity-brand">
                 <div className="identity-logo">
-                  {shopProfile.logoUrl ? (
+                  {(selectedBill.shopLogoUrl || shopProfile.logoUrl) ? (
                     <img
-                      src={shopProfile.logoUrl}
-                      alt={shopProfile.shopName}
+                      src={selectedBill.shopLogoUrl || shopProfile.logoUrl}
+                      alt={selectedBill.shopName || shopProfile.shopName}
                     />
                   ) : (
                     <strong>
-                      {(shopProfile.shopName || "B").charAt(0).toUpperCase()}
+                      {(selectedBill.shopName || shopProfile.shopName || "B").charAt(0).toUpperCase()}
                     </strong>
                   )}
                 </div>
 
                 <div>
-                  <strong>{shopProfile.shopName || "BillBox"}</strong>
+                  <strong>{selectedBill.shopName || shopProfile.shopName || "BillBox"}</strong>
                   <span>
                     {t.footerTrust} • {t.footerPurity} • {t.footerBeauty}
                   </span>
@@ -1019,6 +1162,18 @@ function BillHistory() {
                   {formatNumber(selectedTotalWeight)} {t.gram}
                 </strong>
                 <small>{t.allItemsWeight}</small>
+              </div>
+
+              <div className="details-info-card">
+                <span>{t.billType}</span>
+                <strong>
+                  {selectedBill.billType === "tax"
+                    ? t.taxInvoice
+                    : selectedBill.billType
+                      ? t.estimateInvoice
+                      : (selectedBill.billTypeLabel || t.estimateInvoice)}
+                </strong>
+                <small>{selectedBill.gstEnabled ? `${t.gst}: ${formatNumber(selectedBill.gstRate || 0)}%` : `${t.gst}: ${t.gstOff || "—"}`}</small>
               </div>
             </div>
 
@@ -1079,7 +1234,24 @@ function BillHistory() {
 
                       <div className="details-item-amount">
                         <span>{t.itemAmount}</span>
-                        <strong>₹{formatMoney(item.amount)}</strong>
+                        <strong>₹{formatMoney(item.amount ?? item.chargesBreakdown?.metalValue ?? 0)}</strong>
+                      </div>
+
+                      <div className="details-item-extra">
+                        {(item.hsnCode || item.skuCode || item.huid) && (
+                          <div className="details-extra-codes">
+                            {item.hsnCode && <span><b>{t.hsn}:</b> {item.hsnCode}</span>}
+                            {item.skuCode && <span><b>{t.sku}:</b> {item.skuCode}</span>}
+                            {item.huid && <span><b>{t.huid}:</b> {item.huid}</span>}
+                          </div>
+                        )}
+                        <div className="details-extra-values">
+                          <span>{t.making}: <b>₹{formatMoney(item.makingCharges ?? item.chargesBreakdown?.makingTotal ?? 0)}</b></span>
+                          <span>{t.otherCharges}: <b>₹{formatMoney(item.otherCharges ?? item.chargesBreakdown?.otherTotal ?? 0)}</b></span>
+                          <span>{t.gst} ({formatNumber(item.gstRate || 0)}%): <b>₹{formatMoney(item.gstAmount || 0)}</b></span>
+                          <span>{t.taxableAmount}: <b>₹{formatMoney(item.taxableAmount ?? (Number(item.amount || 0) + Number(item.makingCharges || 0) + Number(item.otherCharges || 0)))}</b></span>
+                          <span>{t.lineTotal}: <b>₹{formatMoney(item.lineTotal ?? item.totalAmount ?? item.amount ?? 0)}</b></span>
+                        </div>
                       </div>
                     </div>
                   );
@@ -1090,22 +1262,30 @@ function BillHistory() {
             <div className="details-bottom-grid">
               <div className="details-shop-card">
                 <span>{t.shopInfo}</span>
-                <strong>{shopProfile.shopName || "BillBox"}</strong>
+                <strong>{selectedBill.shopName || shopProfile.shopName || "BillBox"}</strong>
 
-                {shopProfile.ownerName && (
-                  <p>{shopProfile.ownerName}</p>
+                {(selectedBill.shopOwnerName || shopProfile.ownerName) && (
+                  <p>{t.owner}: {selectedBill.shopOwnerName || shopProfile.ownerName}</p>
                 )}
 
-                {shopProfile.address && (
-                  <p>{shopProfile.address}</p>
+                {(selectedBill.shopTagline || shopProfile.tagline) && (
+                  <p>{selectedBill.shopTagline || shopProfile.tagline}</p>
                 )}
 
-                {shopProfile.phone && (
-                  <small>{t.phoneLabel}: {shopProfile.phone}</small>
+                {(selectedBill.shopAddress || shopProfile.address) && (
+                  <p>{selectedBill.shopAddress || shopProfile.address}</p>
                 )}
 
-                {shopProfile.gstNumber && (
-                  <small>{t.gstin}: {shopProfile.gstNumber}</small>
+                {(selectedBill.shopPhone || shopProfile.phone) && (
+                  <small>{t.phoneLabel}: {selectedBill.shopPhone || shopProfile.phone}</small>
+                )}
+
+                {(selectedBill.shopAlternatePhone || shopProfile.alternatePhone) && (
+                  <small>{t.alternatePhone}: {selectedBill.shopAlternatePhone || shopProfile.alternatePhone}</small>
+                )}
+
+                {(selectedBill.shopGstNumber || shopProfile.gstNumber) && (
+                  <small>{t.gstin}: {selectedBill.shopGstNumber || shopProfile.gstNumber}</small>
                 )}
               </div>
 
@@ -1122,6 +1302,11 @@ function BillHistory() {
                   </div>
                 )}
 
+                <div className="details-amount-row">
+                  <span>{t.otherCharges}</span>
+                  <strong>₹{formatMoney(selectedOtherCharges)}</strong>
+                </div>
+
                 {selectedOffer > 0 && (
                   <div className="details-amount-row discount">
                     <span>{t.discount}</span>
@@ -1134,7 +1319,7 @@ function BillHistory() {
                   <strong>₹{formatMoney(selectedSubtotal)}</strong>
                 </div>
 
-                {selectedBill.gstEnabled && (
+                {(selectedBill.gstEnabled || selectedGst > 0) && (
                   <div className="details-amount-row">
                     <span>
                       {t.gst} ({selectedBill.gstRate || 0}%)
@@ -1146,6 +1331,24 @@ function BillHistory() {
                 <div className="details-grand-total">
                   <span>{t.grandTotal}</span>
                   <strong>₹{formatMoney(selectedGrandTotal)}</strong>
+                </div>
+
+                <div className="details-amount-row details-payment-row">
+                  <span>{t.amountPaid}</span>
+                  <strong>₹{formatMoney(selectedPaid)}</strong>
+                </div>
+
+                <div className="details-amount-row details-balance-row">
+                  <span>{t.balanceDue}</span>
+                  <strong>₹{formatMoney(selectedBalance)}</strong>
+                </div>
+
+                <div className="details-payment-status">
+                  <span>{t.paymentStatus}</span>
+                  <strong>
+                    {selectedPaymentStatus === "paid" ? t.paidStatus :
+                      selectedPaymentStatus === "partial" ? t.partialStatus : t.dueStatus}
+                  </strong>
                 </div>
               </div>
             </div>
@@ -1159,6 +1362,75 @@ function BillHistory() {
               <button type="button" onClick={closeBillDetails}>
                 {t.close}
               </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* BILL DELETE CONFIRMATION */}
+      {deleteConfirmBill && (
+        <div
+          className="bill-delete-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              cancelBillDelete();
+            }
+          }}
+        >
+          <section
+            className="bill-delete-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bill-delete-title"
+          >
+            <div className="bill-delete-dialog-icon" aria-hidden="true">
+              <span>!</span>
+            </div>
+
+            <div className="bill-delete-dialog-content">
+              <span className="bill-delete-eyebrow">BILLBOX • {t.deleteBill}</span>
+              <h2 id="bill-delete-title">{t.confirmDeleteTitle}</h2>
+              <p>{t.confirmDeleteMessage}</p>
+
+              <div className="bill-delete-summary">
+                <div>
+                  <span>{t.billNumber}</span>
+                  <strong>
+                    #{deleteConfirmBill.billNumber || deleteConfirmBill.id.slice(0, 7)}
+                  </strong>
+                </div>
+                <div>
+                  <span>{t.customer}</span>
+                  <strong>{deleteConfirmBill.customerName || t.customerFallback}</strong>
+                </div>
+                <div>
+                  <span>{t.amount}</span>
+                  <strong>₹{formatMoney(deleteConfirmBill.grandTotal)}</strong>
+                </div>
+              </div>
+
+              {deleteError && (
+                <p className="bill-delete-error" role="alert">{deleteError}</p>
+              )}
+
+              <div className="bill-delete-dialog-actions">
+                <button
+                  type="button"
+                  className="bill-delete-cancel"
+                  onClick={cancelBillDelete}
+                  disabled={Boolean(deletingBillId)}
+                >
+                  {t.cancelDelete}
+                </button>
+                <button
+                  type="button"
+                  className="bill-delete-confirm"
+                  onClick={confirmBillDelete}
+                  disabled={Boolean(deletingBillId)}
+                >
+                  {deletingBillId ? t.deleting : t.confirmDelete}
+                </button>
+              </div>
             </div>
           </section>
         </div>
