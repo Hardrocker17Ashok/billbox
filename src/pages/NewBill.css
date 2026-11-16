@@ -4708,3 +4708,298 @@ button {
   border-color: var(--gold);
   color: var(--gold-light);
 }
+
+/* =========================================================
+   BILLBOX — EXPLICIT SAVE / PRINT CONFIRMATION
+   Screen-only modal; existing invoice and A4 print styling untouched.
+========================================================= */
+.billbox-share-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.76);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.billbox-share-dialog {
+  width: min(100%, 480px);
+  padding: 30px;
+  border: 1px solid rgba(181, 138, 58, 0.28);
+  border-radius: 18px;
+  background: linear-gradient(145deg, #201e1a, #111110);
+  color: #e9e5dc;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+}
+
+.billbox-share-success-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 17px;
+  border: 1px solid rgba(181, 138, 58, 0.35);
+  border-radius: 13px;
+  background: rgba(181, 138, 58, 0.13);
+  color: #d4af63;
+  font-size: 21px;
+}
+
+.billbox-share-eyebrow {
+  color: #c49a4c;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.billbox-share-dialog h2 {
+  margin: 9px 0 8px;
+  color: #f3efe7;
+  font-size: 23px;
+  font-weight: 600;
+}
+
+.billbox-share-dialog > p {
+  margin: 0 0 20px;
+  color: #aaa59c;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.billbox-share-summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px 16px;
+  margin: 18px 0 22px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.20);
+}
+
+.billbox-share-summary span {
+  color: #85817a;
+  font-size: 11px;
+}
+
+.billbox-share-summary strong {
+  color: #e9e5dc;
+  font-size: 11px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.billbox-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.billbox-share-actions button {
+  min-height: 42px;
+  padding: 0 15px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.billbox-share-actions button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.billbox-share-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.billbox-share-cancel {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.045);
+  color: #c7c1b7;
+}
+
+.billbox-share-secondary {
+  border: 1px solid rgba(181, 138, 58, 0.42);
+  background: rgba(181, 138, 58, 0.12);
+  color: #dfbd78;
+}
+
+.billbox-share-primary {
+  border: 0;
+  background: linear-gradient(135deg, #c0974b, #9a702d);
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(151, 108, 39, 0.22);
+}
+
+@media (max-width: 520px) {
+  .billbox-share-dialog {
+    padding: 22px;
+  }
+
+  .billbox-invoice-actions {
+    flex-direction: column-reverse;
+  }
+
+  .billbox-invoice-actions button {
+    width: 100%;
+  }
+}
+
+@media print {
+  .billbox-share-backdrop {
+    display: none !important;
+  }
+}
+
+
+/* =========================================================
+   BILLBOX — SAVE CONFIRMATION DIALOG
+   Theme-aware (shop theme) and bilingual through React copy.
+========================================================= */
+.billbox-save-dialog {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  width: min(100%, 470px);
+  border-radius: 20px;
+  padding: 30px;
+  animation: billboxDialogIn 220ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.billbox-save-dialog::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #c49a4c, #ead39a, #c49a4c, transparent);
+}
+
+.billbox-save-dialog .billbox-share-success-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  font-size: 22px;
+}
+
+.billbox-save-dialog .billbox-share-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  letter-spacing: 1.8px;
+}
+
+.billbox-save-dialog h2 {
+  margin-top: 11px;
+  margin-bottom: 9px;
+  font-size: clamp(20px, 4vw, 24px);
+  line-height: 1.4;
+  letter-spacing: -0.35px;
+}
+
+.billbox-save-dialog > p {
+  font-size: 12.5px;
+  line-height: 1.85;
+  margin-bottom: 19px;
+}
+
+.billbox-save-dialog .billbox-share-summary {
+  border-radius: 13px;
+  padding: 17px 18px;
+  margin: 18px 0 21px;
+}
+
+.billbox-save-dialog .billbox-share-actions button {
+  min-height: 44px;
+  padding-inline: 18px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.billbox-save-dialog .billbox-share-primary {
+  background: linear-gradient(135deg, #c8a15b 0%, #a77b35 100%);
+  color: #17130d;
+  font-weight: 800;
+}
+
+.billbox-save-dialog.bill-theme-light {
+  background: linear-gradient(145deg, #ffffff 0%, #f8f6f0 100%);
+  color: #332d24;
+  border: 1px solid rgba(130, 94, 35, 0.20);
+  box-shadow: 0 24px 80px rgba(47, 38, 22, 0.22);
+}
+
+.billbox-save-dialog.bill-theme-light h2 {
+  color: #28231b;
+}
+
+.billbox-save-dialog.bill-theme-light > p {
+  color: #70695e;
+}
+
+.billbox-save-dialog.bill-theme-light .billbox-share-summary {
+  background: #f2eee5;
+  border-color: rgba(78, 62, 37, 0.10);
+}
+
+.billbox-save-dialog.bill-theme-light .billbox-share-summary span {
+  color: #82796b;
+}
+
+.billbox-save-dialog.bill-theme-light .billbox-share-summary strong {
+  color: #342d22;
+}
+
+.billbox-save-dialog.bill-theme-light .billbox-share-cancel {
+  color: #625a4e;
+  border-color: rgba(78, 62, 37, 0.18);
+  background: #fff;
+}
+
+.billbox-save-dialog.bill-theme-dark {
+  background: linear-gradient(145deg, #24211c 0%, #121210 100%);
+  color: #e9e5dc;
+  border: 1px solid rgba(196, 154, 76, 0.28);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.58);
+}
+
+.billbox-save-dialog.bill-theme-dark h2 {
+  color: #f4efe5;
+}
+
+.billbox-save-dialog.bill-theme-dark > p {
+  color: #b5aea2;
+}
+
+@keyframes billboxDialogIn {
+  from { opacity: 0; transform: translateY(9px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 520px) {
+  .billbox-save-dialog {
+    width: min(100%, 440px);
+    padding: 23px 20px;
+    border-radius: 17px;
+  }
+
+  .billbox-save-dialog .billbox-share-actions {
+    flex-direction: column-reverse;
+  }
+
+  .billbox-save-dialog .billbox-share-actions button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .billbox-save-dialog { animation: none; }
+}

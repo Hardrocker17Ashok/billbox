@@ -66,8 +66,8 @@ const TEXT = {
     perKg: "प्रति किलो",
     newBill: "नया बिल",
     newBillText: "ग्राहक का नया बिल बनाएँ",
-    jewellery: "आभूषण",
-    jewelleryText: "अपने आभूषण देखें",
+    jewellery: "ग्राहक लेजर",
+    jewelleryText: "ग्राहक का पूरा लेन-देन और बकाया देखें",
     sales: "बिक्री",
     salesText: "आज की बिक्री देखें",
     billHistory: "बिल इतिहास",
@@ -143,8 +143,8 @@ const TEXT = {
     perKg: "Per kilogram",
     newBill: "New Bill",
     newBillText: "Create a new customer bill",
-    jewellery: "Jewellery",
-    jewelleryText: "View your jewellery",
+    jewellery: "Customer Ledger",
+    jewelleryText: "Track customer payments and outstanding bills",
     sales: "Sales",
     salesText: "View today's sales",
     billHistory: "Bill History",
@@ -382,6 +382,8 @@ function Dashboard() {
   const [todayBillsCount, setTodayBillsCount] = useState(0);
   const [todaySales, setTodaySales] = useState(0);
   const [monthlySales, setMonthlySales] = useState(0);
+  const [todayPaid, setTodayPaid] = useState(0);
+  const [monthlyPaid, setMonthlyPaid] = useState(0);
 
   const [metalRates, setMetalRates] = useState({
     gold24: null,
@@ -885,21 +887,29 @@ function Dashboard() {
 
         const todayTotal = todayBills.reduce(
           (total, bill) =>
-            total + Number(bill.grandTotal || 0),
+            total + Number(bill.grandTotal || bill.totalAmount || 0),
           0
         );
 
         const monthTotal = monthBills.reduce(
-          (total, bill) =>
-            total + Number(bill.grandTotal || 0),
+          (total, bill) => total + Number(bill.grandTotal || bill.totalAmount || 0),
           0
         );
+
+        const getPaidAmount = (bill) => Number(
+          bill.paidAmount ?? bill.amountPaid ?? bill.payment?.paid ?? 0
+        ) || 0;
+
+        const todayPaidTotal = todayBills.reduce((sum, bill) => sum + getPaidAmount(bill), 0);
+        const monthPaidTotal = monthBills.reduce((sum, bill) => sum + getPaidAmount(bill), 0);
 
         if (!active) return;
 
         setTodayBillsCount(todayBills.length);
         setTodaySales(todayTotal);
         setMonthlySales(monthTotal);
+        setTodayPaid(todayPaidTotal);
+        setMonthlyPaid(monthPaidTotal);
         setRecentBills(todayBills.slice(0, 3));
       } catch (error) {
         console.error("Dashboard Firebase Error:", error);
@@ -910,6 +920,8 @@ function Dashboard() {
         setTodayBillsCount(0);
         setTodaySales(0);
         setMonthlySales(0);
+        setTodayPaid(0);
+        setMonthlyPaid(0);
       } finally {
         if (active) {
           setRecentBillsLoading(false);
@@ -1417,16 +1429,14 @@ function Dashboard() {
 
             <button
               type="button"
-              className="action-card"
-              onClick={() => navigate("/jewellery")}
+              className="action-card ledger-action"
+              onClick={() => navigate("/customer-ledger")}
             >
-              <div className="action-icon">◇</div>
-
+              <div className="action-icon">▥</div>
               <div className="action-content">
                 <h2>{t.jewellery}</h2>
                 <p>{t.jewelleryText}</p>
               </div>
-
               <span className="action-arrow">→</span>
             </button>
 
@@ -1489,8 +1499,15 @@ function Dashboard() {
                   {t.todaySales}
                 </span>
 
-                <strong>₹{money(todaySales)}</strong>
-
+                <div className="summary-sales-row">
+                  <strong>₹{money(todaySales)}</strong>
+                  <div className="summary-payment-flip" aria-label={language === "en" ? "Paid amount and total amount" : "प्राप्त राशि और कुल राशि"}>
+                    <div className="flip-track">
+                      <span><small>{language === "en" ? "PAID" : "प्राप्त"}</small><b>₹{money(todayPaid)}</b></span>
+                      <span><small>{language === "en" ? "TOTAL" : "कुल"}</small><b>₹{money(todaySales)}</b></span>
+                    </div>
+                  </div>
+                </div>
                 <p>{t.totalTodaySales}</p>
               </div>
 
@@ -1499,10 +1516,15 @@ function Dashboard() {
                   {t.thisMonth}
                 </span>
 
-                <strong>
-                  {formatMonthlySales(monthlySales)}
-                </strong>
-
+                <div className="summary-sales-row">
+                  <strong>{formatMonthlySales(monthlySales)}</strong>
+                  <div className="summary-payment-flip" aria-label={language === "en" ? "Paid amount and total amount" : "प्राप्त राशि और कुल राशि"}>
+                    <div className="flip-track">
+                      <span><small>{language === "en" ? "PAID" : "प्राप्त"}</small><b>₹{formatMonthlySales(monthlyPaid).replace(/^₹/, "")}</b></span>
+                      <span><small>{language === "en" ? "TOTAL" : "कुल"}</small><b>₹{formatMonthlySales(monthlySales).replace(/^₹/, "")}</b></span>
+                    </div>
+                  </div>
+                </div>
                 <p>{t.monthSales}</p>
               </div>
             </div>
@@ -1548,8 +1570,18 @@ function Dashboard() {
               {!recentBillsLoading &&
                 recentBills.map((bill) => (
                   <div
-                    className="table-row"
+                    className="table-row recent-bill-clickable"
                     key={bill.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(`/bill-history?billId=${encodeURIComponent(bill.id)}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigate(`/bill-history?billId=${encodeURIComponent(bill.id)}`);
+                      }
+                    }}
+                    title={language === "en" ? "Open bill details" : "बिल का विवरण देखें"}
                   >
                     <span className="bill-no">
                       #

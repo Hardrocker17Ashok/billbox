@@ -3689,3 +3689,74 @@ button {
     max-width: 190px !important;
   }
 }
+
+/* ==========================================================
+   BILLBOX DASHBOARD — SALES COLLECTION FLIP + CLICKABLE BILLS
+========================================================== */
+.dashboard .summary-sales-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.dashboard .summary-sales-row > strong { min-width: 0; }
+.dashboard .summary-payment-flip {
+  width: min(46%, 150px);
+  height: 58px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--gold-border);
+  border-radius: 9px;
+  background: linear-gradient(145deg, rgba(197,160,91,.13), rgba(197,160,91,.035));
+  perspective: 500px;
+}
+.dashboard .summary-payment-flip .flip-track {
+  display: flex;
+  flex-direction: column;
+  animation: billboxAmountFlip 5s cubic-bezier(.6,0,.25,1) infinite;
+}
+.dashboard .summary-payment-flip span {
+  height: 58px;
+  min-height: 58px;
+  padding: 7px 9px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+}
+.dashboard .summary-payment-flip small {
+  color: var(--gold);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.dashboard .summary-payment-flip b {
+  overflow: hidden;
+  color: var(--white);
+  font-size: 12px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@keyframes billboxAmountFlip {
+  0%, 42% { transform: translateY(0); }
+  50%, 92% { transform: translateY(-58px); }
+  100% { transform: translateY(0); }
+}
+.dashboard .recent-bill-clickable { cursor: pointer; transition: background .2s ease; }
+.dashboard .recent-bill-clickable:hover,
+.dashboard .recent-bill-clickable:focus-visible {
+  outline: none;
+  background: rgba(197,160,91,.09);
+}
+.dashboard .recent-bill-clickable:focus-visible { box-shadow: inset 0 0 0 2px var(--gold); }
+.dashboard .ledger-action { border-color: rgba(197,160,91,.48); }
+@media (max-width: 700px) {
+  .dashboard .summary-sales-row { align-items: flex-start; flex-direction: column; }
+  .dashboard .summary-payment-flip { width: 100%; max-width: none; }
+  .dashboard .summary-card { min-height: 170px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard .summary-payment-flip .flip-track { animation: none; }
+}

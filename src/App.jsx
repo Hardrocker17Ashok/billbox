@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter,
   Routes,
@@ -21,7 +22,7 @@ import Dashboard from "./pages/Dashboard";
 import NewBill from "./pages/NewBill";
 import BillHistory from "./pages/BillHistory";
 import TodaySales from "./pages/TodaySales";
-import Jewellery from "./pages/Jewellery";
+import CustomerLedger from "./pages/CustomerLedger";
 
 const ADMIN_EMAIL = "kj@gmail.com";
 
@@ -49,9 +50,6 @@ function applyPreferences(preferences, broadcast = true) {
   }
 }
 
-// Only a user validated as an active shop (or the BillBox admin)
-// can enter protected routes. Do not use auth.currentUser here:
-// Firebase also signs in users immediately after registration.
 function ProtectedRoute({ children, user, authReady }) {
   if (!authReady) {
     return null;
@@ -92,7 +90,6 @@ function AppContent() {
 
         const thisEvent = ++authEventVersion;
 
-        // A signed-out state is always safe to apply immediately.
         if (!currentUser) {
           setUser(null);
           applyLocalPreferences();
@@ -101,7 +98,6 @@ function AppContent() {
           return;
         }
 
-        // The existing BillBox admin account does not need a shops/{uid} doc.
         if (
           String(currentUser.email || "").toLowerCase() ===
           ADMIN_EMAIL.toLowerCase()
@@ -114,22 +110,17 @@ function AppContent() {
         }
 
         try {
-          // IMPORTANT:
-          // Do not mark a Firebase user as logged in until their shop
-          // document exists AND its status is active.
           const shopRef = doc(db, "shops", currentUser.uid);
           const shopSnapshot = await getDoc(shopRef);
 
           if (!active || thisEvent !== authEventVersion) return;
 
           if (!shopSnapshot.exists()) {
-            // This is commonly the short interval during registration:
-            // Firebase Auth has created the user, but the shop document
-            // has not yet been written. Keep the Login page mounted.
             setUser(null);
             applyLocalPreferences();
           } else {
             const shopData = shopSnapshot.data();
+
             const shopStatus = String(shopData.status || "")
               .toLowerCase()
               .trim();
@@ -144,8 +135,6 @@ function AppContent() {
                   shopData.language || DEFAULT_PREFERENCES.language,
               });
             } else {
-              // Pending / rejected / suspended / unknown accounts
-              // must never be treated as authenticated app users.
               setUser(null);
               applyLocalPreferences();
             }
@@ -247,11 +236,12 @@ function AppContent() {
           }
         />
 
+        {/* Customer Ledger Route */}
         <Route
-          path="/jewellery"
+          path="/customer-ledger"
           element={
             <ProtectedRoute user={user} authReady={appReady}>
-              <Jewellery />
+              <CustomerLedger />
             </ProtectedRoute>
           }
         />

@@ -70,6 +70,7 @@ const TEXT = {
     oldRecord: "पुराना बिक्री रिकॉर्ड",
     billDetails: "बिल का विवरण",
     close: "बंद करें",
+    downloadPdf: "PDF डाउनलोड करें",
     dateTime: "तारीख और समय",
     mobile: "मोबाइल",
     mobileUnavailable: "मोबाइल नंबर उपलब्ध नहीं",
@@ -176,6 +177,7 @@ const TEXT = {
     oldRecord: "PREVIOUS SALES RECORD",
     billDetails: "Bill details",
     close: "Close",
+    downloadPdf: "Download PDF",
     dateTime: "Date & time",
     mobile: "Mobile",
     mobileUnavailable: "Mobile number unavailable",
@@ -807,8 +809,8 @@ function BillHistory() {
           )}
 
           <div>
-            <span>{shopProfile.shopName || "BillBox"}</span>
-            <strong>{t.pageTitle}</strong>
+            <strong>{shopProfile.shopName || "BillBox"}</strong>
+            <span>{t.pageTitle}</span>
           </div>
         </div>
 
@@ -1359,9 +1361,18 @@ function BillHistory() {
                 <span>{t.readOnly}</span>
               </div>
 
-              <button type="button" onClick={closeBillDetails}>
-                {t.close}
-              </button>
+              <div className="details-modal-actions">
+                <button
+                  type="button"
+                  className="details-download-button"
+                  onClick={() => window.print()}
+                >
+                  ↓ {t.downloadPdf}
+                </button>
+                <button type="button" onClick={closeBillDetails}>
+                  {t.close}
+                </button>
+              </div>
             </div>
           </section>
         </div>

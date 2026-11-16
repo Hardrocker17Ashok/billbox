@@ -57,6 +57,10 @@ const TEXT = {
 
     totalSales: "आज की कुल बिक्री",
     filtered: "फ़िल्टर के अनुसार",
+    paid: "प्राप्त राशि",
+    due: "बाकी राशि",
+    flipHint: "Paid / Due अपने आप बदलता रहेगा",
+    backHint: "कुल बिक्री पर वापस जाने के लिए टैप करें",
 
     totalBills: "कुल बिल",
     createdToday: "आज बनाए गए बिल",
@@ -130,6 +134,10 @@ const TEXT = {
 
     totalSales: "Total sales today",
     filtered: "Based on filters",
+    paid: "Paid",
+    due: "Due",
+    flipHint: "Paid / Due changes automatically",
+    backHint: "Tap to return to total sales",
 
     totalBills: "Total bills",
     createdToday: "Bills created today",
@@ -613,6 +621,33 @@ function TodaySales() {
     0
   );
 
+  // Payment totals use the same bill fields as Bill History.
+  const paidTotal = filteredBills.reduce((sum, bill) => {
+    const grandTotal = Number(bill.grandTotal || 0);
+    const explicitDue = bill.balanceDue ?? bill.balanceAmount ?? bill.payment?.balance;
+    const explicitPaid = bill.paidAmount ?? bill.amountPaid ?? bill.payment?.paid;
+
+    const paid = explicitPaid !== undefined && explicitPaid !== null
+      ? Number(explicitPaid || 0)
+      : explicitDue !== undefined && explicitDue !== null
+        ? Math.max(0, grandTotal - Number(explicitDue || 0))
+        : 0;
+
+    return sum + paid;
+  }, 0);
+
+  const dueTotal = filteredBills.reduce((sum, bill) => {
+    const grandTotal = Number(bill.grandTotal || 0);
+    const explicitDue = bill.balanceDue ?? bill.balanceAmount ?? bill.payment?.balance;
+    const explicitPaid = bill.paidAmount ?? bill.amountPaid ?? bill.payment?.paid;
+
+    if (explicitDue !== undefined && explicitDue !== null) {
+      return sum + Math.max(0, Number(explicitDue || 0));
+    }
+
+    return sum + Math.max(0, grandTotal - Number(explicitPaid || 0));
+  }, 0);
+
   const averageBill =
     filteredBills.length > 0
       ? totalSales / filteredBills.length
@@ -729,14 +764,28 @@ function TodaySales() {
             {/* SUMMARY */}
 
             <div className="sales-stats">
-              <div className="sales-stat primary">
-                <span>{t.totalSales}</span>
-
-                <strong>
-                  ₹{formatMoney(totalSales)}
-                </strong>
-
-                <small>{t.filtered}</small>
+              <div className="sales-stat primary sales-stat-auto-flip">
+                <div className="sales-stat-auto-main">
+                  <span>{t.totalSales}</span>
+                  <strong>₹{formatMoney(totalSales)}</strong>
+                  <small>{t.filtered}</small>
+                </div>
+                <div className="sales-auto-payment-flip" aria-label={`${t.paid} ₹${formatMoney(paidTotal)}; ${t.due} ₹${formatMoney(dueTotal)}`}>
+                  <div className="sales-auto-flip-track">
+                    <span>
+                      <small>{t.paid}</small>
+                      <strong>₹{formatMoney(paidTotal)}</strong>
+                    </span>
+                    <span>
+                      <small>{t.due}</small>
+                      <strong>₹{formatMoney(dueTotal)}</strong>
+                    </span>
+                    <span>
+                      <small>{t.paid}</small>
+                      <strong>₹{formatMoney(paidTotal)}</strong>
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div className="sales-stat">

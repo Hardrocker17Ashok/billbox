@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import {
-  addDoc,
   collection,
   doc,
   getDoc,
   serverTimestamp,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 
@@ -427,9 +427,8 @@ function NewBill() {
   const [isPrinting, setIsPrinting] = useState(false);
   const [pendingPrintConfirmation, setPendingPrintConfirmation] = useState(false);
   const [pendingBillData, setPendingBillData] = useState(null);
+  const [pendingBillDocId, setPendingBillDocId] = useState(null);
   const [isSavingBill, setIsSavingBill] = useState(false);
-  const [savedBill, setSavedBill] = useState(null);
-  const [showWhatsAppShare, setShowWhatsAppShare] = useState(false);
   const saveLockRef = useRef(false);
 
   const [customerName, setCustomerName] = useState("");
@@ -946,6 +945,9 @@ function NewBill() {
 
     const now = new Date();
     const generatedBillNumber = makeBillNumber();
+    // Allocate one stable Firestore document ID for this pending invoice.
+    // Repeated save attempts always target this same document.
+    const billDocumentRef = doc(collection(db, "bills"));
 
     const billItems = items.map((line) => {
       const detail = getLineDetails(line);
@@ -1046,68 +1048,70 @@ function NewBill() {
     };
 
     try {
-      // Do not write to Firestore before the print dialog is completed.
-      // afterprint fires for both Print and Cancel, so ask the owner to
-      // explicitly confirm successful printing before saving.
+      // Opening the browser print dialog never writes to Firestore.
+      // Browsers fire afterprint for both Print and Cancel, so saving is
+      // offered only as a separate, explicit action after the dialog closes.
       setBillNumber(generatedBillNumber);
       setPrintDateTime(now);
       setPendingBillData(billData);
+      setPendingBillDocId(billDocumentRef.id);
 
       window.setTimeout(() => {
         window.print();
       }, 150);
     } catch (error) {
-      console.error("Unable to open print dialog:", error);
+      console.error("Unable to prepare invoice:", error);
       setIsPrinting(false);
       setPendingBillData(null);
+      setPendingBillDocId(null);
       window.alert(t.printError);
+    } finally {
+      setIsPrinting(false);
     }
   };
 
-  // The browser fires afterprint for both a successful print and a
-  // cancelled dialog. Never save automatically from this event.
   useEffect(() => {
     const handleAfterPrint = () => {
       setIsPrinting(false);
-      if (pendingBillData) setPendingPrintConfirmation(true);
+      if (pendingBillData && pendingBillDocId) {
+        setPendingPrintConfirmation(true);
+      }
     };
 
     window.addEventListener("afterprint", handleAfterPrint);
     return () => window.removeEventListener("afterprint", handleAfterPrint);
-  }, [pendingBillData]);
+  }, [pendingBillData, pendingBillDocId]);
 
   const cancelPrintConfirmation = () => {
+    // Cancel only discards the local pending invoice. No Firestore write.
     setPendingPrintConfirmation(false);
     setPendingBillData(null);
+    setPendingBillDocId(null);
     setBillNumber("INV-0000");
     setPrintDateTime(null);
   };
 
   const confirmPrintedAndSave = async () => {
-    if (!pendingBillData || saveLockRef.current) return;
+    if (!pendingBillData || !pendingBillDocId || saveLockRef.current) return;
 
     saveLockRef.current = true;
     setIsSavingBill(true);
 
     try {
-      // The only bill write happens after explicit print confirmation.
-      const savedRef = await addDoc(collection(db, "bills"), {
+      // setDoc with the pre-generated ID makes this save idempotent:
+      // retries/double clicks cannot create a second bill document.
+      const billRef = doc(db, "bills", pendingBillDocId);
+      await setDoc(billRef, {
         ...pendingBillData,
         createdAt: serverTimestamp(),
         printedAt: serverTimestamp(),
       });
 
-      setSavedBill({
-        id: savedRef.id,
-        billNumber: pendingBillData.billNumber,
-        customerName: pendingBillData.customerName,
-        customerMobile: pendingBillData.customerMobile,
-        shopName: pendingBillData.shopName,
-        grandTotal: pendingBillData.grandTotal,
-      });
       setPendingPrintConfirmation(false);
       setPendingBillData(null);
-      setShowWhatsAppShare(true);
+      setPendingBillDocId(null);
+
+      window.alert(language === "hi" ? "बिल सफलतापूर्वक सेव हो गया।" : "Bill saved successfully.");
     } catch (error) {
       console.error("Bill save error:", error?.code, error?.message, error);
       window.alert(`${t.saveError} ${error?.code || error?.message || ""}`);
@@ -1115,27 +1119,6 @@ function NewBill() {
       saveLockRef.current = false;
       setIsSavingBill(false);
     }
-  };
-
-  const openCustomerWhatsApp = () => {
-    if (!savedBill) return;
-
-    const digits = String(savedBill.customerMobile || "").replace(/\\D/g, "");
-    const whatsappNumber = digits.length === 10 ? `91${digits}` : digits;
-    const amount = formatMoney(savedBill.grandTotal);
-    const message = language === "hi"
-      ? `नमस्ते ${savedBill.customerName} जी! 🙏\\n\\n${savedBill.shopName} में खरीदारी करने के लिए आपका बहुत-बहुत धन्यवाद।\\n\\nआपका बिल सफलतापूर्वक तैयार हो गया है।\\nबिल नंबर: ${savedBill.billNumber}\\nकुल राशि: ₹${amount}\\n\\nहम आपके विश्वास की सराहना करते हैं। आपसे दोबारा मिलने की प्रतीक्षा रहेगी।\\n\\nसादर,\\n${savedBill.shopName}`
-      : `Dear ${savedBill.customerName},\\n\\nThank you for shopping with ${savedBill.shopName}. Your bill has been generated successfully.\\n\\nBill No: ${savedBill.billNumber}\\nGrand Total: ₹${amount}\\n\\nWe truly appreciate your trust and look forward to serving you again.\\n\\nRegards,\\n${savedBill.shopName}`;
-
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-    setShowWhatsAppShare(false);
-    setSavedBill(null);
-  };
-
-  const closeWhatsAppShare = () => {
-    setShowWhatsAppShare(false);
-    setSavedBill(null);
   };
 
   useEffect(() => {
@@ -1892,28 +1875,28 @@ function NewBill() {
 
       {pendingPrintConfirmation && (
         <div className="billbox-share-backdrop" role="presentation">
-          <section className="billbox-share-dialog" role="dialog" aria-modal="true" aria-labelledby="billbox-print-confirm-title">
-            <div className="billbox-share-success-icon">?</div>
-            <span className="billbox-share-eyebrow">BILLBOX • PRINT CONFIRMATION</span>
+          <section className={`billbox-share-dialog billbox-save-dialog bill-theme-${theme}`} role="dialog" aria-modal="true" aria-labelledby="billbox-print-confirm-title">
+            <div className="billbox-share-success-icon">✓</div>
+            <span className="billbox-share-eyebrow">BILLBOX <span aria-hidden="true">·</span> INVOICE</span>
             <h2 id="billbox-print-confirm-title">
-              {language === "hi" ? "क्या बिल सफलतापूर्वक प्रिंट हुआ?" : "Was the bill printed successfully?"}
+              {language === "hi" ? "क्या आप यह बिल सेव करना चाहते हैं?" : "Would you like to save this invoice?"}
             </h2>
             <p>
               {language === "hi"
-                ? "अगर आपने Print दबाया और बिल प्रिंट हो गया है, तभी सेव करें। अगर Print dialog Cancel किया था, तो नीचे रद्द करें — डेटाबेस में कोई बिल सेव नहीं होगा।"
-                : "Save only if the invoice was printed successfully. If you cancelled the print dialog, choose Cancel. No bill will be stored."}
+                ? "आपका प्रिंट डायलॉग बंद हो गया है। यह बिल अभी डेटाबेस में सेव नहीं हुआ है। अगर बिल प्रिंट हो गया है और आप इसे रिकॉर्ड में रखना चाहते हैं, तो ‘बिल सेव करें’ दबाएँ। ‘रद्द करें’ चुनने पर कोई एंट्री नहीं बनेगी।"
+                : "The print window has closed, but this invoice is not saved yet. If you have printed it and want to keep it in your records, select ‘Save Bill’. Choose ‘Cancel’ to discard it without creating a database entry."}
             </p>
             <div className="billbox-share-summary">
-              <span>{language === "hi" ? "बिल नंबर" : "Bill number"}</span>
+              <span>{language === "hi" ? "बिल नंबर" : "Invoice number"}</span>
               <strong>{billNumber}</strong>
-              <span>{language === "hi" ? "ग्राहक" : "Customer"}</span>
+              <span>{language === "hi" ? "ग्राहक का नाम" : "Customer name"}</span>
               <strong>{customerName}</strong>
-              <span>{language === "hi" ? "कुल राशि" : "Grand total"}</span>
+              <span>{language === "hi" ? "कुल देय राशि" : "Total amount"}</span>
               <strong>₹ {formatMoney(grandTotal)}</strong>
             </div>
-            <div className="billbox-share-actions">
+            <div className="billbox-share-actions billbox-invoice-actions">
               <button type="button" className="billbox-share-cancel" onClick={cancelPrintConfirmation} disabled={isSavingBill}>
-                {language === "hi" ? "प्रिंट नहीं हुआ / रद्द करें" : "Not printed / Cancel"}
+                {language === "hi" ? "नहीं, अभी नहीं" : "No, cancel"}
               </button>
               <button type="button" className="billbox-share-primary" onClick={confirmPrintedAndSave} disabled={isSavingBill}>
                 {isSavingBill
@@ -1921,47 +1904,6 @@ function NewBill() {
                   : (language === "hi" ? "प्रिंट हुआ — बिल सेव करें" : "Printed — Save Bill")}
               </button>
             </div>
-          </section>
-        </div>
-      )}
-
-      {showWhatsAppShare && savedBill && (
-        <div className="billbox-share-backdrop" role="presentation">
-          <section className="billbox-share-dialog" role="dialog" aria-modal="true" aria-labelledby="billbox-whatsapp-title">
-            <div className="billbox-share-success-icon billbox-whatsapp-success">✓</div>
-            <span className="billbox-share-eyebrow">BILLBOX • BILL SAVED</span>
-            <h2 id="billbox-whatsapp-title">
-              {language === "hi" ? "बिल सेव हो गया!" : "Bill saved successfully!"}
-            </h2>
-            <p>
-              {language === "hi"
-                ? "अब ग्राहक को दुकान के WhatsApp अकाउंट से बिल की जानकारी भेजें।"
-                : "Now share the bill details with your customer using your shop's WhatsApp account."}
-            </p>
-            <div className="billbox-share-summary">
-              <span>{language === "hi" ? "ग्राहक" : "Customer"}</span>
-              <strong>{savedBill.customerName}</strong>
-              <span>{language === "hi" ? "मोबाइल नंबर" : "Mobile number"}</span>
-              <strong>{savedBill.customerMobile}</strong>
-              <span>{language === "hi" ? "बिल नंबर" : "Bill number"}</span>
-              <strong>{savedBill.billNumber}</strong>
-              <span>{language === "hi" ? "कुल राशि" : "Grand total"}</span>
-              <strong>₹ {formatMoney(savedBill.grandTotal)}</strong>
-            </div>
-            <div className="billbox-share-actions">
-              <button type="button" className="billbox-share-cancel" onClick={closeWhatsAppShare}>
-                {language === "hi" ? "अभी नहीं" : "Not now"}
-              </button>
-              <button type="button" className="billbox-share-whatsapp" onClick={openCustomerWhatsApp}>
-                <span aria-hidden="true">●</span>
-                {language === "hi" ? "WhatsApp पर भेजें" : "Send on WhatsApp"}
-              </button>
-            </div>
-            <small className="billbox-share-note">
-              {language === "hi"
-                ? "WhatsApp खुलेगा और संदेश तैयार मिलेगा। भेजने के लिए WhatsApp में Send दबाएँ।"
-                : "WhatsApp will open with a prepared message. Press Send inside WhatsApp to deliver it."}
-            </small>
           </section>
         </div>
       )}
