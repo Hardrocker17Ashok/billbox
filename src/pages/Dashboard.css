@@ -3760,3 +3760,7 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .dashboard .summary-payment-flip .flip-track { animation: none; }
 }
+
+
+ /* mobile responsive  */
+ 

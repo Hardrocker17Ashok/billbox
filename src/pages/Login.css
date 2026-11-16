@@ -2175,3 +2175,513 @@
   font-size: 12px;
   font-weight: 600;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =====================================================
+   BILLBOX LOGIN — FINAL RESPONSIVE POLISH
+   CSS ONLY | KEEP EXISTING JSX UNCHANGED
+===================================================== */
+
+/* Main viewport safety */
+.billbox-login,
+.billbox-login * {
+  box-sizing: border-box;
+}
+
+.billbox-login {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.billbox-showcase,
+.billbox-login-panel {
+  min-width: 0;
+}
+
+/* Desktop login panel */
+.billbox-login-panel {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd7ea transparent;
+}
+
+.billbox-login-panel .login-content {
+  width: 100%;
+  max-width: 420px;
+  margin: auto;
+  padding: 14px 0 24px;
+}
+
+/* WhatsApp support */
+.billbox-whatsapp-top {
+  min-height: 62px;
+  padding: 11px 15px;
+  border-radius: 13px;
+  gap: 12px;
+}
+
+.billbox-whatsapp-top:focus-visible,
+.registration-whatsapp-button:focus-visible,
+.registration-back-button:focus-visible,
+.login-mode-switch button:focus-visible {
+  outline: 3px solid rgba(52, 120, 246, 0.3);
+  outline-offset: 3px;
+}
+
+/* Heading */
+.login-heading {
+  margin-bottom: 25px;
+}
+
+.login-heading h2 {
+  font-size: clamp(32px, 2.8vw, 40px);
+  line-height: 1.15;
+}
+
+.login-heading > p {
+  max-width: 100%;
+  line-height: 1.7;
+}
+
+/* Login and registration forms */
+.billbox-form {
+  width: 100%;
+  min-width: 0;
+  gap: 17px;
+}
+
+.billbox-register-form {
+  gap: 15px;
+}
+
+.billbox-form .form-field {
+  width: 100%;
+  min-width: 0;
+  gap: 8px;
+}
+
+.billbox-form .form-field label {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.billbox-form .form-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 51px;
+  border-radius: 11px;
+}
+
+.billbox-form .form-input input {
+  min-width: 0;
+  width: 100%;
+  height: 49px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.billbox-register-form .form-input input {
+  padding-left: 14px;
+}
+
+.billbox-form .form-input:focus-within {
+  border-color: #6e9af1;
+  box-shadow: 0 0 0 4px rgba(52, 120, 246, 0.09);
+}
+
+/* File upload */
+.register-file-input {
+  min-height: 52px;
+  padding: 5px 12px;
+  border: 1px dashed #cbd8eb;
+  border-radius: 11px;
+  background: #f8faff;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.register-file-input:hover {
+  border-color: #7da5ed;
+  background: #f2f6ff;
+}
+
+.register-file-input input[type="file"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  padding: 9px 0;
+  color: #52617a;
+  font-size: 11px;
+}
+
+.register-hint {
+  display: block;
+  margin-top: 1px;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+/* Submit buttons */
+.billbox-submit {
+  min-height: 53px;
+  border-radius: 11px;
+  font-size: 13px;
+  letter-spacing: 0.1px;
+}
+
+.billbox-submit:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+/* Error and success messages */
+.login-error {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.login-success {
+  width: 100%;
+  overflow-wrap: anywhere;
+  border-radius: 11px;
+}
+
+.registration-success-card {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.registration-success-card > p {
+  overflow-wrap: anywhere;
+}
+
+.activation-step {
+  min-width: 0;
+}
+
+.activation-step > span:last-child {
+  min-width: 0;
+}
+
+/* Footer and security */
+.login-security {
+  border-radius: 12px;
+}
+
+.login-footer {
+  padding-bottom: 5px;
+  line-height: 1.6;
+}
+
+/* Tablet */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .billbox-login {
+    grid-template-columns: 45% 55%;
+  }
+
+  .billbox-showcase {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+
+  .billbox-login-panel {
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+
+  .billbox-login-panel .login-content {
+    max-width: 390px;
+  }
+
+  .billbox-showcase .showcase-copy h1 {
+    font-size: clamp(30px, 3.7vw, 42px);
+  }
+}
+
+/* Mobile layout */
+@media (max-width: 760px) {
+  .billbox-login {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 68px minmax(0, 1fr) !important;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* Compact brand header */
+  .billbox-showcase {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    height: 68px;
+    min-height: 68px;
+    padding: 10px 22px;
+    overflow: hidden;
+  }
+
+  .showcase-header {
+    width: 100%;
+    min-height: 45px;
+    align-items: center !important;
+    justify-content: flex-start;
+  }
+
+  .billbox-wordmark strong {
+    font-size: 25px;
+  }
+
+  .billbox-wordmark > span {
+    font-size: 7px;
+    letter-spacing: 1.35px;
+  }
+
+  /* Hide large hero content in compact mobile header */
+  .billbox-showcase .showcase-copy,
+  .billbox-showcase .showcase-bottom,
+  .billbox-showcase .showcase-decoration {
+    display: none !important;
+  }
+
+  .billbox-showcase .showcase-image-background {
+    opacity: 0.19;
+  }
+
+  .billbox-showcase .showcase-image-background::before {
+    background: linear-gradient(
+      90deg,
+      rgba(7, 15, 28, 0.5),
+      rgba(7, 15, 28, 0.15)
+    );
+  }
+
+  /* Scrollable form area */
+  .billbox-login-panel {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 22px 24px 28px;
+    overflow-x: hidden;
+    overflow-y: auto !important;
+    align-items: flex-start;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  .billbox-login-panel .login-content {
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 3px 0 25px;
+  }
+
+  .billbox-whatsapp-top {
+    min-height: 57px;
+    margin-bottom: 23px;
+    padding: 10px 13px;
+  }
+
+  .whatsapp-icon {
+    width: 37px;
+    height: 37px;
+    flex-basis: 37px;
+  }
+
+  .login-heading {
+    margin-bottom: 22px;
+  }
+
+  .login-heading h2 {
+    font-size: 35px;
+  }
+
+  .login-heading > p {
+    font-size: 12px;
+  }
+
+  .billbox-form {
+    gap: 16px;
+  }
+
+  .billbox-register-form {
+    gap: 15px;
+  }
+
+  .billbox-form .form-input {
+    min-height: 51px;
+  }
+
+  .billbox-form .form-input input {
+    height: 49px;
+    font-size: 16px;
+  }
+
+  .billbox-submit {
+    min-height: 52px;
+  }
+
+  .login-mode-switch {
+    margin-top: 20px;
+    font-size: 11px;
+  }
+
+  .login-mode-switch button {
+    font-size: 11px;
+  }
+
+  .registration-success-card {
+    padding: 22px 17px 19px;
+  }
+
+  .registration-success-card h3 {
+    font-size: 21px;
+  }
+
+  .login-footer {
+    margin-top: 20px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .billbox-login {
+    grid-template-rows: 64px minmax(0, 1fr) !important;
+  }
+
+  .billbox-showcase {
+    height: 64px;
+    min-height: 64px;
+    padding: 9px 18px;
+  }
+
+  .billbox-login-panel {
+    padding: 19px 19px 25px;
+  }
+
+  .billbox-login-panel .login-content {
+    padding-top: 2px;
+  }
+
+  .billbox-whatsapp-top {
+    min-height: 54px;
+    margin-bottom: 20px;
+  }
+
+  .whatsapp-copy strong {
+    font-size: 12px;
+  }
+
+  .whatsapp-copy small {
+    font-size: 9px;
+  }
+
+  .login-heading {
+    margin-bottom: 20px;
+  }
+
+  .login-heading h2 {
+    font-size: 32px;
+  }
+
+  .billbox-form {
+    gap: 14px;
+  }
+
+  .billbox-register-form {
+    gap: 13px;
+  }
+
+  .registration-success-card {
+    padding: 19px 14px 16px;
+  }
+
+  .registration-success-card h3 {
+    font-size: 19px;
+  }
+
+  .activation-steps {
+    padding: 12px 10px;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+  .billbox-showcase {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .billbox-login-panel {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .login-heading h2 {
+    font-size: 29px;
+  }
+
+  .billbox-whatsapp-top {
+    gap: 8px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .whatsapp-copy small {
+    font-size: 8px;
+  }
+
+  .registration-success-card h3 {
+    font-size: 18px;
+  }
+}
+
+/* Short mobile screens */
+@media (max-width: 760px) and (max-height: 700px) {
+  .billbox-login-panel {
+    padding-top: 15px;
+  }
+
+  .billbox-whatsapp-top {
+    margin-bottom: 15px;
+  }
+
+  .login-heading {
+    margin-bottom: 16px;
+  }
+
+  .billbox-form {
+    gap: 12px;
+  }
+
+  .billbox-register-form {
+    gap: 11px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .billbox-login *,
+  .billbox-login *::before,
+  .billbox-login *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
