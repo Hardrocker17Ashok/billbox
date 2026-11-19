@@ -4185,3 +4185,164 @@ html[data-theme="light"] .subscription-expired-card small {
     justify-content: center;
   }
 }
+
+/* ==========================================
+   BILLBOX SIMPLE HELP & CONTACT PAGE
+   Isolated styles; existing dashboard untouched.
+========================================== */
+.dashboard .help-hero-simple {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.dashboard .help-hero-simple .help-hero-copy {
+  max-width: 760px;
+  margin-top: 42px;
+}
+.dashboard .help-contact-section {
+  margin: 34px 0 42px;
+}
+.dashboard .help-section-heading {
+  margin-bottom: 20px;
+}
+.dashboard .help-section-heading h2 {
+  margin: 9px 0 7px;
+  color: var(--white);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(23px, 2.5vw, 30px);
+  font-weight: 400;
+}
+.dashboard .help-section-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.dashboard .help-contact-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  gap: 18px;
+}
+.dashboard .help-contact-detail-card {
+  min-height: 270px;
+  padding: 25px;
+  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+}
+.dashboard .help-contact-detail-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--gold-border);
+  box-shadow: 0 16px 35px rgba(0,0,0,.16);
+}
+.dashboard .help-contact-detail-card h2 {
+  margin: 9px 0 8px;
+  color: var(--white);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 400;
+}
+.dashboard .help-contact-detail-card p {
+  margin: 9px 0 18px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.dashboard .help-contact-value {
+  display: inline-block;
+  max-width: 100%;
+  color: var(--gold-light);
+  font-size: 15px;
+  font-weight: 650;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.dashboard .help-email-value {
+  font-size: clamp(13px, 1.2vw, 15px);
+}
+.dashboard .help-contact-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  margin-top: auto;
+  padding: 0 14px;
+  border: 1px solid var(--gold-border);
+  border-radius: 8px;
+  background: rgba(197,160,91,.09);
+  color: var(--gold-light);
+  font-size: 11px;
+  font-weight: 650;
+  text-decoration: none;
+  transition: background .2s ease, border-color .2s ease;
+}
+.dashboard .help-contact-action:hover {
+  border-color: var(--gold);
+  background: rgba(197,160,91,.16);
+}
+.dashboard .help-contact-detail-card .help-contact-icon {
+  margin-bottom: 18px;
+}
+.dashboard .help-cta-action {
+  margin-top: 0;
+  flex-shrink: 0;
+}
+:root[data-theme="light"] .dashboard .help-section-heading h2,
+:root[data-theme="light"] .dashboard .help-contact-detail-card h2 {
+  color: #191814;
+}
+:root[data-theme="light"] .dashboard .help-contact-detail-card {
+  background: #fff;
+}
+@media (max-width: 900px) {
+  .dashboard .help-contact-grid-three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dashboard .help-contact-detail-card:last-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 700px) {
+  .dashboard .help-page-content {
+    width: calc(100% - 32px);
+    padding: 20px 0 42px;
+  }
+  .dashboard .help-hero-simple {
+    min-height: 0;
+    padding: 22px;
+  }
+  .dashboard .help-hero-simple .help-hero-copy {
+    margin-top: 28px;
+  }
+  .dashboard .help-contact-section {
+    margin: 27px 0 30px;
+  }
+  .dashboard .help-contact-grid-three {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .dashboard .help-contact-detail-card,
+  .dashboard .help-contact-detail-card:last-child {
+    grid-column: auto;
+    min-height: 0;
+    padding: 21px;
+  }
+  .dashboard .help-contact-detail-card p {
+    margin-bottom: 15px;
+  }
+  .dashboard .help-bottom-cta {
+    padding: 21px;
+    gap: 16px;
+  }
+  .dashboard .help-cta-action {
+    width: 100%;
+  }
+}
+@media (max-width: 380px) {
+  .dashboard .help-hero-simple {
+    padding: 18px;
+  }
+  .dashboard .help-contact-detail-card {
+    padding: 18px;
+  }
+}

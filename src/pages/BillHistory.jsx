@@ -8,7 +8,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  deleteDoc,
   query,
   where,
 } from "firebase/firestore";
@@ -125,14 +124,6 @@ const TEXT = {
     gstin: "GSTIN",
     phoneLabel: "फोन",
     noShopProfile: "शॉप प्रोफाइल उपलब्ध नहीं है।",
-    deleteBill: "बिल हटाएँ",
-    confirmDeleteTitle: "बिल हटाने की पुष्टि करें",
-    confirmDeleteMessage: "क्या आप यह बिल स्थायी रूप से हटाना चाहते हैं? यह कार्रवाई वापस नहीं की जा सकती।",
-    confirmDelete: "हाँ, बिल हटाएँ",
-    cancelDelete: "रद्द करें",
-    deleting: "हटाया जा रहा है...",
-    deleteSuccess: "बिल सफलतापूर्वक हटा दिया गया।",
-    deleteError: "बिल हटाया नहीं जा सका। कृपया दोबारा प्रयास करें।",
   },
 
   en: {
@@ -232,14 +223,6 @@ const TEXT = {
     gstin: "GSTIN",
     phoneLabel: "Phone",
     noShopProfile: "Shop profile is unavailable.",
-    deleteBill: "Remove bill",
-    confirmDeleteTitle: "Confirm bill deletion",
-    confirmDeleteMessage: "Are you sure you want to permanently delete this bill? This action cannot be undone.",
-    confirmDelete: "Yes, delete bill",
-    cancelDelete: "Cancel",
-    deleting: "Deleting...",
-    deleteSuccess: "Bill deleted successfully.",
-    deleteError: "Could not delete the bill. Please try again.",
   },
 };
 
@@ -263,10 +246,6 @@ function BillHistory() {
   const [metalFilter, setMetalFilter] = useState("all");
 
   const [selectedBill, setSelectedBill] = useState(null);
-  const [deleteConfirmBill, setDeleteConfirmBill] = useState(null);
-  const [deletingBillId, setDeletingBillId] = useState("");
-  const [deleteError, setDeleteError] = useState("");
-
   const language =
     shopProfile.language === "en" ? "en" : "hi";
 
@@ -639,47 +618,6 @@ function BillHistory() {
 
   const closeBillDetails = () => setSelectedBill(null);
 
-  const requestBillDelete = (event, bill) => {
-    event.stopPropagation();
-    setDeleteError("");
-    setDeleteConfirmBill(bill);
-  };
-
-  const cancelBillDelete = () => {
-    if (deletingBillId) return;
-    setDeleteConfirmBill(null);
-    setDeleteError("");
-  };
-
-  const confirmBillDelete = async () => {
-    if (!deleteConfirmBill?.id || !user?.uid || deletingBillId) return;
-
-    const billToDelete = deleteConfirmBill;
-    setDeletingBillId(billToDelete.id);
-    setDeleteError("");
-
-    try {
-      // The bill list is already scoped to the signed-in owner's UID.
-      // Delete the exact Firestore document only after explicit confirmation.
-      await deleteDoc(doc(db, "bills", billToDelete.id));
-
-      setBills((currentBills) =>
-        currentBills.filter((bill) => bill.id !== billToDelete.id)
-      );
-
-      if (selectedBill?.id === billToDelete.id) {
-        setSelectedBill(null);
-      }
-
-      setDeleteConfirmBill(null);
-    } catch (deleteErr) {
-      console.error("Bill delete error:", deleteErr);
-      setDeleteError(t.deleteError);
-    } finally {
-      setDeletingBillId("");
-    }
-  };
-
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === "Escape") {
@@ -1039,18 +977,6 @@ function BillHistory() {
                             </strong>
                           </div>
                         </div>
-
-                        <div className="bill-card-actions">
-                          <button
-                            type="button"
-                            className="bill-delete-button"
-                            onClick={(event) => requestBillDelete(event, bill)}
-                            aria-label={`${t.deleteBill} #${bill.billNumber || bill.id.slice(0, 7)}`}
-                          >
-                            <span className="bill-delete-icon" aria-hidden="true">⌫</span>
-                            {t.deleteBill}
-                          </button>
-                        </div>
                       </article>
                     );
                   })}
@@ -1378,74 +1304,6 @@ function BillHistory() {
         </div>
       )}
 
-      {/* BILL DELETE CONFIRMATION */}
-      {deleteConfirmBill && (
-        <div
-          className="bill-delete-overlay"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              cancelBillDelete();
-            }
-          }}
-        >
-          <section
-            className="bill-delete-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="bill-delete-title"
-          >
-            <div className="bill-delete-dialog-icon" aria-hidden="true">
-              <span>!</span>
-            </div>
-
-            <div className="bill-delete-dialog-content">
-              <span className="bill-delete-eyebrow">BILLBOX • {t.deleteBill}</span>
-              <h2 id="bill-delete-title">{t.confirmDeleteTitle}</h2>
-              <p>{t.confirmDeleteMessage}</p>
-
-              <div className="bill-delete-summary">
-                <div>
-                  <span>{t.billNumber}</span>
-                  <strong>
-                    #{deleteConfirmBill.billNumber || deleteConfirmBill.id.slice(0, 7)}
-                  </strong>
-                </div>
-                <div>
-                  <span>{t.customer}</span>
-                  <strong>{deleteConfirmBill.customerName || t.customerFallback}</strong>
-                </div>
-                <div>
-                  <span>{t.amount}</span>
-                  <strong>₹{formatMoney(deleteConfirmBill.grandTotal)}</strong>
-                </div>
-              </div>
-
-              {deleteError && (
-                <p className="bill-delete-error" role="alert">{deleteError}</p>
-              )}
-
-              <div className="bill-delete-dialog-actions">
-                <button
-                  type="button"
-                  className="bill-delete-cancel"
-                  onClick={cancelBillDelete}
-                  disabled={Boolean(deletingBillId)}
-                >
-                  {t.cancelDelete}
-                </button>
-                <button
-                  type="button"
-                  className="bill-delete-confirm"
-                  onClick={confirmBillDelete}
-                  disabled={Boolean(deletingBillId)}
-                >
-                  {deletingBillId ? t.deleting : t.confirmDelete}
-                </button>
-              </div>
-            </div>
-          </section>
-        </div>
-      )}
     </main>
   );
 }
