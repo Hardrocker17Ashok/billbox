@@ -4346,3 +4346,22 @@ html[data-theme="light"] .subscription-expired-card small {
     padding: 18px;
   }
 }
+
+
+/* Pending bills shortcut — follows the existing dashboard action-card system. */
+.dashboard .pending-bills-action {
+  border-color: rgba(197, 160, 91, 0.58);
+  background: linear-gradient(135deg, rgba(197, 160, 91, 0.13), rgba(21, 21, 19, 0.96));
+}
+
+.dashboard .pending-bills-action .action-icon {
+  color: var(--gold, #c5a05b);
+}
+
+.dashboard .pending-bills-action:hover {
+  border-color: var(--gold, #c5a05b);
+}
+
+.dashboard-light .pending-bills-action {
+  background: linear-gradient(135deg, rgba(197, 160, 91, 0.13), #fff);
+}

@@ -2,6 +2,7 @@ import "./Dashboard.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { signOut } from "firebase/auth";
+
 import {
   collection,
   getDocs,
@@ -72,8 +73,8 @@ const TEXT = {
     newBillText: "ग्राहक का नया बिल बनाएँ",
     jewellery: "ग्राहक लेजर",
     jewelleryText: "ग्राहक का पूरा लेन-देन और बकाया देखें",
-    sales: "बिक्री",
-    salesText: "आज की बिक्री देखें",
+    pendingBills: "बकाया बिल",
+    pendingBillsText: "बाकी भुगतान वाले बिल खोलें और पूरा भुगतान दर्ज करें",
     billHistory: "बिल इतिहास",
     billHistoryText: "पुराने बिल देखें",
     summary: "सारांश",
@@ -181,8 +182,8 @@ const TEXT = {
     newBillText: "Create a new customer bill",
     jewellery: "Customer Ledger",
     jewelleryText: "Track customer payments and outstanding bills",
-    sales: "Sales",
-    salesText: "View today's sales",
+    pendingBills: "Pending Bills",
+    pendingBillsText: "Open bills with outstanding balances and collect payment",
     billHistory: "Bill History",
     billHistoryText: "View previous bills",
     summary: "SUMMARY",
@@ -1366,6 +1367,19 @@ function Dashboard() {
 
             <button
               type="button"
+              className="action-card pending-bills-action"
+              onClick={() => navigate("/pending-bills")}
+            >
+              <div className="action-icon">₹</div>
+              <div className="action-content">
+                <h2>{t.pendingBills}</h2>
+                <p>{t.pendingBillsText}</p>
+              </div>
+              <span className="action-arrow">→</span>
+            </button>
+
+            <button
+              type="button"
               className="action-card ledger-action"
               onClick={() => navigate("/customer-ledger")}
             >
@@ -1373,19 +1387,6 @@ function Dashboard() {
               <div className="action-content">
                 <h2>{t.jewellery}</h2>
                 <p>{t.jewelleryText}</p>
-              </div>
-              <span className="action-arrow">→</span>
-            </button>
-
-            <button
-              type="button"
-              className="action-card"
-              onClick={() => navigate("/today-sales")}
-            >
-              <div className="action-icon">₹</div>
-              <div className="action-content">
-                <h2>{t.sales}</h2>
-                <p>{t.salesText}</p>
               </div>
               <span className="action-arrow">→</span>
             </button>

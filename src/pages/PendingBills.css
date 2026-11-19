@@ -1,0 +1,88 @@
+@import "./NewBill.css";
+
+/* Pending Bills page additions — NewBill typography, header, theme and invoice design are inherited unchanged. */
+.pending-list-card .pending-toolbar{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+.pending-list-card .pending-toolbar input{flex:1;min-width:0;height:46px;padding:0 14px;border:1px solid rgba(255,255,255,.10);border-radius:10px;background:rgba(7,7,7,.46);color:var(--nb-heading,#eee);font:inherit;font-size:13px;outline:none}
+.pending-list-card .pending-toolbar input:focus{border-color:rgba(181,138,58,.7);box-shadow:0 0 0 3px rgba(181,138,58,.08)}
+.pending-list-card .pending-toolbar button{height:46px;padding:0 17px;border:1px solid rgba(181,138,58,.35);border-radius:10px;background:rgba(181,138,58,.08);color:var(--gold-light);font:inherit;font-size:12px;font-weight:600}
+.pending-summary{display:grid;grid-template-columns:1fr 180px;gap:14px;margin:0 0 18px}
+.pending-summary>div{padding:15px 17px;border:1px solid rgba(181,138,58,.22);border-radius:12px;background:rgba(181,138,58,.055);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.pending-summary span{color:var(--nb-muted,#aaa59c);font-size:11px}
+.pending-summary strong{color:var(--gold-light);font-size:17px}
+.pending-table-wrap{width:100%;overflow-x:auto;border:1px solid rgba(255,255,255,.075);border-radius:12px}
+.pending-table{width:100%;min-width:850px;border-collapse:collapse;background:rgba(0,0,0,.12)}
+.pending-table th{padding:13px 12px;text-align:left;background:rgba(181,138,58,.09);color:#c8ad78;font-size:10px;font-weight:700;white-space:nowrap}
+.pending-table td{padding:14px 12px;border-top:1px solid rgba(255,255,255,.065);color:#d8d2c8;font-size:12px;white-space:nowrap}
+.pending-table td small{display:block;margin-top:4px;color:#89847b;font-size:10px}
+.pending-table td strong{font-weight:600}
+.pending-table .pending-due{color:#e0bd72;font-weight:800}
+.pending-open{padding:9px 12px;border:1px solid rgba(181,138,58,.4);border-radius:8px;background:rgba(181,138,58,.1);color:#dfbd78;font:inherit;font-size:11px;font-weight:700;white-space:nowrap}
+.pending-message{margin:12px 0;padding:12px 14px;border:1px solid rgba(181,138,58,.25);border-radius:10px;background:rgba(181,138,58,.07);color:var(--nb-heading,#eee);font-size:12px}
+.pending-modal-backdrop{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}
+.pending-modal{width:min(760px,100%);max-height:92vh;overflow:auto;margin:0!important;padding:25px!important;border:1px solid rgba(181,138,58,.28)!important;background:linear-gradient(145deg,#1d1c1a,#111110)!important;box-shadow:0 25px 80px rgba(0,0,0,.5)}
+.pending-modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:17px}
+.pending-modal-head span{font-size:10px;color:#c39a4e;letter-spacing:1.5px;text-transform:uppercase}
+.pending-modal-head h2{margin:5px 0 0;color:#f3efe7;font-size:23px;font-weight:600}
+.pending-modal-head>button{width:36px;height:36px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:rgba(255,255,255,.04);color:#e9e5dc;font-size:23px}
+.pending-customer-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:15px;border:1px solid rgba(255,255,255,.075);border-radius:11px;background:rgba(0,0,0,.16)}
+.pending-customer-row>div{display:flex;flex-direction:column;gap:4px}
+.pending-customer-row small,.pending-customer-row span{color:#8f897f;font-size:10px}
+.pending-customer-row strong{color:#e9e5dc;font-size:13px}
+.pending-subheading{margin:20px 0 10px;color:#d5ad61;font-size:14px;font-weight:600}
+.pending-item-list{display:flex;flex-direction:column}
+.pending-item-row{display:grid;grid-template-columns:minmax(0,1.5fr) .7fr .7fr .8fr;align-items:center;gap:10px;padding:12px 0;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:#c9c2b7}
+.pending-item-row>div{min-width:0;display:flex;flex-direction:column;gap:4px}
+.pending-item-row>div strong{color:#eee8de;font-size:12px}
+.pending-item-row small{color:#888278;font-size:10px}
+.pending-item-row>strong{text-align:right;color:#d9b66f}
+.pending-payment-breakup{margin-top:16px;padding:14px 16px;border:1px solid rgba(181,138,58,.2);border-radius:11px;background:rgba(181,138,58,.045)}
+.pending-payment-breakup>div{display:flex;justify-content:space-between;gap:12px;padding:6px 0;color:#aaa397;font-size:12px}
+.pending-payment-breakup strong{color:#eee8de}
+.pending-payment-breakup .pending-balance-row{border-top:1px solid rgba(181,138,58,.2);margin-top:5px;padding-top:12px;color:#d6b36c;font-size:14px}
+.pending-payment-breakup .pending-balance-row strong{color:#e4c47f;font-size:16px}
+.pending-collect-box{margin-top:18px;padding:17px;border:1px solid rgba(181,138,58,.22);border-radius:13px;background:rgba(181,138,58,.055)}
+.pending-collect-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
+.pending-collect-heading>div{display:flex;flex-direction:column;gap:5px}
+.pending-collect-heading small{color:#aaa397;font-size:10px}
+.pending-collect-heading strong{color:#e4c47f;font-size:23px}
+.pending-collect-heading>span{color:#c7a45f;font-size:10px}
+.pending-form-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:14px}
+.pending-form-grid label{display:flex;flex-direction:column;gap:7px;color:#aaa397;font-size:11px}
+.pending-form-grid input,.pending-form-grid select{height:43px;width:100%;padding:0 12px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:#111110;color:#e9e5dc;font:inherit;font-size:12px;outline:none}
+.pending-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:17px}
+.pending-modal-actions .print-bill{min-height:43px}
+.pending-cancel{min-height:43px;padding:0 17px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.04);color:#c9c2b7;font:inherit;font-size:12px}
+.pending-paid-note{display:flex;align-items:center;justify-content:space-between;margin-top:18px;color:#69c99c;font-size:12px}
+.pending-print-again{margin-top:12px;padding:10px 14px;border:1px solid rgba(181,138,58,.35);border-radius:9px;background:rgba(181,138,58,.08);color:#dfbd78;font:inherit;font-size:12px}
+.pending-modal .pending-message{margin-bottom:0}
+.bill-theme-light .pending-list-card .pending-toolbar input{background:#fff;border-color:#ddd4c4;color:#342d22}
+.bill-theme-light .pending-table{background:#fff}
+.bill-theme-light .pending-table th{background:#f6f0e3;color:#775b2a}
+.bill-theme-light .pending-table td{color:#383229;border-color:#eae4d9}
+.bill-theme-light .pending-table td small{color:#82796b}
+.bill-theme-light .pending-modal{background:linear-gradient(145deg,#fff,#f8f5ee)!important;color:#302b24}
+.bill-theme-light .pending-modal-head h2,.bill-theme-light .pending-customer-row strong,.bill-theme-light .pending-item-row>div strong{color:#302b24}
+.bill-theme-light .pending-customer-row{background:#faf7f0;border-color:#e8dfcf}
+.bill-theme-light .pending-customer-row small,.bill-theme-light .pending-customer-row span,.bill-theme-light .pending-item-row{color:#777064}
+.bill-theme-light .pending-item-row{border-color:#e9e2d7}
+.bill-theme-light .pending-item-row>strong{color:#805c20}
+.bill-theme-light .pending-payment-breakup{background:#fbf7ed;border-color:#e5d8bf}
+.bill-theme-light .pending-payment-breakup>div{color:#71695d}
+.bill-theme-light .pending-payment-breakup strong{color:#342d22}
+.bill-theme-light .pending-form-grid label{color:#71695d}
+.bill-theme-light .pending-form-grid input,.bill-theme-light .pending-form-grid select{background:#fff;color:#342d22;border-color:#ddd4c4}
+.bill-theme-light .pending-cancel{background:#fff;color:#625a4e;border-color:#ded5c6}
+@media(max-width:700px){
+ .pending-list-card .pending-toolbar{align-items:stretch;flex-direction:column}
+ .pending-summary{grid-template-columns:1fr}
+ .pending-modal{padding:18px!important}
+ .pending-customer-row{grid-template-columns:1fr 1fr}
+ .pending-item-row{grid-template-columns:1fr 1fr;gap:8px}
+ .pending-item-row>strong{text-align:left}
+ .pending-form-grid{grid-template-columns:1fr}
+ .pending-modal-actions{flex-direction:column-reverse}
+ .pending-modal-actions button{width:100%}
+}
+@media print{
+ .pending-list-card,.pending-modal-backdrop,.shop-footer,.sales-header,.bill-container{display:none!important}
+}

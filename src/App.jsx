@@ -23,6 +23,7 @@ import NewBill from "./pages/NewBill";
 import BillHistory from "./pages/BillHistory";
 import TodaySales from "./pages/TodaySales";
 import CustomerLedger from "./pages/CustomerLedger";
+import PendingBills from "./pages/PendingBills";
 
 const ADMIN_EMAIL = "kj@gmail.com";
 
@@ -242,6 +243,16 @@ function AppContent() {
           element={
             <ProtectedRoute user={user} authReady={appReady}>
               <CustomerLedger />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Pending Bills Route */}
+        <Route
+          path="/pending-bills"
+          element={
+            <ProtectedRoute user={user} authReady={appReady}>
+              <PendingBills />
             </ProtectedRoute>
           }
         />
