@@ -5003,3 +5003,89 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .billbox-save-dialog { animation: none; }
 }
+
+
+
+/* =========================================================
+   BILLBOX FINAL PRINT VISIBILITY + COLOR PRESERVATION FIX
+   Keeps the existing A4 invoice design and all billing UI intact.
+========================================================= */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .new-bill-page,
+  .new-bill-page .print-invoice,
+  .new-bill-page .print-invoice * {
+    visibility: visible !important;
+  }
+
+  .new-bill-page {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #181716 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .new-bill-page .sales-header,
+  .new-bill-page .bill-container,
+  .new-bill-page .shop-footer,
+  .new-bill-page .billbox-share-backdrop {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .new-bill-page .print-invoice {
+    display: flex !important;
+    position: relative !important;
+    width: 194mm !important;
+    max-width: 194mm !important;
+    min-height: 281mm !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #181716 !important;
+    opacity: 1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    break-inside: auto !important;
+  }
+
+  .new-bill-page .print-invoice,
+  .new-bill-page .print-invoice * {
+    text-shadow: none !important;
+  }
+
+  .new-bill-page .print-invoice img {
+    visibility: visible !important;
+    display: block !important;
+    max-width: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

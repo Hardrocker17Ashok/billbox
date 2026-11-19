@@ -12,6 +12,7 @@ import {
   getDoc,
   serverTimestamp,
   setDoc,
+  Timestamp,
 } from "firebase/firestore";
 import {
   getDownloadURL,
@@ -453,15 +454,26 @@ export default function Login() {
       // Step 3: Create shop document
       // Collection: shops
       // Document ID: Firebase Authentication UID
+
+      // Step 3: Create shop document
+
+      const subscriptionStart = new Date();
+      const subscriptionEnd = new Date(subscriptionStart);
+
+      // One calendar month from registration date
+      subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+
       await setDoc(doc(db, "shops", createdUser.uid), {
         uid: createdUser.uid,
         shopName: cleanShopName,
         ownerName: cleanOwnerName,
         gstNumber: cleanGstNumber,
+
         shopNameLower: cleanShopName
           .trim()
           .toLowerCase()
           .replace(/\s+/g, " "),
+
         username: cleanUsername,
         email: cleanEmail,
         phone: cleanPhone,
@@ -470,9 +482,19 @@ export default function Login() {
         theme: "dark",
         language: "en",
 
+        // Account approval
         status: "pending",
+
+        // Subscription starts immediately on registration
+        subscriptionPlan: "monthly",
+        subscriptionDurationDays: 30,
+        subscriptionStatus: "active",
+        subscriptionStartAt: Timestamp.fromDate(subscriptionStart),
+        subscriptionEndsAt: Timestamp.fromDate(subscriptionEnd),
+
         createdAt: serverTimestamp(),
       });
+
 
 
 
@@ -963,7 +985,7 @@ export default function Login() {
 
 
 
-              
+
                 {/* Business Mobile Number - PASTE HERE */}
                 <div className="form-field">
                   <label htmlFor="register-phone">
@@ -993,7 +1015,7 @@ export default function Login() {
                   </small>
                 </div>
 
-             
+
 
 
 

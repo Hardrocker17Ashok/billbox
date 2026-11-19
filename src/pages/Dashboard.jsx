@@ -21,8 +21,8 @@ import {
 import { auth, db, storage } from "../firebase";
 import PageLoader from "../components/PageLoader";
 
-
-
+// Per-bill cost in ₹
+const PER_BILL_COST = 3;
 
 const DEFAULT_PROFILE = {
   shopName: "",
@@ -33,8 +33,12 @@ const DEFAULT_PROFILE = {
   logoUrl: "",
   language: "en",
   theme: "dark",
+  subscriptionPlan: "monthly",
+  subscriptionStatus: "active",
+  subscriptionDurationDays: 30,
+  subscriptionStartAt: null,
+  subscriptionEndsAt: null,
 };
-
 
 const GSTIN_REGEX =
   /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
@@ -120,6 +124,38 @@ const TEXT = {
     gstInvalid: "कृपया सही 15 अंकों का GSTIN दर्ज करें।",
     gstValid: "GSTIN का फॉर्मेट सही है।",
     gstLength: "GSTIN में कुल 15 अक्षर होने चाहिए।",
+
+    subscription: "सब्सक्रिप्शन",
+    subscriptionTitle: "सब्सक्रिप्शन और बिलिंग",
+    subscriptionSubtitle: "आपके प्लान, रिन्यूअल और बिल शुल्क की पूरी जानकारी",
+    backToDashboard: "डैशबोर्ड पर वापस जाएँ",
+    statusActive: "सक्रिय",
+    statusExpired: "समाप्त",
+    statusPending: "लंबित",
+    daysRemaining: "शेष दिन",
+    daysLeft: "दिन शेष",
+    plan: "प्लान",
+    planMonthly: "मासिक (Monthly)",
+    planLabel: "सब्सक्रिप्शन प्लान",
+    startedOn: "शुरू हुआ",
+    renewsOn: "रिन्यूअल तारीख",
+    totalBills: "कुल बनाए गए बिल",
+    totalBillsLabel: "अब तक कुल बिल",
+    perBillCost: "प्रति बिल लागत",
+    perBillLabel: "प्रति बिल शुल्क",
+    totalCharges: "कुल बिल शुल्क",
+    totalChargesLabel: "कुल शुल्क (बिल × ₹3)",
+    billingSummary: "बिलिंग सारांश",
+    planDetails: "प्लान की जानकारी",
+    renewNow: "WhatsApp पर रिन्यू करें",
+    renewHeading: "सब्सक्रिप्शन रिन्यू करें",
+    renewText: "रिन्यूअल, पेमेंट या प्लान से जुड़ी किसी भी सहायता के लिए हमारी टीम से संपर्क करें।",
+    expiredMessage: "आपका सब्सक्रिप्शन समाप्त हो गया है। नए बिल बनाने के लिए कृपया रिन्यूअल पूरा करें।",
+    activeMessage: "आपका सब्सक्रिप्शन सक्रिय है। आप बिल बना सकते हैं।",
+    subscriptionNotFound: "सब्सक्रिप्शन की जानकारी उपलब्ध नहीं है। कृपया सहायता से संपर्क करें।",
+    cycleBills: "इस साइकिल के बिल",
+    lifetimeBills: "अब तक के कुल बिल",
+    billsChargesNote: "₹3 प्रति बिल के हिसाब से कुल बिल शुल्क",
   },
 
   en: {
@@ -197,11 +233,41 @@ const TEXT = {
     gstInvalid: "Please enter a valid GSTIN format.",
     gstValid: "GSTIN format is valid.",
     gstLength: "GSTIN must contain exactly 15 characters.",
+
+    subscription: "Subscription",
+    subscriptionTitle: "Subscription & Billing",
+    subscriptionSubtitle: "Full details of your plan, renewal and bill charges.",
+    backToDashboard: "Back to Dashboard",
+    statusActive: "Active",
+    statusExpired: "Expired",
+    statusPending: "Pending",
+    daysRemaining: "Days Remaining",
+    daysLeft: "days left",
+    plan: "Plan",
+    planMonthly: "Monthly",
+    planLabel: "Subscription Plan",
+    startedOn: "Started On",
+    renewsOn: "Renews On",
+    totalBills: "Total Bills Created",
+    totalBillsLabel: "Total bills till now",
+    perBillCost: "Per Bill Cost",
+    perBillLabel: "Per bill charge",
+    totalCharges: "Total Bill Charges",
+    totalChargesLabel: "Total charges (bills × ₹3)",
+    billingSummary: "Billing Summary",
+    planDetails: "Plan Details",
+    renewNow: "Renew on WhatsApp",
+    renewHeading: "Renew your subscription",
+    renewText: "Contact our team for renewal, payment or any plan-related help.",
+    expiredMessage: "Your subscription has expired. Please complete the renewal to continue creating bills.",
+    activeMessage: "Your subscription is active. You can create bills.",
+    subscriptionNotFound: "Subscription details are not available. Please contact support.",
+    cycleBills: "Bills this cycle",
+    lifetimeBills: "Total bills till now",
+    billsChargesNote: "Total bill charges calculated at ₹3 per bill",
   },
 };
 
-// Add your official WhatsApp number with country code, without + or spaces.
-// Example: 919876543210. Keep empty until the official support number is confirmed.
 const SUPPORT_WHATSAPP_NUMBER = "917597201594";
 
 const HELP_FAQS = [
@@ -305,12 +371,34 @@ const HELP_FAQS = [
   },
 ];
 
+const toDateSafe = (value) => {
+  if (!value) return null;
+  try {
+    const date = value?.toDate ? value.toDate() : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  } catch {
+    return null;
+  }
+};
+
+const formatDate = (date, language) => {
+  if (!date) return "—";
+  return date.toLocaleDateString(language === "hi" ? "hi-IN" : "en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
 function Dashboard() {
+  const [showSubscriptionExpired, setShowSubscriptionExpired] = useState(false);
+
   const navigate = useNavigate();
   const user = auth.currentUser;
 
   const [showMenu, setShowMenu] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showSubscription, setShowSubscription] = useState(false);
   const [helpSearch, setHelpSearch] = useState("");
   const [helpCategory, setHelpCategory] = useState("All");
   const [expandedFaq, setExpandedFaq] = useState(0);
@@ -326,7 +414,6 @@ function Dashboard() {
   const [notice, setNotice] = useState("");
   const [noticeError, setNoticeError] = useState(false);
 
-  // Close the profile dropdown when the user clicks anywhere outside it.
   useEffect(() => {
     if (!showMenu) return;
 
@@ -354,7 +441,6 @@ function Dashboard() {
     };
   }, [showMenu]);
 
-  // Show dashboard notifications briefly, then dismiss them automatically.
   useEffect(() => {
     if (!notice) return;
 
@@ -366,13 +452,8 @@ function Dashboard() {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
-  const [profile, setProfile] = useState({
-    ...DEFAULT_PROFILE,
-  });
-
-  const [draft, setDraft] = useState({
-    ...DEFAULT_PROFILE,
-  });
+  const [profile, setProfile] = useState({ ...DEFAULT_PROFILE });
+  const [draft, setDraft] = useState({ ...DEFAULT_PROFILE });
 
   const language = profile.language === "en" ? "en" : "hi";
   const t = TEXT[language];
@@ -380,6 +461,7 @@ function Dashboard() {
   const [recentBills, setRecentBills] = useState([]);
   const [recentBillsLoading, setRecentBillsLoading] = useState(true);
   const [todayBillsCount, setTodayBillsCount] = useState(0);
+  const [totalBillsCount, setTotalBillsCount] = useState(0);
   const [todaySales, setTodaySales] = useState(0);
   const [monthlySales, setMonthlySales] = useState(0);
   const [todayPaid, setTodayPaid] = useState(0);
@@ -400,68 +482,41 @@ function Dashboard() {
     (amount) =>
       Number(amount || 0).toLocaleString(
         language === "hi" ? "en-IN" : "en-IN",
-        {
-          maximumFractionDigits: 2,
-        }
+        { maximumFractionDigits: 2 }
       ),
     [language]
   );
 
   const formatMonthlySales = (amount) => {
     const value = Number(amount || 0);
-
-    if (value >= 10000000) {
-      return `₹${(value / 10000000).toFixed(2)} Cr`;
-    }
-
-    if (value >= 100000) {
-      return `₹${(value / 100000).toFixed(2)} L`;
-    }
-
-    if (value >= 1000) {
-      return `₹${(value / 1000).toFixed(1)} K`;
-    }
-
+    if (value >= 10000000) return `₹${(value / 10000000).toFixed(2)} Cr`;
+    if (value >= 100000) return `₹${(value / 100000).toFixed(2)} L`;
+    if (value >= 1000) return `₹${(value / 1000).toFixed(1)} K`;
     return `₹${money(value)}`;
   };
 
-  // Load this signed-in user's shop settings.
-  // Load shop settings and preload the shop logo before hiding PageLoader.
   useEffect(() => {
     if (!user) return;
-
     let active = true;
 
     const preloadShopLogo = (logoUrl) => {
       if (!logoUrl) return Promise.resolve();
-
       return new Promise((resolve) => {
         const image = new Image();
         let completed = false;
-
         const finish = () => {
           if (completed) return;
-
           completed = true;
           window.clearTimeout(timeout);
-
           image.onload = null;
           image.onerror = null;
-
           resolve();
         };
-
-        // Safety timeout: never keep the dashboard loader forever.
         const timeout = window.setTimeout(finish, 10000);
-
         image.onload = finish;
         image.onerror = finish;
         image.src = logoUrl;
-
-        // Handle an already cached image.
-        if (image.complete) {
-          finish();
-        }
+        if (image.complete) finish();
       });
     };
 
@@ -469,27 +524,18 @@ function Dashboard() {
       try {
         const shopRef = doc(db, "shops", user.uid);
         const snapshot = await getDoc(shopRef);
-
         if (!active) return;
 
         if (!snapshot.exists()) {
-          console.error(
-            "Shop document not found:",
-            `shops/${user.uid}`
-          );
-
-          setNotice(
-            "Shop profile not found. Please contact BillBox support."
-          );
+          console.error("Shop document not found:", `shops/${user.uid}`);
+          setNotice("Shop profile not found. Please contact BillBox support.");
           setNoticeError(true);
-
           setProfile(DEFAULT_PROFILE);
           setDraft(DEFAULT_PROFILE);
           return;
         }
 
         const saved = snapshot.data();
-
         const merged = {
           ...DEFAULT_PROFILE,
           ...saved,
@@ -497,12 +543,9 @@ function Dashboard() {
           language: saved.language === "hi" ? "hi" : "en",
         };
 
-        // IMPORTANT: Wait for Firebase Storage logo image to load.
         await preloadShopLogo(merged.logoUrl);
-
         if (!active) return;
 
-        // Only show dashboard after logo loading has completed.
         setProfile(merged);
         setDraft(merged);
 
@@ -512,10 +555,8 @@ function Dashboard() {
         document.documentElement.dataset.theme = merged.theme;
         document.body.dataset.theme = merged.theme;
         document.documentElement.dataset.language = merged.language;
-
       } catch (error) {
         console.error("Shop profile load error:", error);
-
         if (active) {
           setNotice(
             `Could not load shop profile: ${error.code || error.message}`
@@ -523,45 +564,72 @@ function Dashboard() {
           setNoticeError(true);
         }
       } finally {
-        if (active) {
-          setProfileLoading(false);
-        }
+        if (active) setProfileLoading(false);
       }
     };
 
     loadProfile();
-
     return () => {
       active = false;
     };
   }, [user]);
 
-  // Apply theme to the complete dashboard page.
   useEffect(() => {
     document.documentElement.dataset.theme =
       profile.theme === "light" ? "light" : "dark";
-
     document.body.dataset.theme =
       profile.theme === "light" ? "light" : "dark";
   }, [profile.theme]);
 
   const updateDraft = (field, value) => {
-    setDraft((current) => ({
-      ...current,
-      [field]: value,
-    }));
+    setDraft((current) => ({ ...current, [field]: value }));
   };
 
   const openSettings = () => {
     setDraft({ ...profile });
     setNotice("");
     setShowMenu(false);
+    setShowHelp(false);
+    setShowSubscription(false);
     setShowSettings(true);
+  };
+
+  const openSubscription = () => {
+    setShowMenu(false);
+    setShowSettings(false);
+    setShowHelp(false);
+    setShowSubscription(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const openHelpCentre = () => {
+    setShowMenu(false);
+    setShowSettings(false);
+    setShowSubscription(false);
+    setShowHelp(true);
+    setHelpSearch("");
+    setHelpCategory("All");
+    setExpandedFaq(0);
+    setShowProblemForm(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleNewBillClick = () => {
+    const expiry = toDateSafe(profile.subscriptionEndsAt);
+    const isSubscriptionValid =
+      profile.subscriptionStatus === "active" &&
+      expiry &&
+      expiry.getTime() > Date.now();
+
+    if (!isSubscriptionValid) {
+      setShowSubscriptionExpired(true);
+      return;
+    }
+    navigate("/new-bill");
   };
 
   const saveSettings = async (event) => {
     event.preventDefault();
-
     if (!user) return;
 
     if (!draft.shopName.trim()) {
@@ -570,7 +638,6 @@ function Dashboard() {
       return;
     }
     const gstin = draft.gstNumber.trim().toUpperCase();
-
     if (!isValidGSTIN(gstin)) {
       setNotice(TEXT[language].gstInvalid);
       setNoticeError(true);
@@ -591,35 +658,19 @@ function Dashboard() {
         logoUrl: draft.logoUrl || "",
         language: draft.language === "hi" ? "hi" : "en",
         theme: draft.theme === "light" ? "light" : "dark",
-
       };
 
-      // Update the existing shop document only.
-      await updateDoc(
-        doc(db, "shops", user.uid),
-        payload
-      );
+      await updateDoc(doc(db, "shops", user.uid), payload);
 
-      setProfile((current) => ({
-        ...current,
-        ...payload,
-      }));
+      setProfile((current) => ({ ...current, ...payload }));
+      setDraft((current) => ({ ...current, ...payload }));
 
-      setDraft((current) => ({
-        ...current,
-        ...payload,
-      }));
-
-      // Persist preferences locally and notify App.jsx.
       localStorage.setItem("billbox-theme", payload.theme);
       localStorage.setItem("billbox-language", payload.language);
 
       window.dispatchEvent(
         new CustomEvent("billbox-preferences-change", {
-          detail: {
-            theme: payload.theme,
-            language: payload.language,
-          },
+          detail: { theme: payload.theme, language: payload.language },
         })
       );
 
@@ -629,14 +680,10 @@ function Dashboard() {
 
       setNotice(TEXT[payload.language].saved);
       setShowSettings(false);
-
     } catch (error) {
       console.error("Save shop profile error:", error);
-
       setNoticeError(true);
-      setNotice(
-        `${TEXT[language].saveError} (${error.code || error.message})`
-      );
+      setNotice(`${TEXT[language].saveError} (${error.code || error.message})`);
     } finally {
       setSaving(false);
     }
@@ -645,7 +692,6 @@ function Dashboard() {
   const handleLogoUpload = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = "";
-
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -653,106 +699,60 @@ function Dashboard() {
       setNotice(t.selectImage);
       return;
     }
-
     if (file.size > 5 * 1024 * 1024) {
       setNoticeError(true);
       setNotice(t.logoSize);
       return;
     }
-
     if (!user) return;
 
-    // Keep the previous logo URL before uploading the new one.
     const oldLogoUrl = draft.logoUrl || profile.logoUrl || "";
-
     setLogoUploading(true);
     setNotice("");
     setNoticeError(false);
 
     try {
-      const safeName = file.name.replace(
-        /[^a-zA-Z0-9._-]/g,
-        "_"
-      );
-
-      const path =
-        `shop-logos/${user.uid}/${Date.now()}-${safeName}`;
-
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `shop-logos/${user.uid}/${Date.now()}-${safeName}`;
       const fileRef = storageRef(storage, path);
 
-      // 1. Upload new logo
-      await uploadBytes(fileRef, file, {
-        contentType: file.type,
-      });
-
-      // 2. Get new logo URL
+      await uploadBytes(fileRef, file, { contentType: file.type });
       const newLogoUrl = await getDownloadURL(fileRef);
+      await updateDoc(doc(db, "shops", user.uid), { logoUrl: newLogoUrl });
 
-      // 3. Save new URL in Firestore first
-      // 3. Save new URL in the shop document
-      await updateDoc(
-        doc(db, "shops", user.uid),
-        {
-          logoUrl: newLogoUrl,
-        }
-      );
+      setDraft((current) => ({ ...current, logoUrl: newLogoUrl }));
+      setProfile((current) => ({ ...current, logoUrl: newLogoUrl }));
 
-      // 4. Update React states
-      setDraft((current) => ({
-        ...current,
-        logoUrl: newLogoUrl,
-      }));
-
-      setProfile((current) => ({
-        ...current,
-        logoUrl: newLogoUrl,
-      }));
-
-      // 5. Delete previous logo only after successful Firestore save
       if (oldLogoUrl && oldLogoUrl !== newLogoUrl) {
         try {
           const oldFileRef = storageRef(storage, oldLogoUrl);
-
-          // Delete only files belonging to this shop's logo folder.
           const allowedPath = `shop-logos/${user.uid}/`;
-
           if (oldFileRef.fullPath.startsWith(allowedPath)) {
             await deleteObject(oldFileRef);
             console.log("Previous logo deleted successfully.");
           }
         } catch (deleteError) {
-          // New logo is already saved. Do not undo the successful upload.
-          console.warn(
-            "Previous logo could not be deleted:",
-            deleteError
-          );
+          console.warn("Previous logo could not be deleted:", deleteError);
         }
       }
 
       setNotice("Logo uploaded and saved successfully!");
       setNoticeError(false);
-
     } catch (error) {
       console.error("Logo upload/save error:", error);
-
       setNoticeError(true);
-      setNotice(
-        error.code
-          ? `${t.logoError} (${error.code})`
-          : t.logoError
-      );
-
+      setNotice(error.code ? `${t.logoError} (${error.code})` : t.logoError);
     } finally {
       setLogoUploading(false);
     }
-  };  // Fetch gold and silver market rates.
+  };
+
   const fetchMetalRates = useCallback(async () => {
     try {
       const [goldRes, silverRes] = await Promise.all([
         fetch("https://snapdata.dev/api/v1/gold/in/latest.json"),
         fetch("https://snapdata.dev/api/v1/silver/in/latest.json"),
       ]);
-
       if (!goldRes.ok || !silverRes.ok) {
         throw new Error("Market rate request failed");
       }
@@ -761,41 +761,22 @@ function Dashboard() {
       const silverData = await silverRes.json();
 
       setRatesError("");
-
       setRatesUpdatedAt(
-        goldData.generated_at ||
-        silverData.generated_at ||
-        null
+        goldData.generated_at || silverData.generated_at || null
       );
 
-      const goldRates = {
-        gold24: null,
-        gold22: null,
-        gold18: null,
-      };
-
+      const goldRates = { gold24: null, gold22: null, gold18: null };
       goldData.observations?.forEach((item) => {
-        if (item.instrument_id === "XAU.24K.INR.G") {
-          goldRates.gold24 = item.value;
-        }
-
-        if (item.instrument_id === "XAU.22K.INR.G") {
-          goldRates.gold22 = item.value;
-        }
-
-        if (item.instrument_id === "XAU.18K.INR.G") {
-          goldRates.gold18 = item.value;
-        }
+        if (item.instrument_id === "XAU.24K.INR.G") goldRates.gold24 = item.value;
+        if (item.instrument_id === "XAU.22K.INR.G") goldRates.gold22 = item.value;
+        if (item.instrument_id === "XAU.18K.INR.G") goldRates.gold18 = item.value;
       });
 
       const silverRate = silverData.observations?.find(
         (item) => item.instrument_id === "XAG.INR.KG"
       );
 
-      setMetalRates({
-        ...goldRates,
-        silver999: silverRate?.value ?? null,
-      });
+      setMetalRates({ ...goldRates, silver999: silverRate?.value ?? null });
     } catch (error) {
       console.error("Metal rates error:", error);
       setRatesError(TEXT[language].ratesError);
@@ -806,21 +787,15 @@ function Dashboard() {
 
   useEffect(() => {
     let cancelled = false;
-
     const loadRates = async () => {
-      if (!cancelled) {
-        await fetchMetalRates();
-      }
+      if (!cancelled) await fetchMetalRates();
     };
-
     loadRates();
-
     return () => {
       cancelled = true;
     };
   }, [fetchMetalRates]);
 
-  // Load bill totals and the latest three bills created today.
   useEffect(() => {
     let active = true;
 
@@ -830,9 +805,7 @@ function Dashboard() {
           collection(db, "bills"),
           where("ownerId", "==", user.uid)
         );
-
         const snapshot = await getDocs(billsQuery);
-
         const allBills = snapshot.docs.map((item) => ({
           id: item.id,
           ...item.data(),
@@ -845,15 +818,11 @@ function Dashboard() {
 
         const getBillDate = (bill) => {
           if (!bill.createdAt) return null;
-
           try {
             const date = bill.createdAt?.toDate
               ? bill.createdAt.toDate()
               : new Date(bill.createdAt);
-
-            return Number.isNaN(date.getTime())
-              ? null
-              : date;
+            return Number.isNaN(date.getTime()) ? null : date;
           } catch {
             return null;
           }
@@ -862,7 +831,6 @@ function Dashboard() {
         const todayBills = allBills
           .filter((bill) => {
             const date = getBillDate(bill);
-
             return (
               date &&
               date.getFullYear() === currentYear &&
@@ -870,14 +838,10 @@ function Dashboard() {
               date.getDate() === currentDate
             );
           })
-          .sort(
-            (a, b) =>
-              getBillDate(b) - getBillDate(a)
-          );
+          .sort((a, b) => getBillDate(b) - getBillDate(a));
 
         const monthBills = allBills.filter((bill) => {
           const date = getBillDate(bill);
-
           return (
             date &&
             date.getFullYear() === currentYear &&
@@ -890,22 +854,30 @@ function Dashboard() {
             total + Number(bill.grandTotal || bill.totalAmount || 0),
           0
         );
-
         const monthTotal = monthBills.reduce(
-          (total, bill) => total + Number(bill.grandTotal || bill.totalAmount || 0),
+          (total, bill) =>
+            total + Number(bill.grandTotal || bill.totalAmount || 0),
           0
         );
 
-        const getPaidAmount = (bill) => Number(
-          bill.paidAmount ?? bill.amountPaid ?? bill.payment?.paid ?? 0
-        ) || 0;
+        const getPaidAmount = (bill) =>
+          Number(
+            bill.paidAmount ?? bill.amountPaid ?? bill.payment?.paid ?? 0
+          ) || 0;
 
-        const todayPaidTotal = todayBills.reduce((sum, bill) => sum + getPaidAmount(bill), 0);
-        const monthPaidTotal = monthBills.reduce((sum, bill) => sum + getPaidAmount(bill), 0);
+        const todayPaidTotal = todayBills.reduce(
+          (sum, bill) => sum + getPaidAmount(bill),
+          0
+        );
+        const monthPaidTotal = monthBills.reduce(
+          (sum, bill) => sum + getPaidAmount(bill),
+          0
+        );
 
         if (!active) return;
 
         setTodayBillsCount(todayBills.length);
+        setTotalBillsCount(allBills.length);
         setTodaySales(todayTotal);
         setMonthlySales(monthTotal);
         setTodayPaid(todayPaidTotal);
@@ -913,47 +885,35 @@ function Dashboard() {
         setRecentBills(todayBills.slice(0, 3));
       } catch (error) {
         console.error("Dashboard Firebase Error:", error);
-
         if (!active) return;
-
         setRecentBills([]);
         setTodayBillsCount(0);
+        setTotalBillsCount(0);
         setTodaySales(0);
         setMonthlySales(0);
         setTodayPaid(0);
         setMonthlyPaid(0);
       } finally {
-        if (active) {
-          setRecentBillsLoading(false);
-        }
+        if (active) setRecentBillsLoading(false);
       }
     };
 
     fetchDashboardData();
-
     return () => {
       active = false;
     };
   }, [user]);
 
-  const openHelpCentre = () => {
-    setShowMenu(false);
-    setShowSettings(false);
-    setShowHelp(true);
-    setHelpSearch("");
-    setHelpCategory("All");
-    setExpandedFaq(0);
-    setShowProblemForm(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   const openWhatsAppSupport = (message) => {
     if (!SUPPORT_WHATSAPP_NUMBER) {
-      window.alert("Please add the official BillBox WhatsApp support number in Dashboard.jsx (SUPPORT_WHATSAPP_NUMBER) before using this option.");
+      window.alert(
+        "Please add the official BillBox WhatsApp support number in Dashboard.jsx (SUPPORT_WHATSAPP_NUMBER) before using this option."
+      );
       return;
     }
-
-    const url = `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+      message
+    )}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -972,18 +932,32 @@ function Dashboard() {
 
   const helpCategories = [
     { value: "All", label: language === "en" ? "All topics" : "सभी विषय" },
-    { value: "GST & Billing", label: language === "en" ? "GST & Billing" : "GST और बिलिंग" },
-    { value: "Bills & Printing", label: language === "en" ? "Bills & Printing" : "बिल और प्रिंटिंग" },
-    { value: "Shop Profile & Settings", label: language === "en" ? "Shop Profile" : "शॉप प्रोफाइल" },
-    { value: "Account & Support", label: language === "en" ? "Account & Support" : "अकाउंट और सपोर्ट" },
+    {
+      value: "GST & Billing",
+      label: language === "en" ? "GST & Billing" : "GST और बिलिंग",
+    },
+    {
+      value: "Bills & Printing",
+      label: language === "en" ? "Bills & Printing" : "बिल और प्रिंटिंग",
+    },
+    {
+      value: "Shop Profile & Settings",
+      label: language === "en" ? "Shop Profile" : "शॉप प्रोफाइल",
+    },
+    {
+      value: "Account & Support",
+      label: language === "en" ? "Account & Support" : "अकाउंट और सपोर्ट",
+    },
   ];
 
   const filteredHelpFaqs = HELP_FAQS.filter((faq) => {
     const question = language === "en" ? faq.qEn : faq.q;
     const answer = language === "en" ? faq.aEn : faq.a;
-    const matchesCategory = helpCategory === "All" || faq.category === helpCategory;
+    const matchesCategory =
+      helpCategory === "All" || faq.category === helpCategory;
     const search = helpSearch.trim().toLowerCase();
-    const matchesSearch = !search ||
+    const matchesSearch =
+      !search ||
       `${question} ${answer} ${faq.category}`.toLowerCase().includes(search);
     return matchesCategory && matchesSearch;
   });
@@ -1010,25 +984,41 @@ function Dashboard() {
     }
   };
 
-  const shopName =
-    profile.shopName || "BillBox";
-
-  const ownerName =
-    profile.ownerName || t.admin;
-
-  const avatarLetter = (
-    profile.ownerName || shopName || "B"
-  )
+  const shopName = profile.shopName || "BillBox";
+  const ownerName = profile.ownerName || t.admin;
+  const avatarLetter = (profile.ownerName || shopName || "B")
     .trim()
     .charAt(0)
     .toUpperCase();
 
-  // Show one full-screen loader until all initial data is ready.
-  if (
-    profileLoading ||
-    recentBillsLoading ||
-    ratesLoading
-  ) {
+  const subscriptionStartDate = toDateSafe(profile.subscriptionStartAt);
+  const subscriptionEndDate = toDateSafe(profile.subscriptionEndsAt);
+
+  const daysRemaining = subscriptionEndDate
+    ? Math.max(
+        0,
+        Math.ceil(
+          (subscriptionEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        )
+      )
+    : 0;
+
+  const isSubscriptionActive =
+    profile.subscriptionStatus === "active" &&
+    subscriptionEndDate &&
+    subscriptionEndDate.getTime() > Date.now();
+
+  const totalBillCharges = totalBillsCount * PER_BILL_COST;
+
+  const statusLabel = isSubscriptionActive
+    ? t.statusActive
+    : profile.subscriptionStatus === "active"
+    ? t.statusExpired
+    : profile.subscriptionStatus === "pending"
+    ? t.statusPending
+    : t.statusExpired;
+
+  if (profileLoading || recentBillsLoading || ratesLoading) {
     return (
       <PageLoader
         loading={true}
@@ -1044,10 +1034,9 @@ function Dashboard() {
 
   return (
     <div
-      className={`dashboard ${profile.theme === "light"
-        ? "dashboard-light"
-        : ""
-        }`}
+      className={`dashboard ${
+        profile.theme === "light" ? "dashboard-light" : ""
+      }`}
     >
       <header className="topbar">
         <div className="brand">
@@ -1058,36 +1047,28 @@ function Dashboard() {
               {shopName.trim().charAt(0).toUpperCase()}
             </div>
           )}
-
-          <span className="brand-owner-name">
-            {shopName}
-          </span>
+          <span className="brand-owner-name">{shopName}</span>
         </div>
 
         <div className="topbar-right">
-
-
           <div className="profile-wrapper" ref={profileWrapperRef}>
             <button
               type="button"
               className="admin-avatar"
-              onClick={() =>
-                setShowMenu((current) => !current)
-              }
+              onClick={() => setShowMenu((current) => !current)}
               aria-label={t.profile}
               aria-expanded={showMenu}
             >
               <span className="admin-avatar-letter">{avatarLetter}</span>
-              <span className="admin-avatar-chevron" aria-hidden="true">⌄</span>
+              <span className="admin-avatar-chevron" aria-hidden="true">
+                ⌄
+              </span>
             </button>
 
             {showMenu && (
               <div className="profile-menu">
                 <div className="profile-menu-header">
-                  <div className="profile-menu-avatar">
-                    {avatarLetter}
-                  </div>
-
+                  <div className="profile-menu-avatar">{avatarLetter}</div>
                   <div>
                     <strong>{ownerName}</strong>
                     <span>{shopName}</span>
@@ -1107,11 +1088,25 @@ function Dashboard() {
 
                 <button
                   type="button"
+                  className="profile-action-button profile-subscription-button"
+                  onClick={openSubscription}
+                >
+                  <span aria-hidden="true">₹</span>
+                  <span>{t.subscription}</span>
+                  {!isSubscriptionActive && (
+                    <span className="subscription-alert-dot" aria-hidden="true" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
                   className="profile-action-button profile-help-button"
                   onClick={openHelpCentre}
                 >
                   <span aria-hidden="true">?</span>
-                  <span>{language === "en" ? "Help & Support" : "हेल्प और सपोर्ट"}</span>
+                  <span>
+                    {language === "en" ? "Help & Support" : "हेल्प और सपोर्ट"}
+                  </span>
                 </button>
 
                 <button
@@ -1119,10 +1114,7 @@ function Dashboard() {
                   className="logout-button"
                   onClick={handleLogout}
                 >
-                  <span
-                    className="logout-icon"
-                    aria-hidden="true"
-                  >
+                  <span className="logout-icon" aria-hidden="true">
                     ↪
                   </span>
                   <span>{t.logout}</span>
@@ -1140,28 +1132,188 @@ function Dashboard() {
           aria-live="polite"
         >
           {notice}
-
-          <button
-            type="button"
-            onClick={() => setNotice("")}
-            aria-label="Close"
-          >
+          <button type="button" onClick={() => setNotice("")} aria-label="Close">
             ×
           </button>
         </div>
       )}
 
-      {showHelp ? (
+      {showSubscription ? (
+        <main className="dashboard-content subscription-page-content">
+          <section className="subscription-hero">
+            <button
+              type="button"
+              className="help-back-button"
+              onClick={() => setShowSubscription(false)}
+            >
+              <span aria-hidden="true">←</span>
+              {t.backToDashboard}
+            </button>
+
+            <div className="subscription-hero-copy">
+              <span className="help-eyebrow">BILLBOX SUBSCRIPTION</span>
+              <h1>{t.subscriptionTitle}</h1>
+              <p>{t.subscriptionSubtitle}</p>
+            </div>
+
+            <div
+              className={`subscription-status-pill ${
+                isSubscriptionActive ? "is-active" : "is-expired"
+              }`}
+            >
+              <span className="subscription-status-dot" />
+              {statusLabel}
+            </div>
+          </section>
+
+          <section className="subscription-highlight-card">
+            <div className="subscription-highlight-left">
+              <span className="help-eyebrow">{t.daysRemaining}</span>
+              <h2 className="subscription-days-number">
+                {isSubscriptionActive ? daysRemaining : 0}
+                <small>
+                  {isSubscriptionActive
+                    ? ` ${t.daysLeft}`
+                    : ` — ${t.statusExpired}`}
+                </small>
+              </h2>
+              <p>
+                {isSubscriptionActive
+                  ? `${t.renewsOn}: ${formatDate(subscriptionEndDate, language)}`
+                  : t.expiredMessage}
+              </p>
+            </div>
+
+            <div className="subscription-highlight-right">
+              <div className="subscription-mini-row">
+                <span>{t.startedOn}</span>
+                <strong>{formatDate(subscriptionStartDate, language)}</strong>
+              </div>
+              <div className="subscription-mini-row">
+                <span>{t.renewsOn}</span>
+                <strong>{formatDate(subscriptionEndDate, language)}</strong>
+              </div>
+              <div className="subscription-mini-row">
+                <span>{t.plan}</span>
+                <strong>{t.planMonthly}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section className="subscription-section">
+            <div className="help-section-heading">
+              <span className="help-eyebrow">BILLING</span>
+              <h2>{t.billingSummary}</h2>
+              <p>{t.billsChargesNote}</p>
+            </div>
+
+            <div className="subscription-stats-grid">
+              <div className="subscription-stat-card">
+                <span className="subscription-stat-label">
+                  {t.totalBillsLabel}
+                </span>
+                <strong>{totalBillsCount}</strong>
+                <small>{t.totalBills}</small>
+              </div>
+
+              <div className="subscription-stat-card">
+                <span className="subscription-stat-label">
+                  {t.perBillLabel}
+                </span>
+                <strong>₹{PER_BILL_COST}</strong>
+                <small>{t.perBillCost}</small>
+              </div>
+
+              <div className="subscription-stat-card subscription-stat-highlight">
+                <span className="subscription-stat-label">
+                  {t.totalChargesLabel}
+                </span>
+                <strong>₹{money(totalBillCharges)}</strong>
+                <small>{t.totalCharges}</small>
+              </div>
+            </div>
+          </section>
+
+          <section className="subscription-section">
+            <div className="help-section-heading">
+              <span className="help-eyebrow">PLAN</span>
+              <h2>{t.planDetails}</h2>
+            </div>
+
+            <div className="subscription-plan-card">
+              <div className="subscription-plan-row">
+                <span>{t.planLabel}</span>
+                <strong>{t.planMonthly}</strong>
+              </div>
+              <div className="subscription-plan-row">
+                <span>{t.startedOn}</span>
+                <strong>{formatDate(subscriptionStartDate, language)}</strong>
+              </div>
+              <div className="subscription-plan-row">
+                <span>{t.renewsOn}</span>
+                <strong>{formatDate(subscriptionEndDate, language)}</strong>
+              </div>
+              <div className="subscription-plan-row">
+                <span>{t.perBillLabel}</span>
+                <strong>₹{PER_BILL_COST}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section className="subscription-renew-cta">
+            <div>
+              <span className="help-eyebrow">RENEWAL</span>
+              <h2>{t.renewHeading}</h2>
+              <p>{t.renewText}</p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                openWhatsAppSupport(
+                  language === "en"
+                    ? `Hello BillBox Team,\n\nI want to renew my subscription.\n\nShop: ${profile.shopName}\nOwner: ${profile.ownerName}\nCurrent plan: Monthly\nRenews on: ${formatDate(
+                        subscriptionEndDate,
+                        "en"
+                      )}\n\nPlease share renewal details and payment information.`
+                    : `नमस्ते BillBox Team,\n\nमैं अपना सब्सक्रिप्शन रिन्यू करना चाहता/चाहती हूँ।\n\nदुकान: ${
+                        profile.shopName
+                      }\nमालिक: ${
+                        profile.ownerName
+                      }\nप्लान: मासिक\nरिन्यूअल तारीख: ${formatDate(
+                        subscriptionEndDate,
+                        "hi"
+                      )}\n\nकृपया रिन्यूअल और पेमेंट की जानकारी भेजें।`
+                )
+              }
+            >
+              {t.renewNow} <span aria-hidden="true">↗</span>
+            </button>
+          </section>
+        </main>
+      ) : showHelp ? (
         <main className="dashboard-content help-page-content">
           <section className="help-hero">
-            <button type="button" className="help-back-button" onClick={() => setShowHelp(false)}>
+            <button
+              type="button"
+              className="help-back-button"
+              onClick={() => setShowHelp(false)}
+            >
               <span aria-hidden="true">←</span>
               {language === "en" ? "Back to Dashboard" : "डैशबोर्ड पर वापस जाएँ"}
             </button>
             <div className="help-hero-copy">
               <span className="help-eyebrow">BILLBOX CUSTOMER CARE</span>
-              <h1>{language === "en" ? "How can we help you?" : "हम आपकी कैसे मदद कर सकते हैं?"}</h1>
-              <p>{language === "en" ? "Find quick answers or connect with our support team." : "अपने सवालों के जवाब पाएँ या हमारी सपोर्ट टीम से जुड़ें।"}</p>
+              <h1>
+                {language === "en"
+                  ? "How can we help you?"
+                  : "हम आपकी कैसे मदद कर सकते हैं?"}
+              </h1>
+              <p>
+                {language === "en"
+                  ? "Find quick answers or connect with our support team."
+                  : "अपने सवालों के जवाब पाएँ या हमारी सपोर्ट टीम से जुड़ें।"}
+              </p>
             </div>
             <label className="help-search-box">
               <span aria-hidden="true">⌕</span>
@@ -1169,7 +1321,11 @@ function Dashboard() {
                 type="search"
                 value={helpSearch}
                 onChange={(event) => setHelpSearch(event.target.value)}
-                placeholder={language === "en" ? "Search questions, e.g. GST, printing..." : "सवाल खोजें, जैसे GST, प्रिंटिंग..."}
+                placeholder={
+                  language === "en"
+                    ? "Search questions, e.g. GST, printing..."
+                    : "सवाल खोजें, जैसे GST, प्रिंटिंग..."
+                }
               />
             </label>
           </section>
@@ -1178,24 +1334,54 @@ function Dashboard() {
             <article className="help-contact-card help-whatsapp-card">
               <div className="help-contact-icon">◉</div>
               <div>
-                <span className="help-card-kicker">{language === "en" ? "TALK TO OUR TEAM" : "हमारी टीम से बात करें"}</span>
-                <h2>{language === "en" ? "WhatsApp Support" : "WhatsApp सपोर्ट"}</h2>
-                <p>{language === "en" ? "Get assistance for your account, billing and setup." : "अकाउंट, बिलिंग और सेटअप के लिए सहायता पाएँ।"}</p>
+                <span className="help-card-kicker">
+                  {language === "en" ? "TALK TO OUR TEAM" : "हमारी टीम से बात करें"}
+                </span>
+                <h2>
+                  {language === "en" ? "WhatsApp Support" : "WhatsApp सपोर्ट"}
+                </h2>
+                <p>
+                  {language === "en"
+                    ? "Get assistance for your account, billing and setup."
+                    : "अकाउंट, बिलिंग और सेटअप के लिए सहायता पाएँ।"}
+                </p>
               </div>
               <button type="button" onClick={startGeneralSupport}>
-                {language === "en" ? "Chat on WhatsApp" : "WhatsApp पर चैट करें"} <span>↗</span>
+                {language === "en" ? "Chat on WhatsApp" : "WhatsApp पर चैट करें"}{" "}
+                <span>↗</span>
               </button>
             </article>
 
             <article className="help-contact-card">
               <div className="help-contact-icon help-problem-icon">!</div>
               <div>
-                <span className="help-card-kicker">{language === "en" ? "NEED TECHNICAL HELP?" : "तकनीकी सहायता चाहिए?"}</span>
-                <h2>{language === "en" ? "Report a Problem" : "समस्या की रिपोर्ट करें"}</h2>
-                <p>{language === "en" ? "Describe the issue and send it directly to our team." : "अपनी समस्या लिखें और सीधे हमारी टीम को भेजें।"}</p>
+                <span className="help-card-kicker">
+                  {language === "en"
+                    ? "NEED TECHNICAL HELP?"
+                    : "तकनीकी सहायता चाहिए?"}
+                </span>
+                <h2>
+                  {language === "en" ? "Report a Problem" : "समस्या की रिपोर्ट करें"}
+                </h2>
+                <p>
+                  {language === "en"
+                    ? "Describe the issue and send it directly to our team."
+                    : "अपनी समस्या लिखें और सीधे हमारी टीम को भेजें।"}
+                </p>
               </div>
-              <button type="button" className="help-secondary-button" onClick={() => setShowProblemForm((value) => !value)}>
-                {showProblemForm ? (language === "en" ? "Close form" : "फॉर्म बंद करें") : (language === "en" ? "Report an issue" : "समस्या भेजें")} <span>→</span>
+              <button
+                type="button"
+                className="help-secondary-button"
+                onClick={() => setShowProblemForm((value) => !value)}
+              >
+                {showProblemForm
+                  ? language === "en"
+                    ? "Close form"
+                    : "फॉर्म बंद करें"
+                  : language === "en"
+                  ? "Report an issue"
+                  : "समस्या भेजें"}{" "}
+                <span>→</span>
               </button>
             </article>
           </section>
@@ -1204,27 +1390,63 @@ function Dashboard() {
             <section className="help-problem-panel">
               <div className="help-section-heading">
                 <span className="help-eyebrow">SUPPORT REQUEST</span>
-                <h2>{language === "en" ? "Tell us what went wrong" : "हमें बताएं कि क्या समस्या आई"}</h2>
-                <p>{language === "en" ? "Your shop details will be added automatically. You can attach a screenshot after WhatsApp opens." : "आपकी शॉप की जानकारी अपने आप जुड़ जाएगी। WhatsApp खुलने के बाद screenshot भी attach कर सकते हैं।"}</p>
+                <h2>
+                  {language === "en"
+                    ? "Tell us what went wrong"
+                    : "हमें बताएं कि क्या समस्या आई"}
+                </h2>
+                <p>
+                  {language === "en"
+                    ? "Your shop details will be added automatically. You can attach a screenshot after WhatsApp opens."
+                    : "आपकी शॉप की जानकारी अपने आप जुड़ जाएगी। WhatsApp खुलने के बाद screenshot भी attach कर सकते हैं।"}
+                </p>
               </div>
               <form onSubmit={submitProblemReport} className="help-problem-form">
                 <label>
-                  <span>{language === "en" ? "Problem category" : "समस्या की श्रेणी"}</span>
-                  <select value={problemCategory} onChange={(event) => setProblemCategory(event.target.value)}>
+                  <span>
+                    {language === "en" ? "Problem category" : "समस्या की श्रेणी"}
+                  </span>
+                  <select
+                    value={problemCategory}
+                    onChange={(event) => setProblemCategory(event.target.value)}
+                  >
                     <option value="Billing issue">Billing issue / बिलिंग</option>
                     <option value="GST issue">GST issue / GST</option>
                     <option value="Printing issue">Printing issue / प्रिंटिंग</option>
-                    <option value="Login or account">Login or account / लॉगिन</option>
-                    <option value="Shop profile or settings">Shop profile / शॉप प्रोफाइल</option>
-                    <option value="Other technical issue">Other technical issue / अन्य</option>
+                    <option value="Login or account">
+                      Login or account / लॉगिन
+                    </option>
+                    <option value="Shop profile or settings">
+                      Shop profile / शॉप प्रोफाइल
+                    </option>
+                    <option value="Other technical issue">
+                      Other technical issue / अन्य
+                    </option>
                   </select>
                 </label>
                 <label>
-                  <span>{language === "en" ? "Describe your problem" : "अपनी समस्या विस्तार से लिखें"}</span>
-                  <textarea rows="4" value={problemDescription} onChange={(event) => setProblemDescription(event.target.value)} placeholder={language === "en" ? "Tell us what happened and what you were trying to do..." : "बताएं कि क्या हुआ और आप क्या करने की कोशिश कर रहे थे..."} required />
+                  <span>
+                    {language === "en"
+                      ? "Describe your problem"
+                      : "अपनी समस्या विस्तार से लिखें"}
+                  </span>
+                  <textarea
+                    rows="4"
+                    value={problemDescription}
+                    onChange={(event) =>
+                      setProblemDescription(event.target.value)
+                    }
+                    placeholder={
+                      language === "en"
+                        ? "Tell us what happened and what you were trying to do..."
+                        : "बताएं कि क्या हुआ और आप क्या करने की कोशिश कर रहे थे..."
+                    }
+                    required
+                  />
                 </label>
                 <button type="submit" disabled={!problemDescription.trim()}>
-                  {language === "en" ? "Send on WhatsApp" : "WhatsApp पर भेजें"} <span>↗</span>
+                  {language === "en" ? "Send on WhatsApp" : "WhatsApp पर भेजें"}{" "}
+                  <span>↗</span>
                 </button>
               </form>
             </section>
@@ -1233,8 +1455,16 @@ function Dashboard() {
           <section className="help-faq-section">
             <div className="help-section-heading">
               <span className="help-eyebrow">KNOWLEDGE CENTRE</span>
-              <h2>{language === "en" ? "Frequently Asked Questions" : "अक्सर पूछे जाने वाले सवाल"}</h2>
-              <p>{language === "en" ? "Helpful answers to common BillBox questions." : "BillBox से जुड़े आम सवालों के आसान जवाब।"}</p>
+              <h2>
+                {language === "en"
+                  ? "Frequently Asked Questions"
+                  : "अक्सर पूछे जाने वाले सवाल"}
+              </h2>
+              <p>
+                {language === "en"
+                  ? "Helpful answers to common BillBox questions."
+                  : "BillBox से जुड़े आम सवालों के आसान जवाब।"}
+              </p>
             </div>
 
             <div className="help-category-list">
@@ -1243,7 +1473,10 @@ function Dashboard() {
                   type="button"
                   key={category.value}
                   className={helpCategory === category.value ? "active" : ""}
-                  onClick={() => { setHelpCategory(category.value); setExpandedFaq(0); }}
+                  onClick={() => {
+                    setHelpCategory(category.value);
+                    setExpandedFaq(0);
+                  }}
                 >
                   {category.label}
                 </button>
@@ -1251,30 +1484,59 @@ function Dashboard() {
             </div>
 
             <div className="help-faq-list">
-              {filteredHelpFaqs.length ? filteredHelpFaqs.map((faq) => {
-                const originalIndex = HELP_FAQS.indexOf(faq);
-                const isOpen = expandedFaq === originalIndex;
-                return (
-                  <article className={`help-faq-item ${isOpen ? "is-open" : ""}`} key={faq.qEn}>
-                    <button type="button" className="help-faq-question" onClick={() => setExpandedFaq(isOpen ? -1 : originalIndex)} aria-expanded={isOpen}>
-                      <span>{language === "en" ? faq.qEn : faq.q}</span>
-                      <span className="help-faq-chevron">{isOpen ? "−" : "+"}</span>
-                    </button>
-                    {isOpen && (
-                      <div className="help-faq-answer">
-                        <p>{language === "en" ? faq.aEn : faq.a}</p>
-                        <button type="button" onClick={startGeneralSupport}>
-                          {language === "en" ? "Still need help? Contact support" : "फिर भी मदद चाहिए? सपोर्ट से संपर्क करें"} ↗
-                        </button>
-                      </div>
-                    )}
-                  </article>
-                );
-              }) : (
+              {filteredHelpFaqs.length ? (
+                filteredHelpFaqs.map((faq) => {
+                  const originalIndex = HELP_FAQS.indexOf(faq);
+                  const isOpen = expandedFaq === originalIndex;
+                  return (
+                    <article
+                      className={`help-faq-item ${isOpen ? "is-open" : ""}`}
+                      key={faq.qEn}
+                    >
+                      <button
+                        type="button"
+                        className="help-faq-question"
+                        onClick={() =>
+                          setExpandedFaq(isOpen ? -1 : originalIndex)
+                        }
+                        aria-expanded={isOpen}
+                      >
+                        <span>{language === "en" ? faq.qEn : faq.q}</span>
+                        <span className="help-faq-chevron">
+                          {isOpen ? "−" : "+"}
+                        </span>
+                      </button>
+                      {isOpen && (
+                        <div className="help-faq-answer">
+                          <p>{language === "en" ? faq.aEn : faq.a}</p>
+                          <button type="button" onClick={startGeneralSupport}>
+                            {language === "en"
+                              ? "Still need help? Contact support"
+                              : "फिर भी मदद चाहिए? सपोर्ट से संपर्क करें"}{" "}
+                            ↗
+                          </button>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })
+              ) : (
                 <div className="help-no-results">
-                  <strong>{language === "en" ? "No matching questions found" : "कोई मिलता-जुलता सवाल नहीं मिला"}</strong>
-                  <p>{language === "en" ? "Try another keyword or contact our support team." : "दूसरा शब्द खोजें या हमारी सपोर्ट टीम से संपर्क करें।"}</p>
-                  <button type="button" onClick={startGeneralSupport}>{language === "en" ? "Contact Support" : "सपोर्ट से संपर्क करें"}</button>
+                  <strong>
+                    {language === "en"
+                      ? "No matching questions found"
+                      : "कोई मिलता-जुलता सवाल नहीं मिला"}
+                  </strong>
+                  <p>
+                    {language === "en"
+                      ? "Try another keyword or contact our support team."
+                      : "दूसरा शब्द खोजें या हमारी सपोर्ट टीम से संपर्क करें।"}
+                  </p>
+                  <button type="button" onClick={startGeneralSupport}>
+                    {language === "en"
+                      ? "Contact Support"
+                      : "सपोर्ट से संपर्क करें"}
+                  </button>
                 </div>
               )}
             </div>
@@ -1283,24 +1545,33 @@ function Dashboard() {
           <section className="help-bottom-cta">
             <div>
               <span className="help-eyebrow">BILLBOX SUPPORT</span>
-              <h2>{language === "en" ? "We're here when you need us." : "जब भी जरूरत हो, हम आपकी मदद के लिए हैं।"}</h2>
-              <p>{language === "en" ? "Couldn't find your answer? Send our team a message." : "जवाब नहीं मिला? हमारी टीम को मैसेज भेजें।"}</p>
+              <h2>
+                {language === "en"
+                  ? "We're here when you need us."
+                  : "जब भी जरूरत हो, हम आपकी मदद के लिए हैं।"}
+              </h2>
+              <p>
+                {language === "en"
+                  ? "Couldn't find your answer? Send our team a message."
+                  : "जवाब नहीं मिला? हमारी टीम को मैसेज भेजें।"}
+              </p>
             </div>
-            <button type="button" onClick={startGeneralSupport}>{language === "en" ? "Contact our team" : "हमारी टीम से संपर्क करें"} ↗</button>
+            <button type="button" onClick={startGeneralSupport}>
+              {language === "en"
+                ? "Contact our team"
+                : "हमारी टीम से संपर्क करें"}{" "}
+              ↗
+            </button>
           </section>
         </main>
       ) : (
         <main className="dashboard-content">
           <section className="welcome">
             <div>
-              <span className="welcome-label">
-                {shopName}
-              </span>
-
+              <span className="welcome-label">{shopName}</span>
               <h1>
                 {t.welcome} <em>{ownerName}</em>
               </h1>
-
               <p>{t.welcomeText}</p>
             </div>
           </section>
@@ -1308,21 +1579,13 @@ function Dashboard() {
           <section className="metal-rates-card">
             <div className="metal-rates-header">
               <div>
-                <span className="metal-rates-label">
-                  {t.market}
-                </span>
-
+                <span className="metal-rates-label">{t.market}</span>
                 <h3>{t.goldSilver}</h3>
-
                 {ratesUpdatedAt && (
                   <small className="rates-last-update">
                     {t.lastUpdated}{" "}
-                    {new Date(
-                      ratesUpdatedAt
-                    ).toLocaleString(
-                      language === "hi"
-                        ? "hi-IN"
-                        : "en-IN",
+                    {new Date(ratesUpdatedAt).toLocaleString(
+                      language === "hi" ? "hi-IN" : "en-IN",
                       {
                         day: "2-digit",
                         month: "short",
@@ -1333,97 +1596,70 @@ function Dashboard() {
                   </small>
                 )}
               </div>
-
-              <span className="metal-rates-live">
-                ● {t.live}
-              </span>
+              <span className="metal-rates-live">● {t.live}</span>
             </div>
 
             {ratesLoading ? (
-              <div className="rates-loading">
-                {t.loadingRates}
-              </div>
+              <div className="rates-loading">{t.loadingRates}</div>
             ) : ratesError ? (
-              <div className="rates-error">
-                {ratesError}
-              </div>
+              <div className="rates-error">{ratesError}</div>
             ) : (
               <div className="metal-rates-grid">
                 <div className="metal-rate-item">
                   <span>{t.gold24}</span>
-
                   <strong>
                     ₹{" "}
                     {metalRates.gold24 != null
-                      ? Number(
-                        metalRates.gold24 * 10
-                      ).toLocaleString("en-IN")
+                      ? Number(metalRates.gold24 * 10).toLocaleString("en-IN")
                       : "--"}
                   </strong>
-
                   <small>{t.per10g}</small>
                 </div>
-
                 <div className="metal-rate-item">
                   <span>{t.gold22}</span>
-
                   <strong>
                     ₹{" "}
                     {metalRates.gold22 != null
-                      ? Number(
-                        metalRates.gold22 * 10
-                      ).toLocaleString("en-IN")
+                      ? Number(metalRates.gold22 * 10).toLocaleString("en-IN")
                       : "--"}
                   </strong>
-
                   <small>{t.per10g}</small>
                 </div>
-
                 <div className="metal-rate-item">
                   <span>{t.gold18}</span>
-
                   <strong>
                     ₹{" "}
                     {metalRates.gold18 != null
-                      ? Number(
-                        metalRates.gold18 * 10
-                      ).toLocaleString("en-IN")
+                      ? Number(metalRates.gold18 * 10).toLocaleString("en-IN")
                       : "--"}
                   </strong>
-
                   <small>{t.per10g}</small>
                 </div>
-
                 <div className="metal-rate-item">
                   <span>{t.silver999}</span>
-
                   <strong>
                     ₹{" "}
                     {metalRates.silver999 != null
-                      ? Number(
-                        metalRates.silver999
-                      ).toLocaleString("en-IN")
+                      ? Number(metalRates.silver999).toLocaleString("en-IN")
                       : "--"}
                   </strong>
-
                   <small>{t.perKg}</small>
                 </div>
               </div>
             )}
           </section>
+
           <section className="actions">
             <button
               type="button"
               className="action-card main-action"
-              onClick={() => navigate("/new-bill")}
+              onClick={handleNewBillClick}
             >
               <div className="action-icon">+</div>
-
               <div className="action-content">
                 <h2>{t.newBill}</h2>
                 <p>{t.newBillText}</p>
               </div>
-
               <span className="action-arrow">→</span>
             </button>
 
@@ -1446,12 +1682,10 @@ function Dashboard() {
               onClick={() => navigate("/today-sales")}
             >
               <div className="action-icon">₹</div>
-
               <div className="action-content">
                 <h2>{t.sales}</h2>
                 <p>{t.salesText}</p>
               </div>
-
               <span className="action-arrow">→</span>
             </button>
 
@@ -1461,12 +1695,10 @@ function Dashboard() {
               onClick={() => navigate("/bill-history")}
             >
               <div className="action-icon">▤</div>
-
               <div className="action-content">
                 <h2>{t.billHistory}</h2>
                 <p>{t.billHistoryText}</p>
               </div>
-
               <span className="action-arrow">→</span>
             </button>
           </section>
@@ -1477,34 +1709,37 @@ function Dashboard() {
                 <span>{t.summary}</span>
                 <h2>{t.todayDetails}</h2>
               </div>
-
-              <div className="today-date">
-                {t.today}
-              </div>
+              <div className="today-date">{t.today}</div>
             </div>
 
             <div className="summary-grid">
               <div className="summary-card">
-                <span className="summary-title">
-                  {t.todayBills}
-                </span>
-
+                <span className="summary-title">{t.todayBills}</span>
                 <strong>{todayBillsCount}</strong>
-
                 <p>{t.billsCreated}</p>
               </div>
 
               <div className="summary-card">
-                <span className="summary-title">
-                  {t.todaySales}
-                </span>
-
+                <span className="summary-title">{t.todaySales}</span>
                 <div className="summary-sales-row">
                   <strong>₹{money(todaySales)}</strong>
-                  <div className="summary-payment-flip" aria-label={language === "en" ? "Paid amount and total amount" : "प्राप्त राशि और कुल राशि"}>
+                  <div
+                    className="summary-payment-flip"
+                    aria-label={
+                      language === "en"
+                        ? "Paid amount and total amount"
+                        : "प्राप्त राशि और कुल राशि"
+                    }
+                  >
                     <div className="flip-track">
-                      <span><small>{language === "en" ? "PAID" : "प्राप्त"}</small><b>₹{money(todayPaid)}</b></span>
-                      <span><small>{language === "en" ? "TOTAL" : "कुल"}</small><b>₹{money(todaySales)}</b></span>
+                      <span>
+                        <small>{language === "en" ? "PAID" : "प्राप्त"}</small>
+                        <b>₹{money(todayPaid)}</b>
+                      </span>
+                      <span>
+                        <small>{language === "en" ? "TOTAL" : "कुल"}</small>
+                        <b>₹{money(todaySales)}</b>
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1512,16 +1747,32 @@ function Dashboard() {
               </div>
 
               <div className="summary-card">
-                <span className="summary-title">
-                  {t.thisMonth}
-                </span>
-
+                <span className="summary-title">{t.thisMonth}</span>
                 <div className="summary-sales-row">
                   <strong>{formatMonthlySales(monthlySales)}</strong>
-                  <div className="summary-payment-flip" aria-label={language === "en" ? "Paid amount and total amount" : "प्राप्त राशि और कुल राशि"}>
+                  <div
+                    className="summary-payment-flip"
+                    aria-label={
+                      language === "en"
+                        ? "Paid amount and total amount"
+                        : "प्राप्त राशि और कुल राशि"
+                    }
+                  >
                     <div className="flip-track">
-                      <span><small>{language === "en" ? "PAID" : "प्राप्त"}</small><b>₹{formatMonthlySales(monthlyPaid).replace(/^₹/, "")}</b></span>
-                      <span><small>{language === "en" ? "TOTAL" : "कुल"}</small><b>₹{formatMonthlySales(monthlySales).replace(/^₹/, "")}</b></span>
+                      <span>
+                        <small>{language === "en" ? "PAID" : "प्राप्त"}</small>
+                        <b>
+                          ₹
+                          {formatMonthlySales(monthlyPaid).replace(/^₹/, "")}
+                        </b>
+                      </span>
+                      <span>
+                        <small>{language === "en" ? "TOTAL" : "कुल"}</small>
+                        <b>
+                          ₹
+                          {formatMonthlySales(monthlySales).replace(/^₹/, "")}
+                        </b>
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1536,7 +1787,6 @@ function Dashboard() {
                 <span>{t.activity}</span>
                 <h2>{t.recentBills}</h2>
               </div>
-
               <button
                 type="button"
                 className="view-all"
@@ -1560,12 +1810,11 @@ function Dashboard() {
                 </div>
               )}
 
-              {!recentBillsLoading &&
-                recentBills.length === 0 && (
-                  <div className="table-row">
-                    <span>{t.noBills}</span>
-                  </div>
-                )}
+              {!recentBillsLoading && recentBills.length === 0 && (
+                <div className="table-row">
+                  <span>{t.noBills}</span>
+                </div>
+              )}
 
               {!recentBillsLoading &&
                 recentBills.map((bill) => (
@@ -1574,49 +1823,44 @@ function Dashboard() {
                     key={bill.id}
                     role="button"
                     tabIndex={0}
-                    onClick={() => navigate(`/bill-history?billId=${encodeURIComponent(bill.id)}`)}
+                    onClick={() =>
+                      navigate(
+                        `/bill-history?billId=${encodeURIComponent(bill.id)}`
+                      )
+                    }
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        navigate(`/bill-history?billId=${encodeURIComponent(bill.id)}`);
+                        navigate(
+                          `/bill-history?billId=${encodeURIComponent(bill.id)}`
+                        );
                       }
                     }}
-                    title={language === "en" ? "Open bill details" : "बिल का विवरण देखें"}
+                    title={
+                      language === "en"
+                        ? "Open bill details"
+                        : "बिल का विवरण देखें"
+                    }
                   >
                     <span className="bill-no">
-                      #
-                      {bill.billNumber ||
-                        bill.id.slice(0, 7)}
+                      #{bill.billNumber || bill.id.slice(0, 7)}
                     </span>
-
-                    <span>
-                      {bill.customerName || t.customer}
-                    </span>
-
+                    <span>{bill.customerName || t.customer}</span>
                     <span className="item-name">
                       {bill.itemName || t.jewellery}
-
                       {bill.metal && (
                         <>
                           {" • "}
-
-                          {String(bill.metal).toLowerCase() ===
-                            "gold"
+                          {String(bill.metal).toLowerCase() === "gold"
                             ? t.gold
-                            : String(
-                              bill.metal
-                            ).toLowerCase() === "silver"
-                              ? t.silver
-                              : bill.metal}
+                            : String(bill.metal).toLowerCase() === "silver"
+                            ? t.silver
+                            : bill.metal}
                         </>
                       )}
                     </span>
-
                     <strong>
-                      ₹
-                      {Number(
-                        bill.grandTotal || 0
-                      ).toLocaleString("en-IN")}
+                      ₹{Number(bill.grandTotal || 0).toLocaleString("en-IN")}
                     </strong>
                   </div>
                 ))}
@@ -1631,11 +1875,11 @@ function Dashboard() {
         <span>{t.purity}</span>
         <b>•</b>
         <span>{t.beauty}</span>
-
         <small>
           © {new Date().getFullYear()} {shopName}
         </small>
       </footer>
+
       {showLogoutConfirm && (
         <div
           className="logout-confirm-overlay"
@@ -1652,7 +1896,9 @@ function Dashboard() {
             aria-labelledby="logout-confirm-title"
             aria-describedby="logout-confirm-description"
           >
-            <div className="logout-confirm-icon" aria-hidden="true">↪</div>
+            <div className="logout-confirm-icon" aria-hidden="true">
+              ↪
+            </div>
             <h2 id="logout-confirm-title">
               {language === "en" ? "Confirm Logout" : "लॉग आउट की पुष्टि करें"}
             </h2>
@@ -1698,13 +1944,8 @@ function Dashboard() {
           >
             <div className="shop-settings-heading">
               <div>
-                <span className="shop-settings-eyebrow">
-                  BILLBOX
-                </span>
-
-                <h2 id="shop-settings-title">
-                  {t.settings}
-                </h2>
+                <span className="shop-settings-eyebrow">BILLBOX</span>
+                <h2 id="shop-settings-title">{t.settings}</h2>
               </div>
 
               <button
@@ -1721,27 +1962,18 @@ function Dashboard() {
               <div className="shop-settings-logo-row">
                 <div className="shop-settings-logo-preview">
                   {draft.logoUrl ? (
-                    <img
-                      src={draft.logoUrl}
-                      alt={draft.shopName || t.shopName}
-                    />
+                    <img src={draft.logoUrl} alt={draft.shopName || t.shopName} />
                   ) : (
                     <span>
-                      {(draft.shopName || "B")
-                        .charAt(0)
-                        .toUpperCase()}
+                      {(draft.shopName || "B").charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
 
                 <div className="shop-settings-logo-control">
                   <strong>{t.logo}</strong>
-
                   <label className="shop-settings-upload">
-                    {logoUploading
-                      ? t.saving
-                      : t.chooseLogo}
-
+                    {logoUploading ? t.saving : t.chooseLogo}
                     <input
                       type="file"
                       accept="image/*"
@@ -1749,64 +1981,47 @@ function Dashboard() {
                       disabled={logoUploading}
                     />
                   </label>
-
-                  <small>
-                    PNG, JPG, WEBP · Max 5 MB
-                  </small>
+                  <small>PNG, JPG, WEBP · Max 5 MB</small>
                 </div>
               </div>
 
               <div className="shop-settings-grid">
                 <label className="shop-settings-field">
                   <span>{t.shopName}</span>
-
                   <input
                     type="text"
                     value={draft.shopName}
                     maxLength={40}
                     onChange={(event) =>
-                      updateDraft(
-                        "shopName",
-                        event.target.value
-                      )
+                      updateDraft("shopName", event.target.value)
                     }
                   />
                 </label>
 
                 <label className="shop-settings-field">
                   <span>{t.ownerName}</span>
-
                   <input
                     type="text"
                     value={draft.ownerName}
                     onChange={(event) =>
-                      updateDraft(
-                        "ownerName",
-                        event.target.value
-                      )
+                      updateDraft("ownerName", event.target.value)
                     }
                   />
                 </label>
 
                 <label className="shop-settings-field">
                   <span>{t.phone}</span>
-
                   <input
                     type="tel"
                     value={draft.phone}
                     onChange={(event) =>
-                      updateDraft(
-                        "phone",
-                        event.target.value
-                      )
+                      updateDraft("phone", event.target.value)
                     }
                   />
                 </label>
 
-
                 <label className="shop-settings-field">
                   <span>{t.gst}</span>
-
                   <input
                     type="text"
                     value={draft.gstNumber}
@@ -1817,11 +2032,11 @@ function Dashboard() {
                       textTransform: "uppercase",
                       borderColor:
                         draft.gstNumber.trim() &&
-                          !isValidGSTIN(draft.gstNumber)
+                        !isValidGSTIN(draft.gstNumber)
                           ? "#ef4444"
                           : draft.gstNumber.trim()
-                            ? "#22c55e"
-                            : undefined,
+                          ? "#22c55e"
+                          : undefined,
                     }}
                     onChange={(event) =>
                       updateDraft(
@@ -1833,7 +2048,6 @@ function Dashboard() {
                       )
                     }
                   />
-
                   {draft.gstNumber.trim() && (
                     <small
                       style={{
@@ -1848,77 +2062,55 @@ function Dashboard() {
                       {draft.gstNumber.length < 15
                         ? t.gstLength
                         : isValidGSTIN(draft.gstNumber)
-                          ? t.gstValid
-                          : t.gstInvalid}
+                        ? t.gstValid
+                        : t.gstInvalid}
                     </small>
                   )}
                 </label>
 
-
                 <label className="shop-settings-field shop-settings-field-full">
                   <span>{t.address}</span>
-
                   <textarea
                     rows={2}
                     value={draft.address}
                     onChange={(event) =>
-                      updateDraft(
-                        "address",
-                        event.target.value
-                      )
+                      updateDraft("address", event.target.value)
                     }
                   />
                 </label>
 
                 <label className="shop-settings-field">
                   <span>{t.language}</span>
-
                   <select
                     value={draft.language}
                     onChange={(event) =>
-                      updateDraft(
-                        "language",
-                        event.target.value
-                      )
+                      updateDraft("language", event.target.value)
                     }
                   >
-                    <option value="hi">
-                      {t.hindi}
-                    </option>
-
-                    <option value="en">
-                      {t.english}
-                    </option>
+                    <option value="hi">{t.hindi}</option>
+                    <option value="en">{t.english}</option>
                   </select>
                 </label>
 
                 <label className="shop-settings-field">
                   <span>{t.theme}</span>
-
                   <select
                     value={draft.theme}
                     onChange={(event) =>
-                      updateDraft(
-                        "theme",
-                        event.target.value
-                      )
+                      updateDraft("theme", event.target.value)
                     }
                   >
-                    <option value="dark">
-                      {t.dark}
-                    </option>
-
-                    <option value="light">
-                      {t.light}
-                    </option>
+                    <option value="dark">{t.dark}</option>
+                    <option value="light">{t.light}</option>
                   </select>
                 </label>
               </div>
 
               {notice && (
                 <p
-                  className={`shop-settings-message ${noticeError ? "is-error" : ""
-                    }`}
+                  className={`shop-settings-message ${
+                    noticeError ? "is-error" : ""
+                  }`}
                 >
                   {notice}
                 </p>
@@ -1932,20 +2124,67 @@ function Dashboard() {
                 >
                   {t.cancel}
                 </button>
-
                 <button
                   type="submit"
                   className="shop-settings-save"
-                  disabled={
-                    saving ||
-                    logoUploading ||
-                    profileLoading
-                  }
+                  disabled={saving || logoUploading || profileLoading}
                 >
                   {saving ? t.saving : t.save}
                 </button>
               </div>
             </form>
+          </section>
+        </div>
+      )}
+
+      {showSubscriptionExpired && (
+        <div className="subscription-modal-overlay">
+          <section className="subscription-expired-card">
+            <div className="subscription-expired-icon">!</div>
+
+            <h2>
+              {language === "en"
+                ? "Subscription Expired"
+                : "सब्सक्रिप्शन समाप्त हो गया"}
+            </h2>
+
+            <p>
+              {language === "en"
+                ? "Your BillBox subscription has expired. Please contact our team and complete the renewal payment to continue creating new bills."
+                : "आपके BillBox सब्सक्रिप्शन की अवधि समाप्त हो गई है। नए बिल बनाने के लिए कृपया हमारी टीम से संपर्क करें और रिन्यूअल पेमेंट पूरा करें।"}
+            </p>
+
+            {profile.subscriptionEndsAt && (
+              <small>
+                {language === "en" ? "Expired on: " : "समाप्ति की तारीख: "}
+                {new Date(
+                  profile.subscriptionEndsAt?.toDate
+                    ? profile.subscriptionEndsAt.toDate()
+                    : profile.subscriptionEndsAt
+                ).toLocaleDateString(language === "hi" ? "hi-IN" : "en-IN")}
+              </small>
+            )}
+
+            <a
+              className="subscription-whatsapp-button"
+              href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                language === "en"
+                  ? `Hello BillBox Team, my subscription has expired. Please help me renew it.\nShop: ${profile.shopName}\nOwner: ${profile.ownerName}`
+                  : `नमस्ते BillBox Team, मेरा सब्सक्रिप्शन समाप्त हो गया है। कृपया इसे रिन्यू करने में मेरी मदद करें।\nदुकान: ${profile.shopName}\nमालिक: ${profile.ownerName}`
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              WhatsApp {language === "en" ? "Renew Subscription" : "रिन्यू करें"}
+            </a>
+
+            <button
+              type="button"
+              className="subscription-close-button"
+              onClick={() => setShowSubscriptionExpired(false)}
+            >
+              {language === "en" ? "Close" : "बंद करें"}
+            </button>
           </section>
         </div>
       )}
