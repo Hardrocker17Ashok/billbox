@@ -5089,3 +5089,522 @@ button {
     print-color-adjust: exact !important;
   }
 }
+
+
+/* =========================================================
+   SEARCHABLE JEWELLERY CATALOGUE
+   ========================================================= */
+
+.item-search-field {
+  position: relative;
+  z-index: 5;
+}
+
+.item-search-field input[type="search"] {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.095);
+  border-radius: 11px;
+  outline: none;
+  background: rgba(7, 7, 7, 0.46);
+  color: #e8e3da;
+  font-size: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.item-search-field input[type="search"]:focus {
+  border-color: rgba(181, 138, 58, 0.72);
+  box-shadow: 0 0 0 3px rgba(181, 138, 58, 0.075);
+}
+
+.item-search-field input[type="search"]::placeholder {
+  color: #777169;
+}
+
+.item-search-results {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  right: 0;
+  max-height: 310px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid rgba(181, 138, 58, 0.27);
+  border-radius: 12px;
+  background: #171614;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.48);
+  z-index: 30;
+}
+
+.item-search-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #eee8dc;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+
+.item-search-option:hover,
+.item-search-option.selected {
+  background: rgba(181, 138, 58, 0.13);
+}
+
+.item-search-option span {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.item-search-option small {
+  color: #888176;
+  font-size: 10px;
+  text-align: right;
+}
+
+.item-search-empty {
+  padding: 13px 10px;
+  color: #a9a196;
+  font-size: 11px;
+  text-align: center;
+}
+
+.item-search-custom {
+  width: 100%;
+  margin-top: 5px;
+  padding: 11px;
+  border: 1px dashed rgba(197, 155, 76, 0.48);
+  border-radius: 8px;
+  background: rgba(181, 138, 58, 0.09);
+  color: #e0bb72;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item-search-custom:hover {
+  background: rgba(181, 138, 58, 0.17);
+}
+
+.item-selected-note {
+  color: #c9a45e !important;
+  font-size: 10px !important;
+  margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .item-search-option {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .item-search-option small {
+    text-align: left;
+  }
+}
+
+/* =========================================================
+   BILLBOX ITEM PICKER — CLICK TO OPEN + LIVE SEARCH + CUSTOM
+   ========================================================= */
+.jewellery-section-card {
+  overflow: visible;
+  position: relative;
+  z-index: 6;
+}
+
+.jewellery-section-card .selection-area {
+  position: relative;
+  z-index: 12;
+}
+
+.item-search-field {
+  z-index: 45;
+}
+
+.item-search-control {
+  position: relative;
+  width: 100%;
+}
+
+.item-search-control input[type="search"] {
+  padding-right: 42px;
+}
+
+.item-search-chevron {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-58%);
+  color: #c69c4c;
+  font-size: 21px;
+  line-height: 1;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.item-search-chevron.open {
+  transform: translateY(-35%) rotate(180deg);
+}
+
+.item-search-results {
+  top: calc(100% + 8px);
+  z-index: 100;
+  max-height: min(360px, 55vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(198, 156, 76, 0.55) #171614;
+}
+
+.item-search-results-heading {
+  position: sticky;
+  top: -6px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 11px;
+  margin: -6px -6px 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: #171614;
+  color: #a9a196;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.item-search-results-heading span {
+  min-width: 22px;
+  padding: 3px 6px;
+  border-radius: 20px;
+  background: rgba(181, 138, 58, 0.13);
+  color: #d6b36f;
+  text-align: center;
+}
+
+.item-search-option {
+  min-height: 43px;
+}
+
+.item-search-custom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: sticky;
+  bottom: -6px;
+  border: 1px dashed rgba(197, 155, 76, 0.55);
+  background: #211d15;
+  box-shadow: 0 -8px 14px rgba(23, 22, 20, 0.85);
+}
+
+.item-search-custom span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: rgba(181, 138, 58, 0.18);
+  font-size: 16px;
+}
+
+@media (max-width: 640px) {
+  .jewellery-section-card {
+    overflow: visible;
+  }
+
+  .item-search-results {
+    max-height: 48vh;
+  }
+}
+
+
+/* =========================================================
+   ITEM DROPDOWN — MATCH THE ORIGINAL SELECT MENU APPEARANCE
+   ========================================================= */
+.item-search-results {
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0 0 8px 8px;
+  background: #3d3d3d;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+}
+
+.item-search-results-heading {
+  padding: 9px 14px;
+  margin: 0;
+  background: #303030;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  color: #d8d8d8;
+}
+
+.item-search-results-heading span {
+  background: rgba(255, 255, 255, 0.10);
+  color: #eeeeee;
+}
+
+.item-search-option {
+  min-height: 34px;
+  padding: 7px 14px;
+  border-radius: 0;
+  background: #3d3d3d;
+  color: #f1f1f1;
+  text-align: left;
+}
+
+.item-search-option span {
+  color: inherit;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.item-search-option:hover,
+.item-search-option.selected {
+  background: #9fc9f4;
+  color: #202020;
+}
+
+.item-search-option small {
+  display: none;
+}
+
+.item-search-empty {
+  background: #3d3d3d;
+  color: #eeeeee;
+}
+
+.item-search-custom {
+  position: static;
+  margin: 0;
+  padding: 11px 14px;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0;
+  background: #303030;
+  color: #f0cc80;
+  box-shadow: none;
+}
+
+.item-search-custom:hover {
+  background: #454545;
+}
+
+
+
+
+
+/* ==========================================
+   BILLBOX ITEM DROPDOWN — LIGHT THEME FIX
+   Append at the very end of NewBill.css
+========================================== */
+
+/* Search input */
+.bill-theme-light .item-search-control input[type="search"] {
+  background: #ffffff !important;
+  color: #302b24 !important;
+  border: 1px solid rgba(40, 35, 25, 0.15) !important;
+  box-shadow: inset 0 1px 2px rgba(30, 25, 15, 0.025);
+}
+
+.bill-theme-light .item-search-control input[type="search"]:focus {
+  background: #fffefa !important;
+  color: #25221d !important;
+  border-color: rgba(150, 110, 45, 0.65) !important;
+}
+
+.bill-theme-light .item-search-control input[type="search"]::placeholder {
+  color: #a39b8f !important;
+}
+
+/* Dropdown arrow — same neutral appearance as carat select */
+.bill-theme-light .item-search-chevron {
+  color: #77716a !important;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* Dropdown main panel */
+.bill-theme-light .item-search-results {
+  background: #ffffff !important;
+  border: 1px solid rgba(40, 35, 25, 0.16) !important;
+  box-shadow: 0 12px 28px rgba(30, 25, 15, 0.13) !important;
+}
+
+/* Dropdown heading */
+.bill-theme-light .item-search-results-heading {
+  background: #f7f5f0 !important;
+  color: #625d55 !important;
+  border-bottom: 1px solid rgba(40, 35, 25, 0.10) !important;
+}
+
+.bill-theme-light .item-search-results-heading span {
+  background: #eee9df !important;
+  color: #625d55 !important;
+}
+
+/* Item options */
+.bill-theme-light .item-search-option {
+  background: #ffffff !important;
+  color: #302b24 !important;
+}
+
+.bill-theme-light .item-search-option span {
+  color: #302b24 !important;
+}
+
+/* Same blue selection highlight as native select */
+.bill-theme-light .item-search-option:hover,
+.bill-theme-light .item-search-option.selected {
+  background: #9fc9f4 !important;
+  color: #202020 !important;
+}
+
+.bill-theme-light .item-search-option:hover span,
+.bill-theme-light .item-search-option.selected span {
+  color: #202020 !important;
+}
+
+/* Empty search message */
+.bill-theme-light .item-search-empty {
+  background: #ffffff !important;
+  color: #77716a !important;
+}
+
+/* Add custom item row */
+.bill-theme-light .item-search-custom {
+  background: #f7f5f0 !important;
+  color: #8f6826 !important;
+  border-top: 1px solid rgba(40, 35, 25, 0.12) !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+
+.bill-theme-light .item-search-custom:hover {
+  background: #eee9df !important;
+}
+
+.bill-theme-light .item-search-custom span {
+  background: #e9dfcb !important;
+  color: #8f6826 !important;
+}
+
+/* Scrollbar */
+.bill-theme-light .item-search-results {
+  scrollbar-color: #c5b99f #f7f5f0 !important;
+}
+
+/* Selected item note */
+.bill-theme-light .item-selected-note {
+  color: #8f6826 !important;
+}
+
+
+
+/* =========================================
+   MATCH ITEM DROPDOWN ARROW WITH CARAT ARROW
+========================================= */
+
+/* Remove old text-style arrow */
+.item-search-chevron {
+  font-size: 0 !important;
+  width: 9px !important;
+  height: 9px !important;
+  display: inline-block !important;
+  border-right: 2px solid #403b34 !important;
+  border-bottom: 2px solid #403b34 !important;
+  border-top: 0 !important;
+  border-left: 0 !important;
+  border-radius: 1px;
+  transform: rotate(45deg) translateY(-2px);
+  background: transparent !important;
+  flex-shrink: 0;
+}
+
+/* White theme */
+.bill-theme-light .item-search-chevron {
+  border-right-color: #403b34 !important;
+  border-bottom-color: #403b34 !important;
+}
+
+/* Dark theme */
+.bill-theme-dark .item-search-chevron {
+  border-right-color: #e8e3da !important;
+  border-bottom-color: #e8e3da !important;
+}
+
+
+
+/* =========================================
+   BILLBOX — MATCH ALL DROPDOWN ARROWS
+   Add at END of NewBill.css
+========================================= */
+
+/* Common arrow styling */
+.item-search-chevron,
+.selection-area .field select {
+  background-image: none;
+}
+
+/* Jewellery search arrow */
+.item-search-chevron {
+  width: 9px !important;
+  height: 9px !important;
+  display: inline-block !important;
+  font-size: 0 !important;
+  border: 0 !important;
+  border-right: 2px solid currentColor !important;
+  border-bottom: 2px solid currentColor !important;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  color: #403b34 !important;
+  background: transparent !important;
+  flex-shrink: 0;
+  margin-top: -5px;
+}
+
+/* Carat select — use same arrow */
+.selection-area .field select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  padding-right: 38px !important;
+  background-repeat: no-repeat !important;
+  background-position: right 15px center !important;
+  background-size: 9px 9px !important;
+  background-image: linear-gradient(
+    45deg,
+    transparent 45%,
+    #403b34 45%,
+    #403b34 60%,
+    transparent 60%
+  ),
+  linear-gradient(
+    -45deg,
+    transparent 45%,
+    #403b34 45%,
+    #403b34 60%,
+    transparent 60%
+  ) !important;
+}
+
+/* Dark theme */
+.bill-theme-dark .item-search-chevron {
+  color: #e8e3da !important;
+}
+
+.bill-theme-dark .selection-area .field select {
+  background-image: linear-gradient(
+    45deg, transparent 45%, #e8e3da 45%, #e8e3da 60%, transparent 60%
+  ),
+  linear-gradient(
+    -45deg, transparent 45%, #e8e3da 45%, #e8e3da 60%, transparent 60%
+  ) !important;
+}

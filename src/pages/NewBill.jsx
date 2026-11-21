@@ -331,7 +331,48 @@ const GOLD_ITEMS = [
   { value: "gold-54", hi: 'सोने की नथनी', en: 'Gold Nathni' },
   { value: "gold-55", hi: 'सोने की नोज पिन', en: 'Gold Nose Pin' },
   { value: "gold-56", hi: 'सोने की बेसरी', en: 'Gold Besari' },
-] ;
+  { value: "gold-extra-001", hi: "सोने की माला", en: "Gold Mala" },
+  { value: "gold-extra-002", hi: "सोने का मंगलसूत्र पेंडेंट", en: "Gold Mangalsutra Pendant" },
+  { value: "gold-extra-003", hi: "सोने की मंगलसूत्र चेन", en: "Gold Mangalsutra Chain" },
+  { value: "gold-extra-004", hi: "सोने का नेकलेस सेट", en: "Gold Necklace Set" },
+  { value: "gold-extra-005", hi: "सोने का पेंडेंट सेट", en: "Gold Pendant Set" },
+  { value: "gold-extra-006", hi: "सोने की चांदबाली", en: "Gold Chandbali" },
+  { value: "gold-extra-007", hi: "सोने की हूप बाली", en: "Gold Hoop Earrings" },
+  { value: "gold-extra-008", hi: "सोने की ईयर कफ", en: "Gold Ear Cuff" },
+  { value: "gold-extra-009", hi: "सोने की कान की क्लिप", en: "Gold Ear Clip" },
+  { value: "gold-extra-010", hi: "सोने की माथा पट्टी", en: "Gold Matha Patti" },
+  { value: "gold-extra-011", hi: "सोने का पासा", en: "Gold Passa" },
+  { value: "gold-extra-012", hi: "सोने की कलगी", en: "Gold Kalgi" },
+  { value: "gold-extra-013", hi: "सोने का सरपेच", en: "Gold Sarpech" },
+  { value: "gold-extra-014", hi: "सोने की मुंदावल्या", en: "Gold Mundavlya" },
+  { value: "gold-extra-015", hi: "सोने का अंगूठा छल्ला", en: "Gold Thumb Ring" },
+  { value: "gold-extra-016", hi: "सोने की लेयरिंग चेन", en: "Gold Layered Chain" },
+  { value: "gold-extra-017", hi: "सोने का चार्म", en: "Gold Charm" },
+  { value: "gold-extra-018", hi: "सोने का ब्रोच", en: "Gold Brooch" },
+  { value: "gold-extra-019", hi: "सोने की हेयर पिन", en: "Gold Hair Pin" },
+  { value: "gold-extra-020", hi: "सोने की साड़ी पिन", en: "Gold Saree Pin" },
+  { value: "gold-extra-021", hi: "सोने का कफलिंक", en: "Gold Cufflinks" },
+  { value: "gold-extra-022", hi: "सोने का टाई पिन", en: "Gold Tie Pin" },
+  { value: "gold-extra-023", hi: "सोने की बच्चों की चूड़ी", en: "Gold Kids Bangles" },
+  { value: "gold-extra-024", hi: "सोने का बच्चों का कड़ा", en: "Gold Kids Kada" },
+  { value: "gold-extra-025", hi: "सोने की बच्चों की अंगूठी", en: "Gold Kids Ring" },
+  { value: "gold-extra-026", hi: "सोने का बच्चों का ब्रेसलेट", en: "Gold Kids Bracelet" },
+  { value: "gold-extra-027", hi: "सोने की पुरुषों की चेन", en: "Gold Men's Chain" },
+  { value: "gold-extra-028", hi: "सोने का पुरुषों का ब्रेसलेट", en: "Gold Men's Bracelet" },
+  { value: "gold-extra-029", hi: "सोने की जोड़ी अंगूठी", en: "Gold Couple Rings" },
+  { value: "gold-extra-030", hi: "सोने का हाथ का छल्ला", en: "Gold Hand Ring" },
+  { value: "gold-extra-031", hi: "सोने की पायल", en: "Gold Anklet" },
+  { value: "gold-extra-032", hi: "सोने का लॉकेट", en: "Gold Locket" },
+  { value: "gold-extra-033", hi: "सोने का नवरत्न हार", en: "Gold Navratna Necklace" },
+  { value: "gold-extra-034", hi: "सोने का कुंदन हार", en: "Gold Kundan Necklace" },
+  { value: "gold-extra-035", hi: "सोने का पोल्की हार", en: "Gold Polki Necklace" },
+  { value: "gold-extra-036", hi: "सोने का जड़ाऊ हार", en: "Gold Jadau Necklace" },
+  { value: "gold-extra-037", hi: "सोने की मोहर माला", en: "Gold Mohar Mala" },
+  { value: "gold-extra-038", hi: "सोने की चेन लॉकेट सेट", en: "Gold Chain Locket Set" },
+  { value: "gold-extra-039", hi: "सोने की कमर चेन", en: "Gold Waist Chain" },
+  { value: "gold-extra-040", hi: "सोने का हाथकड़ा", en: "Gold Hand Kada" },
+  { value: "gold-extra-041", hi: "सोने की पगड़ी सरपेच", en: "Gold Turban Sarpech" }
+];
 
 const SILVER_ITEMS = [
   { value: "silver-01", hi: 'चाँदी की पायल', en: 'Silver Payal' },
@@ -373,7 +414,69 @@ const SILVER_ITEMS = [
   { value: "silver-37", hi: 'चाँदी की तगड़ी', en: 'Silver Tagdi' },
   { value: "silver-38", hi: 'चाँदी की करधनी', en: 'Silver Kardhani' },
   { value: "silver-39", hi: 'चाँदी का कंदोरा', en: 'Silver Kandora' },
-] ;
+  { value: "silver-extra-001", hi: "चाँदी की चेन", en: "Silver Chain" },
+  { value: "silver-extra-002", hi: "चाँदी का ब्रेसलेट", en: "Silver Bracelet" },
+  { value: "silver-extra-003", hi: "चाँदी का पेंडेंट", en: "Silver Pendant" },
+  { value: "silver-extra-004", hi: "चाँदी का मंगलसूत्र", en: "Silver Mangalsutra" },
+  { value: "silver-extra-005", hi: "चाँदी का नेकलेस सेट", en: "Silver Necklace Set" },
+  { value: "silver-extra-006", hi: "चाँदी की चांदबाली", en: "Silver Chandbali" },
+  { value: "silver-extra-007", hi: "चाँदी की हूप बाली", en: "Silver Hoop Earrings" },
+  { value: "silver-extra-008", hi: "चाँदी की ईयर कफ", en: "Silver Ear Cuff" },
+  { value: "silver-extra-009", hi: "चाँदी की ईयर चेन", en: "Silver Ear Chain" },
+  { value: "silver-extra-010", hi: "चाँदी की माथा पट्टी", en: "Silver Matha Patti" },
+  { value: "silver-extra-011", hi: "चाँदी का पासा", en: "Silver Passa" },
+  { value: "silver-extra-012", hi: "चाँदी की कलगी", en: "Silver Kalgi" },
+  { value: "silver-extra-013", hi: "चाँदी का सरपेच", en: "Silver Sarpech" },
+  { value: "silver-extra-014", hi: "चाँदी का अंगूठा छल्ला", en: "Silver Thumb Ring" },
+  { value: "silver-extra-015", hi: "चाँदी की बच्चों की पायल", en: "Silver Kids Anklet" },
+  { value: "silver-extra-016", hi: "चाँदी की बच्चों की चूड़ी", en: "Silver Kids Bangles" },
+  { value: "silver-extra-017", hi: "चाँदी का बच्चों का कड़ा", en: "Silver Kids Kada" },
+  { value: "silver-extra-018", hi: "चाँदी की बच्चों की अंगूठी", en: "Silver Kids Ring" },
+  { value: "silver-extra-019", hi: "चाँदी का पुरुषों का कड़ा", en: "Silver Men's Kada" },
+  { value: "silver-extra-020", hi: "चाँदी की पुरुषों की चेन", en: "Silver Men's Chain" },
+  { value: "silver-extra-021", hi: "चाँदी का पुरुषों का ब्रेसलेट", en: "Silver Men's Bracelet" },
+  { value: "silver-extra-022", hi: "चाँदी का ब्रोच", en: "Silver Brooch" },
+  { value: "silver-extra-023", hi: "चाँदी की साड़ी पिन", en: "Silver Saree Pin" },
+  { value: "silver-extra-024", hi: "चाँदी की हेयर पिन", en: "Silver Hair Pin" },
+  { value: "silver-extra-025", hi: "चाँदी का चार्म", en: "Silver Charm" },
+  { value: "silver-extra-026", hi: "चाँदी की करधनी चेन", en: "Silver Waist Chain" },
+  { value: "silver-extra-027", hi: "चाँदी का लॉकेट", en: "Silver Locket" },
+  { value: "silver-extra-028", hi: "चाँदी की चेन पेंडेंट सेट", en: "Silver Chain Pendant Set" },
+  { value: "silver-extra-029", hi: "चाँदी की पायल जोड़ी", en: "Silver Anklet Pair" },
+  { value: "silver-extra-030", hi: "चाँदी का छल्ला", en: "Silver Band Ring" },
+  { value: "silver-extra-031", hi: "चाँदी का कड़ा जोड़ी", en: "Silver Kada Pair" },
+  { value: "silver-extra-032", hi: "चाँदी का दीपक", en: "Silver Diya" },
+  { value: "silver-extra-033", hi: "चाँदी की पूजा थाली", en: "Silver Pooja Thali" },
+  { value: "silver-extra-034", hi: "चाँदी का कलश", en: "Silver Kalash" },
+  { value: "silver-extra-035", hi: "चाँदी की अगरबत्ती स्टैंड", en: "Silver Agarbatti Stand" },
+  { value: "silver-extra-036", hi: "चाँदी की घंटी", en: "Silver Bell" },
+  { value: "silver-extra-037", hi: "चाँदी का आरती सेट", en: "Silver Aarti Set" },
+  { value: "silver-extra-038", hi: "चाँदी का सिक्का", en: "Silver Coin" },
+  { value: "silver-extra-039", hi: "चाँदी की ईंट", en: "Silver Bar" },
+  { value: "silver-extra-040", hi: "चाँदी की गणेश मूर्ति", en: "Silver Ganesh Idol" },
+  { value: "silver-extra-041", hi: "चाँदी की लक्ष्मी मूर्ति", en: "Silver Lakshmi Idol" },
+  { value: "silver-extra-042", hi: "चाँदी की कृष्ण मूर्ति", en: "Silver Krishna Idol" },
+  { value: "silver-extra-043", hi: "चाँदी का फोटो फ्रेम", en: "Silver Photo Frame" },
+  { value: "silver-extra-044", hi: "चाँदी का ड्राई फ्रूट बॉक्स", en: "Silver Dry Fruit Box" },
+  { value: "silver-extra-045", hi: "चाँदी का पेन स्टैंड", en: "Silver Pen Stand" },
+  { value: "silver-extra-046", hi: "चाँदी की ट्रॉफी", en: "Silver Trophy" },
+  { value: "silver-extra-047", hi: "चाँदी की डिब्बी", en: "Silver Box" },
+  { value: "silver-extra-048", hi: "चाँदी की चाबी का छल्ला", en: "Silver Keychain" },
+  { value: "silver-extra-049", hi: "चाँदी का गिलास", en: "Silver Glass" },
+  { value: "silver-extra-050", hi: "चाँदी की कटोरी", en: "Silver Bowl" },
+  { value: "silver-extra-051", hi: "चाँदी की चम्मच", en: "Silver Spoon" },
+  { value: "silver-extra-052", hi: "चाँदी की प्लेट", en: "Silver Plate" },
+  { value: "silver-extra-053", hi: "चाँदी की कटोरी सेट", en: "Silver Bowl Set" },
+  { value: "silver-extra-054", hi: "चाँदी का डिनर सेट", en: "Silver Dinner Set" },
+  { value: "silver-extra-055", hi: "चाँदी का पानदान", en: "Silver Pandaan" },
+  { value: "silver-extra-056", hi: "चाँदी की सुपारी डिब्बी", en: "Silver Betel Nut Box" },
+  { value: "silver-extra-057", hi: "चाँदी का सिंदूरदान", en: "Silver Sindoor Box" },
+  { value: "silver-extra-058", hi: "चाँदी का कछुआ", en: "Silver Turtle" },
+  { value: "silver-extra-059", hi: "चाँदी का हाथी", en: "Silver Elephant" },
+  { value: "silver-extra-060", hi: "चाँदी की पायल घुंघरू", en: "Silver Ghungroo Anklet" },
+  { value: "silver-extra-061", hi: "चाँदी की बिछिया जोड़ी", en: "Silver Toe Ring Pair" },
+  { value: "silver-extra-062", hi: "चाँदी का कमर कंदोरा", en: "Silver Waist Kandora" }
+];
 
 const normalizeLanguage = (value) =>
   value === "en" ? "en" : "hi";
@@ -437,6 +540,19 @@ function NewBill() {
 
   const [metal, setMetal] = useState("");
   const [item, setItem] = useState("");
+  const [itemSearch, setItemSearch] = useState("");
+  const [itemDropdownOpen, setItemDropdownOpen] = useState(false);
+  const itemPickerRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (itemPickerRef.current && !itemPickerRef.current.contains(event.target)) {
+        setItemDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
   const [carat, setCarat] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [weight, setWeight] = useState("");
@@ -732,6 +848,8 @@ function NewBill() {
   const handleMetalChange = (value) => {
     setMetal(value);
     setItem("");
+    setItemSearch("");
+    setItemDropdownOpen(false);
     setCarat("");
     setWeight("");
     setQuantity(1);
@@ -756,6 +874,9 @@ function NewBill() {
 
   const handleItemChange = (value) => {
     setItem(value);
+    const selectedEntry = (metal === "gold" ? GOLD_ITEMS : SILVER_ITEMS).find((entry) => entry.value === value);
+    setItemSearch(selectedEntry ? selectedEntry[language] : value);
+    setItemDropdownOpen(false);
 
     if (metal === "silver") {
       const existing = items.find(
@@ -764,6 +885,32 @@ function NewBill() {
 
       setRate(existing ? String(existing.rate) : "");
     }
+  };
+
+  const itemCatalogue = metal === "gold" ? GOLD_ITEMS : SILVER_ITEMS;
+  const selectedCatalogueEntry = itemCatalogue.find((entry) => entry.value === item);
+  // Show the selected catalogue name in the shop's active language.
+  // Custom names remain exactly as entered by the shop user.
+  const itemInputValue = !itemDropdownOpen && selectedCatalogueEntry
+    ? selectedCatalogueEntry[language]
+    : itemSearch;
+  const filteredItemCatalogue = itemCatalogue.filter((entry) => {
+    const query = itemSearch.trim().toLocaleLowerCase();
+    return !query || entry.hi.toLocaleLowerCase().includes(query) || entry.en.toLocaleLowerCase().includes(query);
+  });
+  const exactItemMatch = itemCatalogue.some((entry) =>
+    entry.hi.trim().toLocaleLowerCase() === itemSearch.trim().toLocaleLowerCase() ||
+    entry.en.trim().toLocaleLowerCase() === itemSearch.trim().toLocaleLowerCase()
+  );
+  const chooseCatalogueItem = (entry) => {
+    handleItemChange(entry.value);
+    setItemDropdownOpen(false);
+  };
+  const useCustomItemName = () => {
+    const customName = itemSearch.trim();
+    if (!customName) return;
+    handleItemChange(customName);
+    setItemDropdownOpen(false);
   };
 
   const addItem = () => {
@@ -855,6 +1002,8 @@ function NewBill() {
 
     setMetal("");
     setItem("");
+    setItemSearch("");
+    setItemDropdownOpen(false);
     setCarat("");
     setQuantity(1);
     setWeight("");
@@ -1285,7 +1434,7 @@ function NewBill() {
 
         {/* JEWELLERY */}
 
-        <section className="section-card">
+        <section className="section-card jewellery-section-card">
           <div className="section-heading">
             <span>02</span>
             <div>
@@ -1324,23 +1473,64 @@ function NewBill() {
 
           {metal && (
             <div className="selection-area">
-              <div className="field">
+              <div className="field item-search-field" ref={itemPickerRef}>
                 <label>{t.itemType}</label>
-                <select
-                  value={item}
-                  onChange={(event) =>
-                    handleItemChange(event.target.value)
-                  }
-                >
-                  <option value="">{t.selectItem}</option>
-                  {(metal === "gold" ? GOLD_ITEMS : SILVER_ITEMS).map(
-                    (entry) => (
-                      <option value={entry.value} key={entry.value}>
-                        {entry[language]}
-                      </option>
-                    )
-                  )}
-                </select>
+                <div className="item-search-control">
+                  <input
+                    type="search"
+                    value={itemInputValue}
+                    placeholder={language === "hi" ? "आभूषण का नाम खोजें या नया नाम लिखें..." : "Search jewellery or type a new item name..."}
+                    onFocus={() => {
+                      if (selectedCatalogueEntry) setItemSearch("");
+                      setItemDropdownOpen(true);
+                    }}
+                    onClick={() => {
+                      if (selectedCatalogueEntry) setItemSearch("");
+                      setItemDropdownOpen(true);
+                    }}
+                    onChange={(event) => {
+                      setItemSearch(event.target.value);
+                      setItem("");
+                      setItemDropdownOpen(true);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") setItemDropdownOpen(false);
+                      if (event.key === "Enter" && itemSearch.trim() && !exactItemMatch) {
+                        event.preventDefault();
+                        useCustomItemName();
+                      }
+                    }}
+                    autoComplete="off"
+                    aria-expanded={itemDropdownOpen}
+                    aria-controls="jewellery-item-options"
+                  />
+                  <span className={`item-search-chevron ${itemDropdownOpen ? "open" : ""}`}>⌄</span>
+                </div>
+                {itemDropdownOpen && (
+                  <div className="item-search-results" id="jewellery-item-options" role="listbox">
+                    <div className="item-search-results-heading">
+                      {itemSearch.trim() ? (language === "hi" ? "मिलते-जुलते आइटम" : "Matching items") : (language === "hi" ? "सभी उपलब्ध आइटम" : "All available items")}
+                      <span>{filteredItemCatalogue.length}</span>
+                    </div>
+                    {filteredItemCatalogue.length > 0 ? filteredItemCatalogue.map((entry) => (
+                      <button type="button" key={entry.value} role="option" aria-selected={item === entry.value} className={`item-search-option ${item === entry.value ? "selected" : ""}`} onClick={() => chooseCatalogueItem(entry)}>
+                        <span>{entry[language]}</span>
+                      </button>
+                    )) : (
+                      <div className="item-search-empty">{language === "hi" ? "कोई मिलता-जुलता आइटम नहीं मिला।" : "No matching item found."}</div>
+                    )}
+                    {itemSearch.trim() && !exactItemMatch && (
+                      <button type="button" className="item-search-custom" onClick={useCustomItemName}>
+                        <span>＋</span> {language === "hi" ? `“${itemSearch.trim()}” को नए आइटम के रूप में जोड़ें` : `Add “${itemSearch.trim()}” as a custom item`}
+                      </button>
+                    )}
+                  </div>
+                )}
+                {item && (
+                  <small className="item-selected-note">
+                    {language === "hi" ? "चयनित आइटम:" : "Selected item:"} {getItemLabel(item, metal, language)}
+                  </small>
+                )}
               </div>
 
               {metal === "gold" && (

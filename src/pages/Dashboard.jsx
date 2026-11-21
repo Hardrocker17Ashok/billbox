@@ -269,7 +269,7 @@ const TEXT = {
   },
 };
 
-const SUPPORT_WHATSAPP_NUMBER = "919358943693";
+const SUPPORT_WHATSAPP_NUMBER = "917597201594";
 
 
 const toDateSafe = (value) => {
@@ -1224,11 +1224,11 @@ function Dashboard() {
                 <h2>{language === "en" ? "WhatsApp Support" : "WhatsApp सपोर्ट"}</h2>
                 <a
                   className="help-contact-value"
-                  href="https://wa.me/919358943693"
+                  href="https://wa.me/917597201594"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  9358943693
+                  7597201594
                 </a>
                 <p>
                   {language === "en"
@@ -1237,7 +1237,7 @@ function Dashboard() {
                 </p>
                 <a
                   className="help-contact-action"
-                  href="https://wa.me/919358943693"
+                  href="https://wa.me/917597201594"
                   target="_blank"
                   rel="noreferrer"
                 >
