@@ -39,8 +39,8 @@ const TEXT = {
     customerInfoDesc: "ग्राहक की जानकारी दर्ज करें",
     customerName: "ग्राहक का नाम",
     customerNamePlaceholder: "ग्राहक का नाम दर्ज करें",
-    mobile: "मोबाइल नंबर",
-    mobilePlaceholder: "मोबाइल नंबर दर्ज करें",
+    mobile: "ग्राहक का WhatsApp नंबर",
+    mobilePlaceholder: "ग्राहक का WhatsApp नंबर दर्ज करें",
     chooseJewellery: "आभूषण चुनें",
     chooseJewelleryDesc: "सोना या चाँदी चुनें",
     gold: "सोना",
@@ -161,8 +161,8 @@ const TEXT = {
     customerInfoDesc: "Enter customer details",
     customerName: "Customer Name",
     customerNamePlaceholder: "Enter customer name",
-    mobile: "Mobile Number",
-    mobilePlaceholder: "Enter mobile number",
+    mobile: "Customer WhatsApp Number",
+    mobilePlaceholder: "Enter customer's WhatsApp number",
     chooseJewellery: "Choose Jewellery",
     chooseJewelleryDesc: "Select gold or silver",
     gold: "Gold",
@@ -533,6 +533,9 @@ function NewBill() {
   const [pendingBillDocId, setPendingBillDocId] = useState(null);
   const [isSavingBill, setIsSavingBill] = useState(false);
   const saveLockRef = useRef(false);
+  const [whatsAppConfirmOpen, setWhatsAppConfirmOpen] = useState(false);
+  const [whatsAppMobile, setWhatsAppMobile] = useState("");
+  const [isOpeningWhatsApp, setIsOpeningWhatsApp] = useState(false);
 
   const [customerName, setCustomerName] = useState("");
   const [customerMobile, setCustomerMobile] = useState("");
@@ -1247,8 +1250,7 @@ function NewBill() {
     setIsSavingBill(true);
 
     try {
-      // setDoc with the pre-generated ID makes this save idempotent:
-      // retries/double clicks cannot create a second bill document.
+      // Keep the existing idempotent Firestore save workflow unchanged.
       const billRef = doc(db, "bills", pendingBillDocId);
       await setDoc(billRef, {
         ...pendingBillData,
@@ -1257,16 +1259,102 @@ function NewBill() {
       });
 
       setPendingPrintConfirmation(false);
-      setPendingBillData(null);
-      setPendingBillDocId(null);
-
-      window.alert(language === "hi" ? "बिल सफलतापूर्वक सेव हो गया।" : "Bill saved successfully.");
+      setWhatsAppMobile(pendingBillData.customerMobile || "");
+      setWhatsAppConfirmOpen(true);
     } catch (error) {
       console.error("Bill save error:", error?.code, error?.message, error);
       window.alert(`${t.saveError} ${error?.code || error?.message || ""}`);
     } finally {
       saveLockRef.current = false;
       setIsSavingBill(false);
+    }
+  };
+
+  const closeWhatsAppConfirmation = () => {
+    setWhatsAppConfirmOpen(false);
+    setPendingBillData(null);
+    setPendingBillDocId(null);
+    setBillNumber("INV-0000");
+    setPrintDateTime(null);
+  };
+
+  const confirmWhatsAppAndOpen = async () => {
+    if (!pendingBillData || !pendingBillDocId || isOpeningWhatsApp) return;
+
+    const digits = String(whatsAppMobile || "").replace(/\D/g, "");
+    const normalizedMobile =
+      digits.startsWith("91") && digits.length === 12
+        ? digits.slice(2)
+        : digits.startsWith("0") && digits.length === 11
+          ? digits.slice(1)
+          : digits;
+
+    if (!/^[6-9]\d{9}$/.test(normalizedMobile)) {
+      window.alert(language === "hi"
+        ? "कृपया मान्य 10 अंकों का WhatsApp नंबर दर्ज करें।"
+        : "Please enter a valid 10-digit Indian WhatsApp number.");
+      return;
+    }
+
+    // Open synchronously from the click to avoid browser popup blocking.
+    const whatsappWindow = window.open("about:blank", "_blank");
+    if (!whatsappWindow) {
+      window.alert(language === "hi"
+        ? "WhatsApp खोलने के लिए कृपया इस साइट के pop-ups allow करें।"
+        : "Please allow pop-ups for this site to open WhatsApp.");
+      return;
+    }
+
+    setIsOpeningWhatsApp(true);
+
+    try {
+      const billRef = doc(db, "bills", pendingBillDocId);
+
+      // If the shopkeeper corrected the number, update the saved bill too.
+      if (normalizedMobile !== pendingBillData.customerMobile) {
+        await updateDoc(billRef, { customerMobile: normalizedMobile });
+      }
+
+      const amountPaid = Number(
+        pendingBillData.amountPaid ?? pendingBillData.paidAmount ?? pendingBillData.payment?.paid ?? 0
+      );
+      const balanceAmount = Number(
+        pendingBillData.balanceAmount ?? pendingBillData.balanceDue ?? pendingBillData.payment?.balance ?? 0
+      );
+      const totalAmount = Number(
+        pendingBillData.grandTotal ?? pendingBillData.totalAmount ?? pendingBillData.payment?.total ?? 0
+      );
+
+      const message = language === "hi"
+        ? [
+            `नमस्ते ${pendingBillData.customerName || ""},`,
+            `आपका बिल ${pendingBillData.billNumber || pendingBillData.invoiceNo || ""} ${pendingBillData.shopName ? `(${pendingBillData.shopName})` : ""} तैयार है।`,
+            `कुल राशि: ₹${formatMoney(totalAmount)}`,
+            `जमा राशि: ₹${formatMoney(amountPaid)}`,
+            `बाकी राशि: ₹${formatMoney(balanceAmount)}`,
+            "हमारे साथ खरीदारी करने के लिए धन्यवाद।",
+          ].join("\n")
+        : [
+            `Hello ${pendingBillData.customerName || ""},`,
+            `Your invoice ${pendingBillData.billNumber || pendingBillData.invoiceNo || ""} ${pendingBillData.shopName ? `from ${pendingBillData.shopName}` : ""} is ready.`,
+            `Total: ₹${formatMoney(totalAmount)}`,
+            `Paid: ₹${formatMoney(amountPaid)}`,
+            `Balance due: ₹${formatMoney(balanceAmount)}`,
+            "Thank you for shopping with us.",
+          ].join("\n");
+
+      whatsappWindow.location.href =
+        `https://wa.me/91${normalizedMobile}?text=${encodeURIComponent(message)}`;
+
+      closeWhatsAppConfirmation();
+    } catch (error) {
+      console.error("Unable to update WhatsApp number:", error);
+      whatsappWindow.close();
+      window.alert(language === "hi"
+        ? "WhatsApp नंबर डेटाबेस में अपडेट नहीं हो सका। कृपया दोबारा प्रयास करें।"
+        : "Could not update the WhatsApp number in the database. Please try again.");
+    } finally {
+      setIsOpeningWhatsApp(false);
     }
   };
 
@@ -1427,6 +1515,11 @@ function NewBill() {
                   if (customerErrors.mobile) setCustomerErrors((prev) => ({ ...prev, mobile: "" }));
                 }}
               />
+              <small className="billbox-whatsapp-hint">
+                {language === "hi"
+                  ? "यह नंबर ग्राहक का WhatsApp नंबर होना चाहिए। बिल इसी नंबर पर साझा होगा।"
+                  : "Enter the customer's WhatsApp number. The bill will be shared to this number."}
+              </small>
               {customerErrors.mobile && <small className="billbox-customer-error">{customerErrors.mobile}</small>}
             </div>
           </div>
@@ -2069,12 +2162,12 @@ function NewBill() {
             <div className="billbox-share-success-icon">✓</div>
             <span className="billbox-share-eyebrow">BILLBOX <span aria-hidden="true">·</span> INVOICE</span>
             <h2 id="billbox-print-confirm-title">
-              {language === "hi" ? "क्या आप यह बिल सेव करना चाहते हैं?" : "Would you like to save this invoice?"}
+              {language === "hi" ? "बिल सेव करके WhatsApp पर साझा करें?" : "Save the bill and share it on WhatsApp?"}
             </h2>
             <p>
               {language === "hi"
-                ? "आपका प्रिंट डायलॉग बंद हो गया है। यह बिल अभी डेटाबेस में सेव नहीं हुआ है। अगर बिल प्रिंट हो गया है और आप इसे रिकॉर्ड में रखना चाहते हैं, तो ‘बिल सेव करें’ दबाएँ। ‘रद्द करें’ चुनने पर कोई एंट्री नहीं बनेगी।"
-                : "The print window has closed, but this invoice is not saved yet. If you have printed it and want to keep it in your records, select ‘Save Bill’. Choose ‘Cancel’ to discard it without creating a database entry."}
+                ? "प्रिंट डायलॉग बंद हो गया है। आगे बढ़ने पर बिल डेटाबेस में सेव होगा और फिर ग्राहक का WhatsApp नंबर कन्फर्म करने का विकल्प आएगा।"
+                : "The print window has closed. Continue to save this bill in the database, then confirm the customer's WhatsApp number before opening the chat."}
             </p>
             <div className="billbox-share-summary">
               <span>{language === "hi" ? "बिल नंबर" : "Invoice number"}</span>
@@ -2091,7 +2184,85 @@ function NewBill() {
               <button type="button" className="billbox-share-primary" onClick={confirmPrintedAndSave} disabled={isSavingBill}>
                 {isSavingBill
                   ? (language === "hi" ? "सेव हो रहा है..." : "Saving...")
-                  : (language === "hi" ? "प्रिंट हुआ — बिल सेव करें" : "Printed — Save Bill")}
+                  : (language === "hi" ? "सेव करें और WhatsApp पर भेजें" : "Save & Send on WhatsApp")}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {whatsAppConfirmOpen && pendingBillData && (
+        <div className="billbox-share-backdrop" role="presentation">
+          <section
+            className={`billbox-share-dialog billbox-save-dialog bill-theme-${theme}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="billbox-whatsapp-confirm-title"
+          >
+            <div className="billbox-share-success-icon">✓</div>
+            <span className="billbox-share-eyebrow">BILLBOX <span aria-hidden="true">·</span> WHATSAPP</span>
+            <h2 id="billbox-whatsapp-confirm-title">
+              {language === "hi"
+                ? "क्या यह ग्राहक का WhatsApp नंबर है?"
+                : "Is this the customer's WhatsApp number?"}
+            </h2>
+            <p>
+              {language === "hi"
+                ? "बिल डेटाबेस में सेव हो चुका है। नंबर सही है तो पुष्टि करें। गलत है तो यहीं बदलें; नया नंबर बिल के रिकॉर्ड में भी अपडेट होगा।"
+                : "The bill is saved in the database. Confirm this number, or edit it here. An edited number will also be updated in the saved bill record."}
+            </p>
+
+            <div className="billbox-whatsapp-number-field">
+              <label htmlFor="billbox-whatsapp-number">
+                {language === "hi" ? "ग्राहक का WhatsApp नंबर" : "Customer WhatsApp number"}
+              </label>
+              <div className="billbox-whatsapp-number-input">
+                <span>+91</span>
+                <input
+                  id="billbox-whatsapp-number"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  maxLength={14}
+                  value={whatsAppMobile}
+                  onChange={(event) => setWhatsAppMobile(
+                    event.target.value.replace(/[^0-9+\s()-]/g, "").slice(0, 16)
+                  )}
+                  placeholder={language === "hi" ? "10 अंकों का नंबर" : "10-digit mobile number"}
+                />
+              </div>
+              <small>
+                {language === "hi"
+                  ? "नंबर बदलने पर Firestore में भी customerMobile अपडेट होगा।"
+                  : "If changed, customerMobile will also be updated in Firestore."}
+              </small>
+            </div>
+
+            <div className="billbox-share-summary">
+              <span>{language === "hi" ? "बिल नंबर" : "Invoice number"}</span>
+              <strong>{pendingBillData.billNumber}</strong>
+              <span>{language === "hi" ? "कुल राशि" : "Total amount"}</span>
+              <strong>₹ {formatMoney(pendingBillData.grandTotal)}</strong>
+            </div>
+
+            <div className="billbox-share-actions billbox-invoice-actions">
+              <button
+                type="button"
+                className="billbox-share-cancel"
+                onClick={closeWhatsAppConfirmation}
+                disabled={isOpeningWhatsApp}
+              >
+                {language === "hi" ? "अभी नहीं" : "Not now"}
+              </button>
+              <button
+                type="button"
+                className="billbox-share-primary"
+                onClick={confirmWhatsAppAndOpen}
+                disabled={isOpeningWhatsApp}
+              >
+                {isOpeningWhatsApp
+                  ? (language === "hi" ? "खोल रहा है..." : "Opening...")
+                  : (language === "hi" ? "पुष्टि करें और WhatsApp खोलें" : "Confirm & Open WhatsApp")}
               </button>
             </div>
           </section>

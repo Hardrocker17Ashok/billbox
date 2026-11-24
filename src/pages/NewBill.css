@@ -5608,3 +5608,101 @@ button {
     -45deg, transparent 45%, #e8e3da 45%, #e8e3da 60%, transparent 60%
   ) !important;
 }
+
+
+/* =========================================================
+   BILLBOX — WHATSAPP NUMBER GUIDANCE + CONFIRMATION INPUT
+   Additive styles only; existing theme and invoice styles stay intact.
+========================================================= */
+
+.billbox-whatsapp-hint {
+  display: block;
+  margin-top: 2px;
+  color: #9b8a68;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.billbox-whatsapp-number-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 18px 0 8px;
+}
+
+.billbox-whatsapp-number-field label {
+  color: #c6a96d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.billbox-whatsapp-number-input {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  overflow: hidden;
+  border: 1px solid rgba(181, 138, 58, 0.34);
+  border-radius: 11px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.billbox-whatsapp-number-input > span {
+  padding: 0 13px;
+  color: #c49a4c;
+  font-size: 12px;
+  font-weight: 700;
+  border-right: 1px solid rgba(181, 138, 58, 0.22);
+}
+
+.billbox-whatsapp-number-input input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 13px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #f1ece2;
+  font-size: 14px;
+}
+
+.billbox-whatsapp-number-input input::placeholder {
+  color: #827b70;
+}
+
+.billbox-whatsapp-number-field > small {
+  color: #8f887d;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.billbox-save-dialog.bill-theme-light .billbox-whatsapp-number-field label {
+  color: #80602c;
+}
+
+.billbox-save-dialog.bill-theme-light .billbox-whatsapp-number-input {
+  background: #fff;
+  border-color: rgba(130, 94, 35, 0.28);
+}
+
+.billbox-save-dialog.bill-theme-light .billbox-whatsapp-number-input > span {
+  color: #80602c;
+  border-right-color: rgba(130, 94, 35, 0.18);
+}
+
+.billbox-save-dialog.bill-theme-light .billbox-whatsapp-number-input input {
+  color: #342d22;
+}
+
+.billbox-save-dialog.bill-theme-light .billbox-whatsapp-number-input input::placeholder,
+.billbox-save-dialog.bill-theme-light .billbox-whatsapp-number-field > small {
+  color: #8a8174;
+}
+
+.billbox-save-dialog.bill-theme-dark .billbox-whatsapp-number-field label {
+  color: #d4af63;
+}
+
+.billbox-save-dialog.bill-theme-dark .billbox-whatsapp-number-input {
+  background: rgba(0, 0, 0, 0.28);
+}
