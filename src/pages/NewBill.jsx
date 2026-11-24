@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
+import html2pdf from "html2pdf.js";
 import {
   collection,
   doc,
@@ -566,7 +567,8 @@ function NewBill() {
   const [gstDialogOpen, setGstDialogOpen] = useState(false);
   const [gstDialogRate, setGstDialogRate] = useState("3");
   const [gstSaving, setGstSaving] = useState(false);
-  const [continuePrintAfterGst, setContinuePrintAfterGst] = useState(false);
+  const [gstPrintRequest, setGstPrintRequest] = useState(0);
+  const handlePrintRef = useRef(null);
   const [hsnCode, setHsnCode] = useState("");
   const [skuCode, setSkuCode] = useState("");
   const [huid, setHuid] = useState("");
@@ -805,8 +807,8 @@ function NewBill() {
     balanceAmount <= 0 && grandTotal > 0
       ? "paid"
       : receivedAmount > 0
-      ? "partial"
-      : "due";
+        ? "partial"
+        : "due";
 
   const rateKey =
     metal === "gold"
@@ -835,7 +837,7 @@ function NewBill() {
       setItems((current) => current.map((line) => (line.gstRate === "" || line.gstRate === null || line.gstRate === undefined ? { ...line, gstRate: selectedRate } : line)));
       setItemGstRate(String(selectedRate));
       setGstDialogOpen(false);
-      setContinuePrintAfterGst(true);
+      setGstPrintRequest((request) => request + 1);
     } catch (error) {
       console.error("Unable to save shop GST rate:", error);
       window.alert(language === "hi" ? "GST दर दुकान के डेटाबेस में सेव नहीं हो सकी। कृपया दोबारा प्रयास करें।" : "GST rate could not be saved to the shop database. Please try again.");
@@ -909,7 +911,7 @@ function NewBill() {
     handleItemChange(entry.value);
     setItemDropdownOpen(false);
   };
-  const useCustomItemName = () => {
+  const applyCustomItemName = () => {
     const customName = itemSearch.trim();
     if (!customName) return;
     handleItemChange(customName);
@@ -984,12 +986,12 @@ function NewBill() {
         return previous.map((line, index) =>
           index === existingIndex
             ? {
-                ...line,
-                quantity: Number(line.quantity) + newLine.quantity,
-                weight: Number(line.weight) + newLine.weight,
-                rate: newLine.rate,
-                rateKey: selectedRateKey,
-              }
+              ...line,
+              quantity: Number(line.quantity) + newLine.quantity,
+              weight: Number(line.weight) + newLine.weight,
+              rate: newLine.rate,
+              rateKey: selectedRateKey,
+            }
             : line
         );
       }
@@ -1278,6 +1280,103 @@ function NewBill() {
     setPrintDateTime(null);
   };
 
+
+  const createInvoicePdfBlob = async () => {
+    const invoice = document.querySelector(".print-invoice");
+
+    if (!invoice) {
+      throw new Error("Invoice element not found");
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "new-bill-page";
+    wrapper.style.cssText = `
+    position: fixed;
+    left: -10000px;
+    top: 0;
+    width: 194mm;
+    background: #ffffff;
+    z-index: -1;
+  `;
+
+    const clone = invoice.cloneNode(true);
+    clone.style.display = "block";
+    wrapper.appendChild(clone);
+
+    const style = document.createElement("style");
+    let normalRules = "";
+    let printRules = "";
+
+    const collectRules = (rules, isPrint = false) => {
+      let output = "";
+
+      for (const rule of rules) {
+        if (rule.type === CSSRule.MEDIA_RULE) {
+          if (rule.media.mediaText.includes("print")) {
+            output += collectRules(rule.cssRules, true);
+          }
+        } else if (rule.cssRules) {
+          output += collectRules(rule.cssRules, isPrint);
+        } else if (rule.type === CSSRule.STYLE_RULE) {
+          output += rule.cssText;
+        }
+      }
+
+      return output;
+    };
+
+    for (const sheet of document.styleSheets) {
+      try {
+        normalRules += collectRules(sheet.cssRules);
+        printRules += collectRules(
+          Array.from(sheet.cssRules).filter(
+            (rule) =>
+              rule.type === CSSRule.MEDIA_RULE &&
+              rule.media.mediaText.includes("print")
+          ).flatMap((rule) => Array.from(rule.cssRules))
+        );
+      } catch (error) {
+        console.warn("Stylesheet skipped:", error);
+      }
+    }
+
+    style.textContent = `${normalRules}\n${printRules}`;
+    wrapper.prepend(style);
+    document.body.appendChild(wrapper);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const pdfBlob = await html2pdf()
+        .set({
+          margin: [8, 8, 8, 8],
+          filename: "invoice.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: "#ffffff",
+            windowWidth: 794,
+          },
+          jsPDF: {
+            unit: "mm",
+            format: "a4",
+            orientation: "portrait",
+          },
+          pagebreak: {
+            mode: ["css", "legacy"],
+          },
+        })
+        .from(clone)
+        .outputPdf("blob");
+
+      return pdfBlob;
+    } finally {
+      wrapper.remove();
+    }
+  };
+
+
   const confirmWhatsAppAndOpen = async () => {
     if (!pendingBillData || !pendingBillDocId || isOpeningWhatsApp) return;
 
@@ -1308,6 +1407,23 @@ function NewBill() {
     setIsOpeningWhatsApp(true);
 
     try {
+      const pdfBlob = await createInvoicePdfBlob();
+
+      const uploadResponse = await fetch("/api/upload-invoice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/pdf",
+        },
+        body: pdfBlob,
+      });
+
+      const uploadResult = await uploadResponse.json();
+
+      if (!uploadResponse.ok || !uploadResult.success || !uploadResult.pdfUrl) {
+        throw new Error(uploadResult.error || "PDF upload failed");
+      }
+
+      const pdfUrl = uploadResult.pdfUrl;
       const billRef = doc(db, "bills", pendingBillDocId);
 
       // If the shopkeeper corrected the number, update the saved bill too.
@@ -1327,43 +1443,50 @@ function NewBill() {
 
       const message = language === "hi"
         ? [
-            `नमस्ते ${pendingBillData.customerName || ""},`,
-            `आपका बिल ${pendingBillData.billNumber || pendingBillData.invoiceNo || ""} ${pendingBillData.shopName ? `(${pendingBillData.shopName})` : ""} तैयार है।`,
-            `कुल राशि: ₹${formatMoney(totalAmount)}`,
-            `जमा राशि: ₹${formatMoney(amountPaid)}`,
-            `बाकी राशि: ₹${formatMoney(balanceAmount)}`,
-            "हमारे साथ खरीदारी करने के लिए धन्यवाद।",
-          ].join("\n")
+          `नमस्ते ${pendingBillData.customerName || ""},`,
+          `आपका बिल ${pendingBillData.billNumber || pendingBillData.invoiceNo || ""} ${pendingBillData.shopName ? `(${pendingBillData.shopName})` : ""} तैयार है।`,
+          `कुल राशि: ₹${formatMoney(totalAmount)}`,
+          `जमा राशि: ₹${formatMoney(amountPaid)}`,
+          `बाकी राशि: ₹${formatMoney(balanceAmount)}`,
+          "हमारे साथ खरीदारी करने के लिए धन्यवाद।",
+          `बिल PDF: ${pdfUrl}`,
+        ].join("\n")
         : [
-            `Hello ${pendingBillData.customerName || ""},`,
-            `Your invoice ${pendingBillData.billNumber || pendingBillData.invoiceNo || ""} ${pendingBillData.shopName ? `from ${pendingBillData.shopName}` : ""} is ready.`,
-            `Total: ₹${formatMoney(totalAmount)}`,
-            `Paid: ₹${formatMoney(amountPaid)}`,
-            `Balance due: ₹${formatMoney(balanceAmount)}`,
-            "Thank you for shopping with us.",
-          ].join("\n");
+          `Hello ${pendingBillData.customerName || ""},`,
+          `Your invoice ${pendingBillData.billNumber || pendingBillData.invoiceNo || ""} ${pendingBillData.shopName ? `from ${pendingBillData.shopName}` : ""} is ready.`,
+          `Total: ₹${formatMoney(totalAmount)}`,
+          `Paid: ₹${formatMoney(amountPaid)}`,
+          `Balance due: ₹${formatMoney(balanceAmount)}`,
+          "Thank you for shopping with us.",
+          `Invoice PDF: ${pdfUrl}`,
+        ].join("\n");
 
       whatsappWindow.location.href =
         `https://wa.me/91${normalizedMobile}?text=${encodeURIComponent(message)}`;
 
       closeWhatsAppConfirmation();
     } catch (error) {
-      console.error("Unable to update WhatsApp number:", error);
+      console.error("PDF upload or WhatsApp preparation failed:", error);
       whatsappWindow.close();
       window.alert(language === "hi"
-        ? "WhatsApp नंबर डेटाबेस में अपडेट नहीं हो सका। कृपया दोबारा प्रयास करें।"
-        : "Could not update the WhatsApp number in the database. Please try again.");
+        ? "PDF अपलोड या WhatsApp तैयार नहीं हो सका। कृपया दोबारा प्रयास करें।"
+        : "Could not upload the PDF or prepare WhatsApp. Please try again.");
     } finally {
       setIsOpeningWhatsApp(false);
     }
   };
 
+  // Keep the latest print handler available to the GST-save effect without
+  // making that effect depend on a new function created on every render.
   useEffect(() => {
-    if (continuePrintAfterGst && shopProfile.gstRate !== null && shopProfile.gstRate !== undefined) {
-      setContinuePrintAfterGst(false);
-      handlePrint(true);
+    handlePrintRef.current = handlePrint;
+  }, [handlePrint]);
+
+  useEffect(() => {
+    if (gstPrintRequest > 0) {
+      handlePrintRef.current?.(true);
     }
-  }, [continuePrintAfterGst, shopProfile.gstRate]);
+  }, [gstPrintRequest]);
 
   // ============================================
   // LOADER
@@ -1590,7 +1713,7 @@ function NewBill() {
                       if (event.key === "Escape") setItemDropdownOpen(false);
                       if (event.key === "Enter" && itemSearch.trim() && !exactItemMatch) {
                         event.preventDefault();
-                        useCustomItemName();
+                        applyCustomItemName();
                       }
                     }}
                     autoComplete="off"
@@ -1613,7 +1736,7 @@ function NewBill() {
                       <div className="item-search-empty">{language === "hi" ? "कोई मिलता-जुलता आइटम नहीं मिला।" : "No matching item found."}</div>
                     )}
                     {itemSearch.trim() && !exactItemMatch && (
-                      <button type="button" className="item-search-custom" onClick={useCustomItemName}>
+                      <button type="button" className="item-search-custom" onClick={applyCustomItemName}>
                         <span>＋</span> {language === "hi" ? `“${itemSearch.trim()}” को नए आइटम के रूप में जोड़ें` : `Add “${itemSearch.trim()}” as a custom item`}
                       </button>
                     )}
