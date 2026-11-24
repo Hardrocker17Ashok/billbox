@@ -1,12 +1,18 @@
 
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
+
 import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
+
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+/* ================================
+   CLOUDFLARE R2 CONFIGURATION
+================================ */
 
 const s3 = new S3Client({
   region: "auto",
@@ -17,31 +23,60 @@ const s3 = new S3Client({
   },
 });
 
+/* ================================
+   VERCEL CONFIGURATION
+================================ */
+
 export const config = {
   maxDuration: 60,
 };
 
+/* ================================
+   PDF GENERATION + R2 UPLOAD
+================================ */
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({
+      error: "Method not allowed",
+    });
   }
 
   let browser;
 
   try {
+    // Receive invoice HTML from NewBill.jsx
     const html = req.body?.html;
 
-    if (typeof html !== "string" || !html.includes("print-invoice")) {
+    if (
+      typeof html !== "string" ||
+      !html.includes("print-invoice")
+    ) {
       return res.status(400).json({
         error: "Invoice HTML is missing or invalid",
       });
     }
 
+    // Maximum HTML payload: 3 MB
     if (Buffer.byteLength(html, "utf8") > 3 * 1024 * 1024) {
       return res.status(413).json({
         error: "Invoice content is too large",
       });
     }
+
+    // Check R2 environment variables
+    if (
+      !process.env.R2_ENDPOINT ||
+      !process.env.R2_ACCESS_KEY_ID ||
+      !process.env.R2_SECRET_ACCESS_KEY ||
+      !process.env.R2_BUCKET_NAME
+    ) {
+      throw new Error("R2 environment variables are missing");
+    }
+
+    /* ================================
+       LAUNCH CHROMIUM
+    ================================= */
 
     browser = await puppeteer.launch({
       args: chromium.args,
@@ -56,6 +91,7 @@ export default async function handler(req, res) {
 
     const page = await browser.newPage();
 
+    // Apply the same print media rules as browser printing
     await page.emulateMediaType("print");
 
     await page.setContent(html, {
@@ -63,16 +99,17 @@ export default async function handler(req, res) {
       timeout: 30000,
     });
 
+    // Wait for fonts and images
     await page.evaluate(async () => {
       if (document.fonts?.ready) {
         await document.fonts.ready;
       }
 
-      const images = Array.from(document.images);
-
       await Promise.all(
-        images.map((img) => {
-          if (img.complete) return Promise.resolve();
+        Array.from(document.images).map((img) => {
+          if (img.complete) {
+            return Promise.resolve();
+          }
 
           return new Promise((resolve) => {
             img.onload = resolve;
@@ -81,6 +118,10 @@ export default async function handler(req, res) {
         })
       );
     });
+
+    /* ================================
+       GENERATE A4 PDF
+    ================================= */
 
     const pdfBuffer = await page.pdf({
       format: "A4",
@@ -96,6 +137,10 @@ export default async function handler(req, res) {
       throw new Error("Chromium did not generate a valid PDF");
     }
 
+    /* ================================
+       UPLOAD PDF TO CLOUDFLARE R2
+    ================================= */
+
     const fileName = `invoices/${Date.now()}-${Math.random()
       .toString(36)
       .slice(2, 9)}.pdf`;
@@ -109,6 +154,10 @@ export default async function handler(req, res) {
         CacheControl: "private, max-age=0, no-cache",
       })
     );
+
+    /* ================================
+       GENERATE PDF LINK
+    ================================= */
 
     const pdfUrl = await getSignedUrl(
       s3,
@@ -125,12 +174,14 @@ export default async function handler(req, res) {
       success: true,
       pdfUrl,
     });
+
   } catch (error) {
     console.error("Invoice PDF render/upload error:", error);
 
     return res.status(500).json({
       error: "PDF render or upload failed",
     });
+
   } finally {
     if (browser) {
       await browser.close().catch(() => {});
