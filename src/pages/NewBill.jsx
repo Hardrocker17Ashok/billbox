@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
-import html2pdf from "html2pdf.js";
 import {
   collection,
   doc,
@@ -1281,101 +1280,46 @@ function NewBill() {
   };
 
 
-  const createInvoicePdfBlob = async () => {
+  const createInvoiceHtmlDocument = () => {
     const invoice = document.querySelector(".print-invoice");
 
     if (!invoice) {
       throw new Error("Invoice element not found");
     }
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "new-bill-page";
-    wrapper.style.cssText = `
-    position: fixed;
-    left: -10000px;
-    top: 0;
-    width: 194mm;
-    background: #ffffff;
-    z-index: -1;
-  `;
+    let cssText = "";
+    for (const sheet of document.styleSheets) {
+      try {
+        for (const rule of sheet.cssRules) {
+          cssText += `${rule.cssText}\n`;
+        }
+      } catch (error) {
+        console.warn("A stylesheet could not be copied for PDF rendering:", error);
+      }
+    }
 
     const clone = invoice.cloneNode(true);
     clone.style.display = "block";
-    wrapper.appendChild(clone);
 
-    const style = document.createElement("style");
-    let normalRules = "";
-    let printRules = "";
-
-    const collectRules = (rules, isPrint = false) => {
-      let output = "";
-
-      for (const rule of rules) {
-        if (rule.type === CSSRule.MEDIA_RULE) {
-          if (rule.media.mediaText.includes("print")) {
-            output += collectRules(rule.cssRules, true);
-          }
-        } else if (rule.cssRules) {
-          output += collectRules(rule.cssRules, isPrint);
-        } else if (rule.type === CSSRule.STYLE_RULE) {
-          output += rule.cssText;
-        }
-      }
-
-      return output;
-    };
-
-    for (const sheet of document.styleSheets) {
-      try {
-        normalRules += collectRules(sheet.cssRules);
-        printRules += collectRules(
-          Array.from(sheet.cssRules).filter(
-            (rule) =>
-              rule.type === CSSRule.MEDIA_RULE &&
-              rule.media.mediaText.includes("print")
-          ).flatMap((rule) => Array.from(rule.cssRules))
-        );
-      } catch (error) {
-        console.warn("Stylesheet skipped:", error);
-      }
-    }
-
-    style.textContent = `${normalRules}\n${printRules}`;
-    wrapper.prepend(style);
-    document.body.appendChild(wrapper);
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const pdfBlob = await html2pdf()
-        .set({
-          margin: [8, 8, 8, 8],
-          filename: "invoice.pdf",
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: "#ffffff",
-            windowWidth: 794,
-          },
-          jsPDF: {
-            unit: "mm",
-            format: "a4",
-            orientation: "portrait",
-          },
-          pagebreak: {
-            mode: ["css", "legacy"],
-          },
-        })
-        .from(clone)
-        .outputPdf("blob");
-
-      return pdfBlob;
-    } finally {
-      wrapper.remove();
-    }
+    return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<base href="${window.location.origin}/" />
+<style>${cssText}
+html, body { margin: 0 !important; padding: 0 !important; width: 100%; background: #fff !important; }
+body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+.new-bill-page { width: 100% !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+.print-invoice { display: block !important; width: 100% !important; max-width: 194mm !important; margin: 0 auto !important; background: #fff !important; color: #181716 !important; }
+@page { size: A4 portrait; margin: 8mm; }
+</style>
+</head>
+<body>
+<div class="new-bill-page">${clone.outerHTML}</div>
+</body>
+</html>`;
   };
-
 
   const confirmWhatsAppAndOpen = async () => {
     if (!pendingBillData || !pendingBillDocId || isOpeningWhatsApp) return;
@@ -1406,15 +1350,20 @@ function NewBill() {
 
     setIsOpeningWhatsApp(true);
 
+    // Replace the temporary blank tab with a small branded preparation screen.
+    whatsappWindow.document.open();
+    whatsappWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BillBox</title><style>*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#101114;color:#f7f3ea;font-family:Arial,sans-serif}.card{text-align:center;padding:36px 28px;max-width:360px}.logo{font-size:13px;letter-spacing:4px;color:#c6a15b;font-weight:800}.spinner{width:42px;height:42px;border:3px solid #39352c;border-top-color:#c6a15b;border-radius:50%;margin:28px auto;animation:spin .8s linear infinite}h2{font-size:20px;margin:0 0 10px}p{color:#aaa49a;font-size:14px;line-height:1.6;margin:0}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><main class="card"><div class="logo">BILLBOX</div><div class="spinner"></div><h2>Preparing your invoice</h2><p>Please wait while we create your PDF and open WhatsApp.</p></main></body></html>`);
+    whatsappWindow.document.close();
+
     try {
-      const pdfBlob = await createInvoicePdfBlob();
+      const invoiceHtml = createInvoiceHtmlDocument();
 
       const uploadResponse = await fetch("/api/upload-invoice", {
         method: "POST",
         headers: {
-          "Content-Type": "application/pdf",
+          "Content-Type": "application/json",
         },
-        body: pdfBlob,
+        body: JSON.stringify({ html: invoiceHtml }),
       });
 
       const uploadResult = await uploadResponse.json();
