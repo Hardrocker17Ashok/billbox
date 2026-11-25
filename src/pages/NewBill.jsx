@@ -1380,12 +1380,17 @@ body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !
       const previewUrl = uploadResult.previewUrl;
       const downloadUrl = uploadResult.downloadUrl;
 
-      
+
       const billRef = doc(db, "bills", pendingBillDocId);
 
-      // If the shopkeeper corrected the number, update the saved bill too.
+      // Update the number in the background.
+      // Never block WhatsApp redirection for this update.
       if (normalizedMobile !== pendingBillData.customerMobile) {
-        await updateDoc(billRef, { customerMobile: normalizedMobile });
+        updateDoc(billRef, {
+          customerMobile: normalizedMobile,
+        }).catch((error) => {
+          console.error("Customer mobile update failed:", error);
+        });
       }
 
       const amountPaid = Number(
@@ -1438,8 +1443,10 @@ body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !
           `Regards,\n${pendingBillData.shopName || "Your Store"}`,
         ].join("\n");
 
-      whatsappWindow.location.href =
+      const whatsappUrl =
         `https://wa.me/91${normalizedMobile}?text=${encodeURIComponent(message)}`;
+
+      whatsappWindow.location.replace(whatsappUrl);
 
       closeWhatsAppConfirmation();
     } catch (error) {
