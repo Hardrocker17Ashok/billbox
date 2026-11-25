@@ -1,5 +1,5 @@
 import "./PendingBills.css";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -11,7 +11,7 @@ import PageLoader from "../components/PageLoader";
 
 const DEFAULT_PROFILE = {
   shopName: "BillBox", ownerName: "", phone: "", alternatePhone: "",
-  address: "", gstNumber: "", logoUrl: "", tagline: "", language: "hi", theme: "dark",
+  address: "", gstNumber: "", gstRate: null, logoUrl: "", tagline: "", language: "hi", theme: "dark",
 };
 const TEXT = {
   hi: {
@@ -38,6 +38,7 @@ const TEXT = {
     signature:"अधिकृत हस्ताक्षर", gstin:"GSTIN", billType:"बिल का प्रकार",
     estimate:"अनुमान / टैक्स इनवॉइस नहीं", taxInvoice:"टैक्स इनवॉइस", time:"समय",
     item:"आभूषण", hsn:"HSN", sku:"SKU", huid:"HUID", receivedNow:"अभी प्राप्त",
+    gstinRequired:"पक्का बिल बनाने के लिए दुकान का GSTIN आवश्यक है। कृपया Profile → Shop Settings में जाकर GST Number अपडेट करें, फिर दोबारा पक्का बिल बनाएँ।",
   },
   en: {
     page:"Pending Bills", heading:"Receive Payment", dashboard:"Dashboard",
@@ -63,6 +64,7 @@ const TEXT = {
     signature:"Authorized Signature", gstin:"GSTIN", billType:"Bill Type",
     estimate:"Estimate / Not a Tax Invoice", taxInvoice:"Tax Invoice", time:"Time",
     item:"Jewellery", hsn:"HSN", sku:"SKU", huid:"HUID", receivedNow:"Received now",
+    gstinRequired:"Shop GSTIN is required to create a Pakka Bill. Please go to Profile → Shop Settings, update the GST Number, and then create the Pakka Bill again.",
   },
 };
 const money = (value, digits=2) => (Number(value)||0).toLocaleString("en-IN",{minimumFractionDigits:0,maximumFractionDigits:digits});
@@ -91,6 +93,12 @@ function PendingBills() {
   const [saving,setSaving] = useState(false);
   const [message,setMessage] = useState("");
   const [printTarget,setPrintTarget] = useState(null);
+  const [afterPrintBill,setAfterPrintBill] = useState(null);
+  const [billTypeChoiceOpen,setBillTypeChoiceOpen] = useState(false);
+  const [whatsAppBill,setWhatsAppBill] = useState(null);
+  const [whatsAppMobile,setWhatsAppMobile] = useState("");
+  const [sendingWhatsApp,setSendingWhatsApp] = useState(false);
+  const whatsAppWindowRef = useRef(null);
   const language = profile.language === "en" ? "en" : "hi";
   const theme = profile.theme === "light" ? "light" : "dark";
   const t = TEXT[language];
@@ -169,16 +177,280 @@ function PendingBills() {
     } finally { setSaving(false); }
   };
 
-  const printBill = (bill) => {
-    setPrintTarget(bill);
-    window.setTimeout(() => window.print(), 250);
+  const printBill = async (bill, requestedType = "estimate") => {
+    let invoice = { ...bill, billType: requestedType };
+
+    if (requestedType === "tax") {
+      // Only the GSTIN saved in Profile > Shop Settings is accepted.
+      // Do not prompt for or save GSTIN from this Pending Bills screen.
+      const gstin = String(profile.gstNumber || "").trim().toUpperCase();
+      if (!gstin) {
+        window.alert(t.gstinRequired);
+        return;
+      }
+
+      // GST rate is optional here. Preserve an existing rate when available;
+      // otherwise use 0 and allow the invoice to be generated.
+      const savedGstRate = profile.gstRate ?? bill.gstRate ?? bill.shopGstRate;
+      const gstRate = savedGstRate === null || savedGstRate === undefined || savedGstRate === ""
+        ? 0
+        : Number(savedGstRate);
+
+      if (!Number.isFinite(gstRate) || gstRate < 0 || gstRate > 100) {
+        window.alert(language === "hi" ? "दुकान की GST दर सही नहीं है। कृपया Profile → Shop Settings में जाँचें।" : "The shop GST rate is invalid. Please check Profile → Shop Settings.");
+        return;
+      }
+
+      const sourceItems = Array.isArray(bill.items) && bill.items.length
+        ? bill.items
+        : [{
+            itemName: bill.itemName || "-",
+            metal: bill.metal || "",
+            carat: bill.carat || "",
+            quantity: bill.quantity || 1,
+            weight: bill.weight || 0,
+            rate: bill.rate || 0,
+            amount: bill.amount || bill.itemAmount || 0,
+            totalAmount: bill.amount || bill.itemAmount || 0,
+            hsnCode: bill.hsnCode || "",
+          }];
+
+      const taxItems = [];
+      for (let index = 0; index < sourceItems.length; index += 1) {
+        const item = sourceItems[index];
+        // HSN is optional for Pakka Bill. Preserve it when already available,
+        // but never prompt for it or block invoice generation when it is blank.
+        const hsnCode = String(item.hsnCode || "").trim();
+
+        const metalValue = Number(item.chargesBreakdown?.metalValue ?? item.amount ?? item.itemAmount ?? 0);
+        const makingValue = Number(item.chargesBreakdown?.makingTotal ?? item.makingCharges ?? 0);
+        const otherValue = Number(item.chargesBreakdown?.otherTotal ?? item.otherCharges ?? 0);
+        const taxableAmount = metalValue + makingValue + otherValue;
+        const itemGstRate = Number(item.gstRate) > 0 ? Number(item.gstRate) : gstRate;
+        const itemGstAmount = taxableAmount * (itemGstRate / 100);
+        const lineTotal = taxableAmount + itemGstAmount;
+
+        taxItems.push({
+          ...item,
+          hsnCode,
+          gstRate: itemGstRate,
+          gstAmount: itemGstAmount,
+          taxableAmount,
+          totalAmount: lineTotal,
+          lineTotal,
+        });
+      }
+
+      const discount = Number(bill.offer ?? bill.discount ?? 0);
+      const taxableSubtotal = taxItems.reduce((sum, item) => sum + Number(item.taxableAmount || 0), 0);
+      const subtotal = Math.max(0, taxableSubtotal - discount);
+      const gstAmount = taxItems.reduce((sum, item) => sum + Number(item.gstAmount || 0), 0);
+      const grandTotal = subtotal + gstAmount;
+      const paid = paidOf(bill);
+      const balance = Math.max(0, grandTotal - paid);
+      const paymentStatus = balance <= 0.009 ? "paid" : paid > 0 ? "partial" : "due";
+
+      invoice = {
+        ...bill,
+        items: taxItems,
+        billType: "tax",
+        billTypeLabel: language === "hi" ? "टैक्स इनवॉइस" : "Tax Invoice",
+        shopGstNumber: gstin,
+        shopGstRate: gstRate,
+        gstRate,
+        gstEnabled: gstAmount > 0,
+        gstAmount,
+        subtotal,
+        grandTotal,
+        totalAmount: grandTotal,
+        paidAmount: paid,
+        amountPaid: paid,
+        balanceDue: balance,
+        balanceAmount: balance,
+        paymentStatus,
+        payment: {
+          ...(bill.payment || {}),
+          total: grandTotal,
+          paid,
+          balance,
+          status: paymentStatus,
+        },
+      };
+
+      try {
+        // Update only this bill. Shop GST settings are managed from Profile > Shop Settings.
+        const invoiceData = { ...invoice };
+        delete invoiceData.id;
+        await updateDoc(doc(db, "bills", bill.id), {
+          ...invoiceData,
+          taxInvoiceCreatedAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error("Tax invoice update failed:", error);
+        window.alert(language === "hi" ? "पक्का बिल सेव नहीं हो सका। कृपया दोबारा प्रयास करें।" : "Tax invoice could not be saved. Please try again.");
+        return;
+      }
+
+      if (balance > 0.009) {
+        setBills((current) => current.some((row) => row.id === invoice.id) ? current : [invoice, ...current]);
+      }
+    } else {
+      invoice = {
+        ...bill,
+        billType: "estimate",
+        billTypeLabel: language === "hi" ? "अनुमान / टैक्स इनवॉइस नहीं" : "Estimate / Not a Tax Invoice",
+      };
+    }
+
+    setSelected(invoice);
+    setPrintTarget(invoice);
+    setAfterPrintBill(invoice);
+    window.setTimeout(() => window.print(), 300);
   };
 
   useEffect(() => {
-    const afterPrint = () => setPrintTarget(null);
+    const afterPrint = () => {
+      if (afterPrintBill) {
+        setWhatsAppBill(afterPrintBill);
+        setWhatsAppMobile(afterPrintBill.customerMobile || "");
+      }
+    };
     window.addEventListener("afterprint", afterPrint);
     return () => window.removeEventListener("afterprint", afterPrint);
-  }, []);
+  }, [afterPrintBill]);
+
+  const createInvoiceHtmlDocument = () => {
+    const invoice = document.querySelector(".print-invoice");
+    if (!invoice) throw new Error("Invoice element not found");
+
+    let cssText = "";
+    for (const sheet of document.styleSheets) {
+      try {
+        for (const rule of sheet.cssRules) cssText += `${rule.cssText}\\n`;
+      } catch (error) {
+        console.warn("A stylesheet could not be copied for PDF rendering:", error);
+      }
+    }
+
+    const clone = invoice.cloneNode(true);
+    clone.style.display = "block";
+    return `<!doctype html>
+<html lang="${language}">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<base href="${window.location.origin}/" />
+<style>${cssText}
+html, body { margin: 0 !important; padding: 0 !important; width: 100%; background: #fff !important; }
+body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+.new-bill-page { width: 100% !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+.print-invoice { display: block !important; width: 100% !important; max-width: 194mm !important; margin: 0 auto !important; background: #fff !important; color: #181716 !important; }
+@page { size: A4 portrait; margin: 8mm; }
+</style>
+</head>
+<body><div class="new-bill-page">${clone.outerHTML}</div></body>
+</html>`;
+  };
+
+  const closeWhatsAppPrompt = () => {
+    setWhatsAppBill(null);
+    setPrintTarget(null);
+    setAfterPrintBill(null);
+    if (whatsAppWindowRef.current && !whatsAppWindowRef.current.closed) {
+      whatsAppWindowRef.current.close();
+    }
+    whatsAppWindowRef.current = null;
+  };
+
+  const sendBillOnWhatsApp = async () => {
+    if (!whatsAppBill || sendingWhatsApp) return;
+    const digits = String(whatsAppMobile || "").replace(/\D/g, "");
+    const normalizedMobile =
+      digits.startsWith("91") && digits.length === 12 ? digits.slice(2) :
+      digits.startsWith("0") && digits.length === 11 ? digits.slice(1) : digits;
+
+    if (!/^[6-9]\d{9}$/.test(normalizedMobile)) {
+      window.alert(language === "hi" ? "कृपया मान्य 10 अंकों का WhatsApp नंबर दर्ज करें।" : "Please enter a valid 10-digit Indian WhatsApp number.");
+      return;
+    }
+
+    const whatsappWindow = window.open("about:blank", "_blank");
+    if (!whatsappWindow) {
+      window.alert(language === "hi" ? "WhatsApp खोलने के लिए pop-ups allow करें।" : "Please allow pop-ups to open WhatsApp.");
+      return;
+    }
+    whatsAppWindowRef.current = whatsappWindow;
+    setSendingWhatsApp(true);
+
+    try {
+      whatsappWindow.document.open();
+      whatsappWindow.document.write(`<!doctype html><html><head><title>BillBox</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#101114;color:#f7f3ea;font-family:Arial,sans-serif}.card{text-align:center;padding:36px 28px}.spinner{width:42px;height:42px;border:3px solid #39352c;border-top-color:#c6a15b;border-radius:50%;margin:28px auto;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><main class="card"><b>BILLBOX</b><div class="spinner"></div><p>${language === "hi" ? "आपका PDF तैयार हो रहा है..." : "Preparing your invoice PDF..."}</p></main></body></html>`);
+      whatsappWindow.document.close();
+
+      const uploadResponse = await fetch("/api/upload-invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: createInvoiceHtmlDocument() }),
+      });
+      const uploadResult = await uploadResponse.json();
+      if (!uploadResponse.ok || !uploadResult.success || !uploadResult.previewUrl || !uploadResult.downloadUrl) {
+        throw new Error(uploadResult.error || "PDF upload failed");
+      }
+
+      if (normalizedMobile !== whatsAppBill.customerMobile) {
+        updateDoc(doc(db, "bills", whatsAppBill.id), { customerMobile: normalizedMobile })
+          .catch((error) => console.error("Customer mobile update failed:", error));
+      }
+
+      const total = totalOf(whatsAppBill);
+      const paid = paidOf(whatsAppBill);
+      const balance = balanceOf(whatsAppBill);
+      const previewUrl = uploadResult.previewUrl;
+      const downloadUrl = uploadResult.downloadUrl;
+      const messageText = language === "hi"
+        ? [
+            `नमस्ते ${whatsAppBill.customerName || ""} जी 🙏`,
+            `आपका ${whatsAppBill.billType === "tax" ? "पक्का टैक्स बिल" : "कच्चा बिल"} ${whatsAppBill.billNumber || whatsAppBill.invoiceNo || ""} तैयार है।`,
+            "",
+            `कुल राशि: ₹${money(total)}`,
+            `जमा राशि: ₹${money(paid)}`,
+            `बाकी राशि: ₹${money(balance)}`,
+            "",
+            `बिल देखें:\n${previewUrl}`,
+            "",
+            `बिल डाउनलोड करें:\n${downloadUrl}`,
+            "",
+            `धन्यवाद!\n${whatsAppBill.shopName || profile.shopName}`,
+          ].join("\n")
+        : [
+            `Hello ${whatsAppBill.customerName || ""},`,
+            `Your ${whatsAppBill.billType === "tax" ? "tax invoice" : "estimate"} ${whatsAppBill.billNumber || whatsAppBill.invoiceNo || ""} is ready.`,
+            "",
+            `Total: ₹${money(total)}`,
+            `Paid: ₹${money(paid)}`,
+            `Balance: ₹${money(balance)}`,
+            "",
+            `View bill:\n${previewUrl}`,
+            "",
+            `Download bill:\n${downloadUrl}`,
+            "",
+            `Regards,\n${whatsAppBill.shopName || profile.shopName}`,
+          ].join("\n");
+
+      whatsappWindow.location.replace(`https://wa.me/91${normalizedMobile}?text=${encodeURIComponent(messageText)}`);
+      setWhatsAppBill(null);
+      setPrintTarget(null);
+      setAfterPrintBill(null);
+      whatsAppWindowRef.current = null;
+    } catch (error) {
+      console.error("Pending bill WhatsApp send failed:", error);
+      if (!whatsappWindow.closed) whatsappWindow.close();
+      whatsAppWindowRef.current = null;
+      window.alert(language === "hi" ? "PDF अपलोड या WhatsApp तैयार नहीं हो सका। कृपया दोबारा प्रयास करें।" : "Could not prepare the PDF or WhatsApp. Please try again.");
+    } finally {
+      setSendingWhatsApp(false);
+    }
+  };
 
 
   if (!authReady || loading) return <PageLoader loading={true} message={language==="hi"?"बकाया बिल लोड हो रहे हैं...":"Loading pending bills..."} fullScreen={true}/>;
@@ -309,10 +581,35 @@ function PendingBills() {
         {balanceOf(selected)>0.009?<div className="pending-collect-box"><div className="pending-collect-heading"><div><small>{t.receive}</small><strong>₹ {money(balanceOf(selected))}</strong></div><span>{t.status}: {paidOf(selected)>0?(language==="hi"?"आंशिक भुगतान":"Partially paid"):(language==="hi"?"बकाया":"Due")}</span></div>
           <div className="pending-form-grid"><label>{t.method}<select value={method} onChange={e=>setMethod(e.target.value)}><option value="cash">{t.cash}</option><option value="upi">{t.upi}</option><option value="bank">{t.bank}</option><option value="cheque">{t.cheque}</option></select></label><label>{t.note}<input value={note} onChange={e=>setNote(e.target.value)} placeholder={language==="hi"?"रेफरेंस नंबर या नोट":"Reference number or note"}/></label></div>
           <div className="pending-modal-actions"><button className="pending-cancel" onClick={()=>setSelected(null)}>{t.cancel}</button><button className="print-bill" disabled={saving} onClick={receivePayment}>{saving?t.saving:`₹ ${money(balanceOf(selected))} · ${t.collect}`}</button></div>
-        </div>:<div className="pending-paid-note">✓ {t.paidStatus}<button className="print-bill" onClick={()=>printBill(selected)}>{t.print} →</button></div>}
+        </div>:<div className="pending-paid-note">✓ {t.paidStatus}<button className="print-bill" onClick={()=>setBillTypeChoiceOpen(true)}>{t.print} →</button></div>}
         {message && <div className="pending-message">{message}</div>}
       </section>
     </div>}
+    {billTypeChoiceOpen && selected && <div className="pending-modal-backdrop" onClick={e=>{if(e.target===e.currentTarget)setBillTypeChoiceOpen(false);}}>
+      <section className="pending-modal section-card pending-choice-modal" role="dialog" aria-modal="true">
+        <div className="pending-modal-head"><div><span>{t.billType}</span><h2>{language==="hi"?"बिल का प्रकार चुनें":"Choose bill type"}</h2></div><button type="button" onClick={()=>setBillTypeChoiceOpen(false)}>×</button></div>
+        <p className="pending-choice-description">{language==="hi"?"कच्चा बिल अनुमान के रूप में बनेगा। पक्का बिल बनाने के लिए केवल दुकान का GSTIN अनिवार्य है, जो Profile → Shop Settings में अपडेट किया जा सकता है। GST दर उपलब्ध न होने पर भी बिल बनेगा। HSN वैकल्पिक है।":"The estimate is created as a non-tax invoice. Only the shop GSTIN is required for a Pakka Bill; update it under Profile → Shop Settings. The bill can still be created if no GST rate is saved. HSN is optional."}</p>
+        <div className="pending-modal-actions pending-choice-actions">
+          <button type="button" className="pending-cancel" onClick={()=>{setBillTypeChoiceOpen(false);printBill(selected,"estimate");}}>{language==="hi"?"कच्चा बिल":"Kaccha Bill"}</button>
+          <button type="button" className="print-bill" onClick={()=>{setBillTypeChoiceOpen(false);printBill(selected,"tax");}}>{language==="hi"?"पक्का बिल (GST)":"Pakka Bill (GST)"}</button>
+        </div>
+      </section>
+    </div>}
+
+    {whatsAppBill && <div className="pending-modal-backdrop" onClick={e=>{if(e.target===e.currentTarget&&!sendingWhatsApp)closeWhatsAppPrompt();}}>
+      <section className="pending-modal section-card pending-whatsapp-modal" role="dialog" aria-modal="true">
+        <div className="pending-modal-head"><div><span>WHATSAPP</span><h2>{language==="hi"?"बिल WhatsApp पर भेजें":"Send bill on WhatsApp"}</h2></div><button type="button" disabled={sendingWhatsApp} onClick={closeWhatsAppPrompt}>×</button></div>
+        <p className="pending-choice-description">{language==="hi"?"बिल प्रिंट या PDF सेव करने के बाद ग्राहक को WhatsApp पर भेजें।":"Your bill is ready. Send the PDF links to the customer on WhatsApp."}</p>
+        <label className="pending-whatsapp-label">{language==="hi"?"ग्राहक का WhatsApp नंबर":"Customer WhatsApp number"}
+          <div className="pending-whatsapp-input"><span>+91</span><input value={whatsAppMobile} onChange={e=>setWhatsAppMobile(e.target.value)} inputMode="numeric" placeholder="10 digit mobile number" maxLength={14}/></div>
+        </label>
+        <div className="pending-modal-actions">
+          <button type="button" className="pending-cancel" disabled={sendingWhatsApp} onClick={closeWhatsAppPrompt}>{language==="hi"?"अभी नहीं":"Not now"}</button>
+          <button type="button" className="print-bill" disabled={sendingWhatsApp} onClick={sendBillOnWhatsApp}>{sendingWhatsApp?(language==="hi"?"भेजने की तैयारी...":"Preparing..."):(language==="hi"?"WhatsApp पर भेजें":"Send on WhatsApp")}</button>
+        </div>
+      </section>
+    </div>}
+
     <footer className="shop-footer"><strong>{profile.shopName}</strong>{profile.tagline&&<span>{profile.tagline}</span>}{profile.address&&<span>{profile.address}</span>}{profile.phone&&<span>{profile.phone}</span>}</footer>
   </div>;
 }

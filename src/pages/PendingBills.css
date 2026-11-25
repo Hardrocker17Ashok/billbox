@@ -86,3 +86,87 @@
 @media print{
  .pending-list-card,.pending-modal-backdrop,.shop-footer,.sales-header,.bill-container{display:none!important}
 }
+
+
+/* Pending Bills — bill type selection and WhatsApp confirmation */
+.pending-choice-description {
+  margin: 0 0 18px;
+  color: #aaa397;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.pending-choice-actions {
+  justify-content: flex-end;
+}
+.pending-choice-actions button {
+  min-width: 145px;
+}
+.pending-whatsapp-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  color: #c6a96d;
+  font-size: 11px;
+  font-weight: 700;
+}
+.pending-whatsapp-input {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  overflow: hidden;
+  border: 1px solid rgba(181, 138, 58, .34);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, .22);
+}
+.pending-whatsapp-input > span {
+  padding: 0 13px;
+  border-right: 1px solid rgba(181, 138, 58, .22);
+  color: #c49a4c;
+  font-size: 12px;
+  font-weight: 700;
+}
+.pending-whatsapp-input input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 13px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #f1ece2;
+  font: inherit;
+  font-size: 14px;
+}
+.pending-whatsapp-input input::placeholder {
+  color: #827b70;
+}
+.pending-whatsapp-modal .pending-modal-actions button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+.bill-theme-light .pending-choice-description {
+  color: #71695d;
+}
+.bill-theme-light .pending-whatsapp-label {
+  color: #80602c;
+}
+.bill-theme-light .pending-whatsapp-input {
+  background: #fff;
+  border-color: #ddd4c4;
+}
+.bill-theme-light .pending-whatsapp-input input {
+  color: #342d22;
+}
+.bill-theme-light .pending-whatsapp-input > span {
+  color: #80602c;
+  border-color: #e5dccd;
+}
+@media (max-width: 700px) {
+  .pending-choice-actions {
+    flex-direction: column-reverse;
+  }
+  .pending-choice-actions button {
+    width: 100%;
+  }
+}

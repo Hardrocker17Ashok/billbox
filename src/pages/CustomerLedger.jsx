@@ -576,7 +576,6 @@ function CustomerLedger() {
             <p>{hi ? "बिक्री, प्राप्त भुगतान और बकाया राशि का पूरा हिसाब।" : "A complete view of sales, collections and outstanding balances."}</p>
           </div>
           <div className="ledger-header-actions">
-            <button className="ledger-export" onClick={exportFilteredPdf}>↓ {hi ? "फ़िल्टर डेटा PDF" : "Export filtered PDF"}</button>
             <button className="ledger-refresh" onClick={loadBills}>↻ {hi ? "रिफ्रेश" : "Refresh"}</button>
           </div>
         </div>
@@ -777,7 +776,6 @@ function CustomerLedger() {
             <div className="details-modal-footer ledger-details-footer">
               <div><strong>{hi ? "BillBox • पुराना बिल रिकॉर्ड" : "BillBox • Previous bill record"}</strong><span>{hi ? "यह जानकारी आपके बिल रिकॉर्ड से ली गई है।" : "This bill is displayed from your saved records."}</span></div>
               <div className="ledger-details-actions">
-                <button type="button" className="ledger-download-pdf" onClick={() => downloadBillPdf(selectedBill)}>↓ {hi ? "PDF डाउनलोड करें" : "Download PDF"}</button>
                 <button type="button" onClick={() => setSelectedBill(null)}>{hi ? "बंद करें" : "Close"}</button>
               </div>
             </div>
