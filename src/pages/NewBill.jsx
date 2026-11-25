@@ -1368,11 +1368,19 @@ body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !
 
       const uploadResult = await uploadResponse.json();
 
-      if (!uploadResponse.ok || !uploadResult.success || !uploadResult.pdfUrl) {
+      if (
+        !uploadResponse.ok ||
+        !uploadResult.success ||
+        !uploadResult.previewUrl ||
+        !uploadResult.downloadUrl
+      ) {
         throw new Error(uploadResult.error || "PDF upload failed");
       }
 
-      const pdfUrl = uploadResult.pdfUrl;
+      const previewUrl = uploadResult.previewUrl;
+      const downloadUrl = uploadResult.downloadUrl;
+
+      
       const billRef = doc(db, "bills", pendingBillDocId);
 
       // If the shopkeeper corrected the number, update the saved bill too.
@@ -1392,22 +1400,42 @@ body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !
 
       const message = language === "hi"
         ? [
-          `नमस्ते ${pendingBillData.customerName || ""},`,
+          `नमस्ते ${pendingBillData.customerName || ""} जी 🙏`,
+          "",
           `आपका बिल ${pendingBillData.billNumber || pendingBillData.invoiceNo || ""} ${pendingBillData.shopName ? `(${pendingBillData.shopName})` : ""} तैयार है।`,
+          "",
+          "🧾 बिल की जानकारी",
+          "━━━━━━━━━━━━━━━━━━",
           `कुल राशि: ₹${formatMoney(totalAmount)}`,
           `जमा राशि: ₹${formatMoney(amountPaid)}`,
           `बाकी राशि: ₹${formatMoney(balanceAmount)}`,
-          "हमारे साथ खरीदारी करने के लिए धन्यवाद।",
-          `बिल PDF: ${pdfUrl}`,
+          "",
+          "📄 अपना बिल यहाँ देखें",
+          `👁️ बिल देखें:\n${previewUrl}`,
+          "",
+          `⬇️ बिल डाउनलोड करें:\n${downloadUrl}`,
+          "",
+          "हमारे साथ खरीदारी करने के लिए धन्यवाद। ❤️",
+          `सादर,\n${pendingBillData.shopName || "आपकी दुकान"}`,
         ].join("\n")
         : [
-          `Hello ${pendingBillData.customerName || ""},`,
+          `Hello ${pendingBillData.customerName || ""} 👋`,
+          "",
           `Your invoice ${pendingBillData.billNumber || pendingBillData.invoiceNo || ""} ${pendingBillData.shopName ? `from ${pendingBillData.shopName}` : ""} is ready.`,
-          `Total: ₹${formatMoney(totalAmount)}`,
-          `Paid: ₹${formatMoney(amountPaid)}`,
-          `Balance due: ₹${formatMoney(balanceAmount)}`,
-          "Thank you for shopping with us.",
-          `Invoice PDF: ${pdfUrl}`,
+          "",
+          "🧾 INVOICE SUMMARY",
+          "━━━━━━━━━━━━━━━━━━",
+          `Total Amount: ₹${formatMoney(totalAmount)}`,
+          `Paid Amount: ₹${formatMoney(amountPaid)}`,
+          `Balance Due: ₹${formatMoney(balanceAmount)}`,
+          "",
+          "📄 ACCESS YOUR INVOICE",
+          `👁️ View Invoice:\n${previewUrl}`,
+          "",
+          `⬇️ Download Invoice (PDF):\n${downloadUrl}`,
+          "",
+          "Thank you for shopping with us. ❤️",
+          `Regards,\n${pendingBillData.shopName || "Your Store"}`,
         ].join("\n");
 
       whatsappWindow.location.href =

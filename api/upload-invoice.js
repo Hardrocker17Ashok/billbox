@@ -188,7 +188,19 @@ export default async function handler(req, res) {
        GENERATE SIGNED PDF URL
     ===================================== */
 
-    const pdfUrl = await getSignedUrl(
+    const previewUrl = await getSignedUrl(
+      s3,
+      new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: fileName,
+        ResponseContentType: "application/pdf",
+        ResponseContentDisposition:
+          'inline; filename="BillBox-Invoice.pdf"',
+      }),
+      { expiresIn: 60 * 60 * 24 * 7 }
+    );
+
+    const downloadUrl = await getSignedUrl(
       s3,
       new GetObjectCommand({
         Bucket: process.env.R2_BUCKET_NAME,
@@ -200,15 +212,10 @@ export default async function handler(req, res) {
       { expiresIn: 60 * 60 * 24 * 7 }
     );
 
-    /* =====================================
-       SUCCESS RESPONSE
-    ===================================== */
-
     return res.status(200).json({
       success: true,
-      message: "Invoice PDF generated and uploaded successfully",
-      fileName,
-      pdfUrl,
+      previewUrl,
+      downloadUrl,
     });
 
   } catch (error) {
