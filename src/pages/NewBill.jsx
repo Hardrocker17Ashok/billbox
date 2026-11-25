@@ -146,7 +146,7 @@ const TEXT = {
     otherChargesTotal: "कुल अन्य चार्ज",
     amountReceived: "प्राप्त राशि",
     invalidPaid: "जमा राशि कुल बिल से अधिक नहीं हो सकती।",
-    taxInvoiceGstinRequired: "पक्का बिल बनाने के लिए दुकान का GSTIN आवश्यक है। कृपया Profile → Shop Settings में जाकर GST Number अपडेट करें, फिर वापस आकर बिल प्रिंट करें।",
+    taxInvoiceGstinRequired: "पक्का GST टैक्स इनवॉइस बनाने के लिए दुकान का GSTIN आवश्यक है।",
     taxInvoiceHsnRequired: "पक्का टैक्स इनवॉइस बनाने से पहले हर आइटम का HSN कोड दर्ज करें।",
     discountInvalid: "छूट कुल राशि से अधिक नहीं हो सकती।",
   },
@@ -268,7 +268,7 @@ const TEXT = {
     otherChargesTotal: "Total Other Charges",
     amountReceived: "Amount Received",
     invalidPaid: "Amount paid cannot exceed the grand total.",
-    taxInvoiceGstinRequired: "Shop GSTIN is required to create a Pakka Bill. Please go to Profile → Shop Settings, update the GST Number, then return here and print the bill.",
+    taxInvoiceGstinRequired: "Shop GSTIN is required for a GST tax invoice.",
     taxInvoiceHsnRequired: "Enter an HSN code for every item before creating a tax invoice.",
     discountInvalid: "Discount cannot exceed the bill amount.",
   },
@@ -1068,6 +1068,17 @@ function NewBill() {
 
     if (billType === "tax" && !String(shopProfile.gstNumber || "").trim()) {
       window.alert(t.taxInvoiceGstinRequired);
+      return;
+    }
+
+    if (billType === "tax" && items.some((line) => !String(line.hsnCode || "").trim())) {
+      window.alert(t.taxInvoiceHsnRequired);
+      return;
+    }
+
+    if (billType === "tax" && !skipGstSetup && (shopProfile.gstRate === null || shopProfile.gstRate === undefined || shopProfile.gstRate === "")) {
+      setGstDialogRate("3");
+      setGstDialogOpen(true);
       return;
     }
 
