@@ -193,10 +193,11 @@ export default async function handler(req, res) {
       new GetObjectCommand({
         Bucket: process.env.R2_BUCKET_NAME,
         Key: fileName,
+        ResponseContentType: "application/pdf",
+        ResponseContentDisposition:
+          'attachment; filename="BillBox-Invoice.pdf"',
       }),
-      {
-        expiresIn: 60 * 60 * 24 * 7,
-      }
+      { expiresIn: 60 * 60 * 24 * 7 }
     );
 
     /* =====================================
