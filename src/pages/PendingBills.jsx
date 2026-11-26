@@ -319,38 +319,86 @@ function PendingBills() {
     return () => window.removeEventListener("afterprint", afterPrint);
   }, [afterPrintBill]);
 
+
   const createInvoiceHtmlDocument = () => {
     const invoice = document.querySelector(".print-invoice");
-    if (!invoice) throw new Error("Invoice element not found");
 
-    let cssText = "";
-    for (const sheet of document.styleSheets) {
-      try {
-        for (const rule of sheet.cssRules) cssText += `${rule.cssText}\\n`;
-      } catch (error) {
-        console.warn("A stylesheet could not be copied for PDF rendering:", error);
-      }
+    if (!invoice) {
+      throw new Error("Invoice element not found");
     }
 
     const clone = invoice.cloneNode(true);
-    clone.style.display = "block";
+    clone.style.display = "flex";
+
+    // Load the original CSS files instead of copying cssRules.
+    const stylesheetLinks = Array.from(
+      document.querySelectorAll('link[rel="stylesheet"]')
+    )
+      .map((link) => link.href)
+      .filter(Boolean);
+
+    // Also preserve dynamically injected inline styles.
+    const inlineStyles = Array.from(document.querySelectorAll("style"))
+      .map((style) => style.innerHTML)
+      .join("\n");
+
     return `<!doctype html>
 <html lang="${language}">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <base href="${window.location.origin}/" />
-<style>${cssText}
-html, body { margin: 0 !important; padding: 0 !important; width: 100%; background: #fff !important; }
-body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-.new-bill-page { width: 100% !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
-.print-invoice { display: block !important; width: 100% !important; max-width: 194mm !important; margin: 0 auto !important; background: #fff !important; color: #181716 !important; }
-@page { size: A4 portrait; margin: 8mm; }
+
+${stylesheetLinks
+        .map((href) => `<link rel="stylesheet" href="${href}">`)
+        .join("\n")}
+
+<style>
+${inlineStyles}
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  background: #fff !important;
+}
+
+body {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.new-bill-page {
+  width: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #fff !important;
+}
+
+.new-bill-page .print-invoice {
+  display: flex !important;
+  width: 194mm !important;
+  max-width: 194mm !important;
+  margin: 0 auto !important;
+  background: #fff !important;
+  color: #181716 !important;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 8mm;
+}
 </style>
 </head>
-<body><div class="new-bill-page">${clone.outerHTML}</div></body>
+<body>
+<div class="new-bill-page bill-theme-${theme}">
+${clone.outerHTML}
+</div>
+</body>
 </html>`;
   };
+
 
   const closeWhatsAppPrompt = () => {
     setWhatsAppBill(null);
@@ -411,7 +459,6 @@ body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !
       const paid = paidOf(whatsAppBill);
       const balance = balanceOf(whatsAppBill);
       const previewUrl = uploadResult.pdfUrl;
-      const downloadUrl = uploadResult.pdfUrl;
       const messageText = language === "hi"
         ? [
           `नमस्ते ${whatsAppBill.customerName || ""} जी 🙏`,
@@ -422,8 +469,6 @@ body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !
           `बाकी राशि: ₹${money(balance)}`,
           "",
           `बिल देखें:\n${previewUrl}`,
-          "",
-          `बिल डाउनलोड करें:\n${downloadUrl}`,
           "",
           `धन्यवाद!\n${whatsAppBill.shopName || profile.shopName}`,
         ].join("\n")
@@ -436,8 +481,7 @@ body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !
           `Balance: ₹${money(balance)}`,
           "",
           `View bill:\n${previewUrl}`,
-          "",
-          `Download bill:\n${downloadUrl}`,
+
           "",
           `Regards,\n${whatsAppBill.shopName || profile.shopName}`,
         ].join("\n");
