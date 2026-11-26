@@ -1071,6 +1071,11 @@ function NewBill() {
       return;
     }
 
+    if (billType === "tax" && items.some((line) => !String(line.hsnCode || "").trim())) {
+      window.alert(t.taxInvoiceHsnRequired);
+      return;
+    }
+
     if (billType === "tax" && !skipGstSetup && (shopProfile.gstRate === null || shopProfile.gstRate === undefined || shopProfile.gstRate === "")) {
       setGstDialogRate("3");
       setGstDialogOpen(true);
@@ -1363,29 +1368,16 @@ body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !
 
       const uploadResult = await uploadResponse.json();
 
-      if (
-        !uploadResponse.ok ||
-        !uploadResult.success ||
-        !uploadResult.previewUrl ||
-        !uploadResult.downloadUrl
-      ) {
+      if (!uploadResponse.ok || !uploadResult.success || !uploadResult.pdfUrl) {
         throw new Error(uploadResult.error || "PDF upload failed");
       }
 
-      const previewUrl = uploadResult.previewUrl;
-      const downloadUrl = uploadResult.downloadUrl;
-
-
+      const pdfUrl = uploadResult.pdfUrl;
       const billRef = doc(db, "bills", pendingBillDocId);
 
-      // Update the number in the background.
-      // Never block WhatsApp redirection for this update.
+      // If the shopkeeper corrected the number, update the saved bill too.
       if (normalizedMobile !== pendingBillData.customerMobile) {
-        updateDoc(billRef, {
-          customerMobile: normalizedMobile,
-        }).catch((error) => {
-          console.error("Customer mobile update failed:", error);
-        });
+        await updateDoc(billRef, { customerMobile: normalizedMobile });
       }
 
       const amountPaid = Number(
@@ -1400,48 +1392,26 @@ body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !
 
       const message = language === "hi"
         ? [
-          `नमस्ते ${pendingBillData.customerName || ""} जी 🙏`,
-          "",
+          `नमस्ते ${pendingBillData.customerName || ""},`,
           `आपका बिल ${pendingBillData.billNumber || pendingBillData.invoiceNo || ""} ${pendingBillData.shopName ? `(${pendingBillData.shopName})` : ""} तैयार है।`,
-          "",
-          "🧾 बिल की जानकारी",
-          "━━━━━━━━━━━━━━━━━━",
           `कुल राशि: ₹${formatMoney(totalAmount)}`,
           `जमा राशि: ₹${formatMoney(amountPaid)}`,
           `बाकी राशि: ₹${formatMoney(balanceAmount)}`,
-          "",
-          "📄 अपना बिल यहाँ देखें",
-          `👁️ बिल देखें:\n${previewUrl}`,
-          "",
-          `⬇️ बिल डाउनलोड करें:\n${downloadUrl}`,
-          "",
-          "हमारे साथ खरीदारी करने के लिए धन्यवाद। ❤️",
-          `सादर,\n${pendingBillData.shopName || "आपकी दुकान"}`,
+          "हमारे साथ खरीदारी करने के लिए धन्यवाद।",
+          `बिल PDF: ${pdfUrl}`,
         ].join("\n")
         : [
-          `Hello ${pendingBillData.customerName || ""} 👋`,
-          "",
+          `Hello ${pendingBillData.customerName || ""},`,
           `Your invoice ${pendingBillData.billNumber || pendingBillData.invoiceNo || ""} ${pendingBillData.shopName ? `from ${pendingBillData.shopName}` : ""} is ready.`,
-          "",
-          "🧾 INVOICE SUMMARY",
-          "━━━━━━━━━━━━━━━━━━",
-          `Total Amount: ₹${formatMoney(totalAmount)}`,
-          `Paid Amount: ₹${formatMoney(amountPaid)}`,
-          `Balance Due: ₹${formatMoney(balanceAmount)}`,
-          "",
-          "📄 ACCESS YOUR INVOICE",
-          `👁️ View Invoice:\n${previewUrl}`,
-          "",
-          `⬇️ Download Invoice (PDF):\n${downloadUrl}`,
-          "",
-          "Thank you for shopping with us. ❤️",
-          `Regards,\n${pendingBillData.shopName || "Your Store"}`,
+          `Total: ₹${formatMoney(totalAmount)}`,
+          `Paid: ₹${formatMoney(amountPaid)}`,
+          `Balance due: ₹${formatMoney(balanceAmount)}`,
+          "Thank you for shopping with us.",
+          `Invoice PDF: ${pdfUrl}`,
         ].join("\n");
 
-      const whatsappUrl =
+      whatsappWindow.location.href =
         `https://wa.me/91${normalizedMobile}?text=${encodeURIComponent(message)}`;
-
-      whatsappWindow.location.replace(whatsappUrl);
 
       closeWhatsAppConfirmation();
     } catch (error) {
