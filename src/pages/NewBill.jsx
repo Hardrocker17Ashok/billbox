@@ -1071,11 +1071,6 @@ function NewBill() {
       return;
     }
 
-    if (billType === "tax" && items.some((line) => !String(line.hsnCode || "").trim())) {
-      window.alert(t.taxInvoiceHsnRequired);
-      return;
-    }
-
     if (billType === "tax" && !skipGstSetup && (shopProfile.gstRate === null || shopProfile.gstRate === undefined || shopProfile.gstRate === "")) {
       setGstDialogRate("3");
       setGstDialogOpen(true);
