@@ -1052,7 +1052,8 @@ function NewBill() {
     return { valid: !errors.name && !errors.mobile, normalizedMobile };
   };
 
-  const handlePrint = async (skipGstSetup = false) => {
+
+  const handlePrint = useCallback(async (skipGstSetup = false) => {
     if (!user) {
       window.alert(t.loginRequired);
       return;
@@ -1076,7 +1077,13 @@ function NewBill() {
       return;
     }
 
-    if (billType === "tax" && !skipGstSetup && (shopProfile.gstRate === null || shopProfile.gstRate === undefined || shopProfile.gstRate === "")) {
+    if (
+      billType === "tax" &&
+      !skipGstSetup &&
+      (shopProfile.gstRate === null ||
+        shopProfile.gstRate === undefined ||
+        shopProfile.gstRate === "")
+    ) {
       setGstDialogRate("3");
       setGstDialogOpen(true);
       return;
@@ -1098,12 +1105,13 @@ function NewBill() {
 
     const now = new Date();
     const generatedBillNumber = makeBillNumber();
+
     // Allocate one stable Firestore document ID for this pending invoice.
-    // Repeated save attempts always target this same document.
     const billDocumentRef = doc(collection(db, "bills"));
 
     const billItems = items.map((line) => {
       const detail = getLineDetails(line);
+
       return {
         itemName: line.itemKey
           ? getItemLabel(line.itemKey, line.metal, language)
@@ -1114,8 +1122,6 @@ function NewBill() {
         quantity: Number(line.quantity) || 0,
         weight: Number(line.weight) || 0,
         rate: Number(line.rate) || 0,
-        // Complete item-wise values are saved so Bill History can reproduce
-        // exactly the same row and calculation as the printed invoice.
         amount: detail.metalValue,
         makingCharges: detail.makingValue,
         makingChargesPerPiece: toAmount(line.makingCharges),
@@ -1144,7 +1150,6 @@ function NewBill() {
     const billData = {
       ownerId: user.uid,
 
-      // Shop snapshot: keeps the shop details used on this invoice.
       shopName: shopProfile.shopName,
       shopOwnerName: shopProfile.ownerName,
       shopPhone: shopProfile.phone,
@@ -1164,17 +1169,18 @@ function NewBill() {
       items: billItems,
       billType,
       billTypeLabel: billType === "tax" ? t.taxInvoice : t.estimateBill,
+
       payment: {
         total: grandTotal,
         paid: receivedAmount,
         balance: balanceAmount,
         status: paymentStatus,
       },
+
       paidAmount: receivedAmount,
       balanceDue: balanceAmount,
       paymentStatus,
 
-      // Backward compatibility with existing BillHistory records.
       itemName: billItems[0]?.itemName || "",
       metal: billItems[0]?.metal || "",
       carat: billItems[0]?.carat || "",
@@ -1197,13 +1203,9 @@ function NewBill() {
       totalAmount: grandTotal,
       amountPaid: receivedAmount,
       balanceAmount,
-
     };
 
     try {
-      // Opening the browser print dialog never writes to Firestore.
-      // Browsers fire afterprint for both Print and Cancel, so saving is
-      // offered only as a separate, explicit action after the dialog closes.
       setBillNumber(generatedBillNumber);
       setPrintDateTime(now);
       setPendingBillData(billData);
@@ -1214,14 +1216,43 @@ function NewBill() {
       }, 150);
     } catch (error) {
       console.error("Unable to prepare invoice:", error);
+
       setIsPrinting(false);
       setPendingBillData(null);
       setPendingBillDocId(null);
+
       window.alert(t.printError);
     } finally {
       setIsPrinting(false);
     }
-  };
+  }, [
+    user,
+    t,
+    customerName,
+    validateCustomerDetails,
+    items,
+    billType,
+    shopProfile,
+    language,
+    offer,
+    preDiscountTotal,
+    paidAmount,
+    grandTotal,
+    isPrinting,
+    receivedAmount,
+    balanceAmount,
+    paymentStatus,
+    makingAmount,
+    otherChargesAmount,
+    offerAmount,
+    gstEnabled,
+    gstRate,
+    gstAmount,
+    subtotal,
+    getLineDetails,
+    getItemLabel,
+  ]);
+
 
   useEffect(() => {
     const handleAfterPrint = () => {
@@ -1287,36 +1318,72 @@ function NewBill() {
       throw new Error("Invoice element not found");
     }
 
-    let cssText = "";
-    for (const sheet of document.styleSheets) {
-      try {
-        for (const rule of sheet.cssRules) {
-          cssText += `${rule.cssText}\n`;
-        }
-      } catch (error) {
-        console.warn("A stylesheet could not be copied for PDF rendering:", error);
-      }
-    }
-
     const clone = invoice.cloneNode(true);
-    clone.style.display = "block";
+    clone.style.display = "flex";
+
+    const stylesheetLinks = Array.from(
+      document.querySelectorAll('link[rel="stylesheet"]')
+    )
+      .map((link) => link.href)
+      .filter(Boolean);
+
+    const inlineStyles = Array.from(document.querySelectorAll("style"))
+      .map((style) => style.innerHTML)
+      .join("\n");
 
     return `<!doctype html>
-<html lang="en">
+<html lang="${language === "hi" ? "hi" : "en"}">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <base href="${window.location.origin}/" />
-<style>${cssText}
-html, body { margin: 0 !important; padding: 0 !important; width: 100%; background: #fff !important; }
-body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-.new-bill-page { width: 100% !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
-.print-invoice { display: block !important; width: 100% !important; max-width: 194mm !important; margin: 0 auto !important; background: #fff !important; color: #181716 !important; }
-@page { size: A4 portrait; margin: 8mm; }
+
+${stylesheetLinks.map((href) =>
+      `<link rel="stylesheet" href="${href}">`
+    ).join("\n")}
+
+<style>
+${inlineStyles}
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  background: #fff !important;
+}
+
+body {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.new-bill-page {
+  width: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #fff !important;
+}
+
+.new-bill-page .print-invoice {
+  display: flex !important;
+  width: 194mm !important;
+  max-width: 194mm !important;
+  margin: 0 auto !important;
+  background: #fff !important;
+  color: #181716 !important;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 8mm;
+}
 </style>
 </head>
 <body>
-<div class="new-bill-page">${clone.outerHTML}</div>
+<div class="new-bill-page bill-theme-${theme}">
+${clone.outerHTML}
+</div>
 </body>
 </html>`;
   };
