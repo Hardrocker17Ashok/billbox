@@ -1,5 +1,4 @@
-import process from "node:process";
-import { Buffer } from "node:buffer";
+
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 
@@ -188,34 +187,26 @@ export default async function handler(req, res) {
        GENERATE SIGNED PDF URL
     ===================================== */
 
-    const previewUrl = await getSignedUrl(
+    const pdfUrl = await getSignedUrl(
       s3,
       new GetObjectCommand({
         Bucket: process.env.R2_BUCKET_NAME,
         Key: fileName,
-        ResponseContentType: "application/pdf",
-        ResponseContentDisposition:
-          'inline; filename="BillBox-Invoice.pdf"',
       }),
-      { expiresIn: 60 * 60 * 24 * 7 }
+      {
+        expiresIn: 60 * 60 * 24 * 7,
+      }
     );
 
-    const downloadUrl = await getSignedUrl(
-      s3,
-      new GetObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME,
-        Key: fileName,
-        ResponseContentType: "application/pdf",
-        ResponseContentDisposition:
-          'attachment; filename="BillBox-Invoice.pdf"',
-      }),
-      { expiresIn: 60 * 60 * 24 * 7 }
-    );
+    /* =====================================
+       SUCCESS RESPONSE
+    ===================================== */
 
     return res.status(200).json({
       success: true,
-      previewUrl,
-      downloadUrl,
+      message: "Invoice PDF generated and uploaded successfully",
+      fileName,
+      pdfUrl,
     });
 
   } catch (error) {
