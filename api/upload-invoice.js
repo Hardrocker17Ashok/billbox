@@ -1,4 +1,3 @@
-
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 
@@ -11,77 +10,134 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /* =====================================
-   CLOUDFLARE R2 CONFIGURATION
-===================================== */
-
-const s3 = new S3Client({
-  region: "auto",
-  endpoint: process.env.R2_ENDPOINT,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  },
-});
-
-/* =====================================
-   VERCEL CONFIGURATION
+   VERCEL FUNCTION CONFIGURATION
 ===================================== */
 
 export const config = {
   maxDuration: 60,
+  api: {
+    bodyParser: {
+      sizeLimit: "4mb",
+    },
+  },
 };
 
 /* =====================================
-   PDF GENERATION + R2 UPLOAD
+   RESPONSE HELPERS
+===================================== */
+
+function sendJson(res, statusCode, payload) {
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  return res.status(statusCode).json(payload);
+}
+
+function getMissingR2Variables() {
+  return [
+    "R2_ENDPOINT",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "R2_BUCKET_NAME",
+  ].filter((name) => !process.env[name]);
+}
+
+function createR2Client() {
+  return new S3Client({
+    region: "auto",
+    endpoint: process.env.R2_ENDPOINT,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+  });
+}
+
+/* =====================================
+   PDF GENERATION + CLOUDFLARE R2 UPLOAD
 ===================================== */
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+
+  // API health check
+  if (req.method === "GET") {
+    return sendJson(res, 200, {
+      success: true,
+      message:
+        "Invoice API route is available. Send a POST request to generate a PDF.",
+      route: "/api/upload-invoice",
+    });
+  }
+
   if (req.method !== "POST") {
-    return res.status(405).json({
+    res.setHeader("Allow", "GET, POST");
+
+    return sendJson(res, 405, {
       success: false,
       error: "Method not allowed",
     });
   }
 
-  let browser;
+  let browser = null;
+  let s3 = null;
 
   try {
     /* =====================================
-       RECEIVE INVOICE HTML
+       READ REQUEST BODY
     ===================================== */
 
-    const html = req.body?.html;
+    let body = req.body;
+
+    if (typeof body === "string") {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        return sendJson(res, 400, {
+          success: false,
+          error: "Request body contains invalid JSON",
+        });
+      }
+    }
+
+    const html = body?.html;
 
     if (
       typeof html !== "string" ||
+      !html.trim() ||
       !html.includes("print-invoice")
     ) {
-      return res.status(400).json({
+      return sendJson(res, 400, {
         success: false,
         error: "Invoice HTML is missing or invalid",
       });
     }
 
-    // Maximum HTML payload: 3 MB
-    if (Buffer.byteLength(html, "utf8") > 3 * 1024 * 1024) {
-      return res.status(413).json({
+    /* =====================================
+       VALIDATE HTML SIZE
+    ===================================== */
+
+    const htmlSize = Buffer.byteLength(html, "utf8");
+
+    if (htmlSize > 3 * 1024 * 1024) {
+      return sendJson(res, 413, {
         success: false,
-        error: "Invoice content is too large",
+        error: "Invoice HTML is larger than the allowed 3 MB limit",
       });
     }
 
     /* =====================================
-       CHECK R2 ENVIRONMENT VARIABLES
+       VALIDATE R2 ENVIRONMENT
     ===================================== */
 
-    if (
-      !process.env.R2_ENDPOINT ||
-      !process.env.R2_ACCESS_KEY_ID ||
-      !process.env.R2_SECRET_ACCESS_KEY ||
-      !process.env.R2_BUCKET_NAME
-    ) {
-      throw new Error("R2 environment variables are missing");
+    const missingVariables = getMissingR2Variables();
+
+    if (missingVariables.length > 0) {
+      throw new Error(
+        `Missing Vercel environment variables: ${missingVariables.join(", ")}`
+      );
     }
+
+    s3 = createR2Client();
 
     /* =====================================
        LAUNCH CHROMIUM
@@ -89,51 +145,79 @@ export default async function handler(req, res) {
 
     browser = await puppeteer.launch({
       args: chromium.args,
-
       defaultViewport: {
         width: 1200,
         height: 1600,
         deviceScaleFactor: 1,
       },
-
       executablePath: await chromium.executablePath(),
-
       headless: true,
     });
 
     const page = await browser.newPage();
 
-    // Apply browser print media CSS
+    await page.setViewport({
+      width: 1200,
+      height: 1600,
+      deviceScaleFactor: 1,
+    });
+
+    // Apply @media print rules from NewBill.css
     await page.emulateMediaType("print");
+
+    page.setDefaultNavigationTimeout(30000);
+    page.setDefaultTimeout(30000);
 
     /* =====================================
        LOAD INVOICE HTML
     ===================================== */
 
     await page.setContent(html, {
-      waitUntil: "networkidle0",
+      waitUntil: "load",
       timeout: 30000,
     });
 
-    // Wait for fonts and images
+    /* =====================================
+       WAIT FOR FONTS AND IMAGES
+    ===================================== */
+
     await page.evaluate(async () => {
       if (document.fonts?.ready) {
         await document.fonts.ready;
       }
 
+      const images = Array.from(document.images);
+
       await Promise.all(
-        Array.from(document.images).map((img) => {
+        images.map((img) => {
           if (img.complete) {
             return Promise.resolve();
           }
 
           return new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
+            const finish = () => resolve();
+
+            img.addEventListener("load", finish, { once: true });
+            img.addEventListener("error", finish, { once: true });
+
+            // Broken remote images should not block invoice generation.
+            setTimeout(finish, 10000);
           });
         })
       );
     });
+
+    /* =====================================
+       VERIFY INVOICE ELEMENT
+    ===================================== */
+
+    const invoiceExists = await page.$(".print-invoice");
+
+    if (!invoiceExists) {
+      throw new Error(
+        "The supplied HTML does not contain a visible .print-invoice element"
+      );
+    }
 
     /* =====================================
        GENERATE A4 PDF
@@ -146,10 +230,8 @@ export default async function handler(req, res) {
       displayHeaderFooter: false,
     });
 
-    // Convert Uint8Array into Node.js Buffer
     const pdfBuffer = Buffer.from(pdfData);
 
-    // Validate PDF header
     if (
       !pdfBuffer.length ||
       pdfBuffer.subarray(0, 5).toString("ascii") !== "%PDF-"
@@ -157,11 +239,7 @@ export default async function handler(req, res) {
       throw new Error("Chromium did not generate a valid PDF");
     }
 
-    console.log(
-      "PDF generated successfully:",
-      pdfBuffer.length,
-      "bytes"
-    );
+    console.log("Invoice PDF generated:", pdfBuffer.length, "bytes");
 
     /* =====================================
        UPLOAD PDF TO CLOUDFLARE R2
@@ -181,10 +259,10 @@ export default async function handler(req, res) {
       })
     );
 
-    console.log("PDF uploaded successfully:", fileName);
+    console.log("Invoice PDF uploaded to R2:", fileName);
 
     /* =====================================
-       GENERATE SIGNED PDF URL
+       GENERATE SIGNED URL
     ===================================== */
 
     const pdfUrl = await getSignedUrl(
@@ -192,6 +270,8 @@ export default async function handler(req, res) {
       new GetObjectCommand({
         Bucket: process.env.R2_BUCKET_NAME,
         Key: fileName,
+        ResponseContentType: "application/pdf",
+        ResponseContentDisposition: "inline",
       }),
       {
         expiresIn: 60 * 60 * 24 * 7,
@@ -202,11 +282,12 @@ export default async function handler(req, res) {
        SUCCESS RESPONSE
     ===================================== */
 
-    return res.status(200).json({
+    return sendJson(res, 200, {
       success: true,
       message: "Invoice PDF generated and uploaded successfully",
       fileName,
       pdfUrl,
+      previewUrl: pdfUrl,
     });
 
   } catch (error) {
@@ -216,20 +297,27 @@ export default async function handler(req, res) {
       error?.stack
     );
 
-    return res.status(500).json({
+    return sendJson(res, 500, {
       success: false,
       error: "PDF render or upload failed",
-      details:
-        process.env.NODE_ENV === "development"
-          ? error?.message
-          : undefined,
+      details: error?.message || "Unknown server error",
     });
 
   } finally {
     if (browser) {
-      await browser.close().catch((error) => {
-        console.error("Chromium close error:", error);
-      });
+      try {
+        await browser.close();
+        console.log("Chromium browser closed");
+      } catch (closeError) {
+        console.error(
+          "Chromium close error:",
+          closeError?.message || closeError
+        );
+      }
+    }
+
+    if (s3) {
+      s3.destroy();
     }
   }
 }

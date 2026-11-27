@@ -1,3 +1,4 @@
+
 /* =========================================================
    KANISHKA JEWELLERS
    NEW BILL — PREMIUM DARK UI + PREMIUM A4 PRINT
@@ -5704,4 +5705,49 @@ button {
 
 .billbox-save-dialog.bill-theme-dark .billbox-whatsapp-number-input {
   background: rgba(0, 0, 0, 0.28);
+}
+
+
+/* =========================================
+   GOLD + SILVER PURITY SELECT — SAME UI
+   Shares the existing carat dropdown styling.
+========================================= */
+.selection-area .field select.purity-select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  padding-right: 38px !important;
+  background-repeat: no-repeat !important;
+  background-position: right 15px center !important;
+  background-size: 9px 9px !important;
+  background-image: linear-gradient(
+    45deg,
+    transparent 45%,
+    #403b34 45%,
+    #403b34 60%,
+    transparent 60%
+  ),
+  linear-gradient(
+    -45deg,
+    transparent 45%,
+    #403b34 45%,
+    #403b34 60%,
+    transparent 60%
+  ) !important;
+}
+
+.bill-theme-dark .selection-area .field select.purity-select {
+  background-image: linear-gradient(
+    45deg,
+    transparent 45%,
+    #e8e3da 45%,
+    #e8e3da 60%,
+    transparent 60%
+  ),
+  linear-gradient(
+    -45deg,
+    transparent 45%,
+    #e8e3da 45%,
+    #e8e3da 60%,
+    transparent 60%
+  ) !important;
 }

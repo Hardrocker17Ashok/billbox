@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
+import { flushSync } from "react-dom";
 import {
   collection,
   doc,
@@ -13,6 +14,102 @@ import {
 import { auth, db } from "../firebase";
 import PageLoader from "../components/PageLoader";
 import "./NewBill.css";
+
+/* =====================================
+   INVOICE PDF API RESPONSE HANDLER
+   Works with Vercel API JSON responses
+   and reports local Vite/API routing errors.
+===================================== */
+
+async function generateInvoicePdf(invoiceHtml) {
+  let response;
+
+  try {
+    response = await fetch("/api/upload-invoice", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: JSON.stringify({ html: invoiceHtml }),
+    });
+  } catch (error) {
+    throw new Error(
+      `API_UNAVAILABLE: ${error?.message || "Network request failed"}`
+    );
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  const responseText = await response.text();
+
+  // Vite's normal dev server does not execute Vercel /api functions.
+  // It may return index.html (sometimes with HTTP 200) instead of JSON.
+  if (
+    contentType.includes("text/html") ||
+    response.status === 404
+  ) {
+    throw new Error(
+      `API_ROUTE_NOT_FOUND: Invoice API returned HTTP ${response.status}. ` +
+      "Run the project with `npx vercel dev` from the project root, " +
+      "or verify that api/upload-invoice.js is in the Vercel project root."
+    );
+  }
+
+  let result;
+
+  try {
+    result = responseText ? JSON.parse(responseText) : null;
+  } catch {
+    throw new Error(
+      `API_INVALID_RESPONSE: Invoice API returned non-JSON data ` +
+      `(HTTP ${response.status}, Content-Type: ${contentType || "unknown"}). ` +
+      responseText.slice(0, 250)
+    );
+  }
+
+  if (!result || typeof result !== "object") {
+    throw new Error(
+      `API_EMPTY_RESPONSE: Invoice API returned an empty response (HTTP ${response.status}).`
+    );
+  }
+
+  if (!response.ok || result.success !== true) {
+    throw new Error(
+      result.details ||
+      result.error ||
+      `Invoice API failed with HTTP ${response.status}.`
+    );
+  }
+
+  const pdfUrl = result.pdfUrl || result.previewUrl;
+
+  if (typeof pdfUrl !== "string" || !pdfUrl.trim()) {
+    throw new Error(
+      "Invoice API succeeded but did not return pdfUrl or previewUrl."
+    );
+  }
+
+  return pdfUrl;
+}
+
+function getInvoiceApiUserMessage(error, language = "en") {
+  const message = String(error?.message || "");
+
+  if (
+    message.includes("API_ROUTE_NOT_FOUND") ||
+    message.includes("API_UNAVAILABLE") ||
+    message.includes("API_INVALID_RESPONSE") ||
+    message.includes("API_EMPTY_RESPONSE")
+  ) {
+    return language === "hi"
+      ? "Invoice API route nahi mil raha. Localhost par normal `npm run dev` ki jagah project root se `npx vercel dev` chalao aur Vercel ke diye hue localhost URL ko open karo. Production mein `api/upload-invoice.js` file project root ke api folder mein honi chahiye."
+      : "The invoice API route is unavailable. For local testing, run `npx vercel dev` from the project root instead of `npm run dev`, then open the localhost URL shown by Vercel. In production, keep `api/upload-invoice.js` inside the project-root api folder.";
+  }
+
+  return language === "hi"
+    ? `बिल PDF तैयार नहीं हो सकी। कारण: ${message || "अज्ञात त्रुटि"}`
+    : `Unable to prepare the invoice PDF. Reason: ${message || "Unknown error"}`;
+}
 
 const DEFAULT_PROFILE = {
   shopName: "BillBox",
@@ -49,7 +146,7 @@ const TEXT = {
     silverJewellery: "चाँदी के आभूषण",
     itemType: "आभूषण का प्रकार",
     selectItem: "आभूषण चुनें",
-    purity: "सोने की शुद्धता",
+    purity: "शुद्धता",
     selectCarat: "कैरेट चुनें",
     quantity: "मात्रा",
     weight: "वजन",
@@ -101,7 +198,7 @@ const TEXT = {
     mobileRequired: "कृपया ग्राहक का मोबाइल नंबर दर्ज करें।",
     itemRequired: "कृपया कम से कम एक आभूषण बिल में जोड़ें।",
     chooseMetalItem: "कृपया आभूषण और उसका प्रकार चुनें।",
-    choosePurity: "कृपया सोने की शुद्धता (कैरेट) चुनें।",
+    choosePurity: "कृपया शुद्धता (कैरेट) चुनें।",
     weightRequired: "कृपया सही वजन दर्ज करें।",
     rateRequired: "कृपया सही दर दर्ज करें।",
     quantityRequired: "कृपया सही मात्रा दर्ज करें।",
@@ -171,7 +268,7 @@ const TEXT = {
     silverJewellery: "Silver Jewellery",
     itemType: "Jewellery Type",
     selectItem: "Select jewellery",
-    purity: "Gold Purity",
+    purity: "Purity",
     selectCarat: "Select carat",
     quantity: "Quantity",
     weight: "Weight",
@@ -223,7 +320,7 @@ const TEXT = {
     mobileRequired: "Please enter the customer mobile number.",
     itemRequired: "Add at least one jewellery item to the bill.",
     chooseMetalItem: "Please select a metal and jewellery type.",
-    choosePurity: "Please select gold purity (carat).",
+    choosePurity: "Please select purity (carat).",
     weightRequired: "Please enter a valid weight.",
     rateRequired: "Please enter a valid rate.",
     quantityRequired: "Please enter a valid quantity.",
@@ -869,11 +966,13 @@ function NewBill() {
   const handleCaratChange = (value) => {
     setCarat(value);
 
-    const existing = items.find(
-      (line) => line.rateKey === `gold-${value}`
-    );
-
-    setRate(existing ? String(existing.rate) : "");
+    // Keep the existing metal/item rate lookup unchanged. Gold rates are
+    // purity-based; silver rates remain item-based as before.
+    const selectedRateKey = metal === "gold" ? `gold-${value}` : `silver-${item}`;
+    const existing = items.find((line) => line.rateKey === selectedRateKey);
+    if (metal === "gold") {
+      setRate(existing ? String(existing.rate) : "");
+    }
   };
 
   const handleItemChange = (value) => {
@@ -923,7 +1022,7 @@ function NewBill() {
       return;
     }
 
-    if (metal === "gold" && !carat) {
+    if (!carat) {
       window.alert(t.choosePurity);
       return;
     }
@@ -952,7 +1051,7 @@ function NewBill() {
       itemKey: item,
       itemName: getItemLabel(item, metal, language),
       metal,
-      carat: metal === "gold" ? carat : "",
+      carat,
       quantity: Number(quantity),
       weight: Number(weight),
       rate: Number(rate),
@@ -1053,6 +1152,83 @@ function NewBill() {
   };
 
 
+  const createInvoiceHtmlDocument = () => {
+    const invoice = document.querySelector(".print-invoice");
+
+    if (!invoice) {
+      throw new Error("Invoice element not found");
+    }
+
+    const clone = invoice.cloneNode(true);
+    clone.style.display = "flex";
+
+    const stylesheetLinks = Array.from(
+      document.querySelectorAll('link[rel="stylesheet"]')
+    )
+      .map((link) => link.href)
+      .filter(Boolean);
+
+    const inlineStyles = Array.from(document.querySelectorAll("style"))
+      .map((style) => style.innerHTML)
+      .join("\n");
+
+    return `<!doctype html>
+<html lang="${language === "hi" ? "hi" : "en"}">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<base href="${window.location.origin}/" />
+
+${stylesheetLinks.map((href) =>
+      `<link rel="stylesheet" href="${href}">`
+    ).join("\n")}
+
+<style>
+${inlineStyles}
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  background: #fff !important;
+}
+
+body {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.new-bill-page {
+  width: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #fff !important;
+}
+
+.new-bill-page .print-invoice {
+  display: flex !important;
+  width: 194mm !important;
+  max-width: 194mm !important;
+  margin: 0 auto !important;
+  background: #fff !important;
+  color: #181716 !important;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 8mm;
+}
+</style>
+</head>
+<body>
+<div class="new-bill-page bill-theme-${theme}">
+${clone.outerHTML}
+</div>
+</body>
+</html>`;
+  };
+
   const handlePrint = useCallback(async (skipGstSetup = false) => {
     if (!user) {
       window.alert(t.loginRequired);
@@ -1118,7 +1294,7 @@ function NewBill() {
           : line.itemName,
         itemKey: line.itemKey || "",
         metal: line.metal,
-        carat: line.metal === "gold" ? line.carat : "",
+        carat: line.carat || "",
         quantity: Number(line.quantity) || 0,
         weight: Number(line.weight) || 0,
         rate: Number(line.rate) || 0,
@@ -1204,24 +1380,75 @@ function NewBill() {
       amountPaid: receivedAmount,
       balanceAmount,
     };
+    let printWindow = null;
 
     try {
-      setBillNumber(generatedBillNumber);
-      setPrintDateTime(now);
-      setPendingBillData(billData);
-      setPendingBillDocId(billDocumentRef.id);
+      // Open a new tab immediately during the user's click.
+      // This avoids iOS Chrome popup restrictions.
+      printWindow = window.open("about:blank", "_blank");
 
-      window.setTimeout(() => {
-        window.print();
-      }, 150);
+      if (!printWindow) {
+        throw new Error("POPUP_BLOCKED");
+      }
+
+      printWindow.document.open();
+      printWindow.document.write(`
+    <!doctype html>
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>BillBox</title>
+      </head>
+      <body style="font-family:Arial,sans-serif;padding:30px;text-align:center">
+        <h3>Preparing your invoice...</h3>
+        <p>Please wait.</p>
+      </body>
+    </html>
+  `);
+      printWindow.document.close();
+
+      // Force React to render invoice data before creating HTML.
+      flushSync(() => {
+        setBillNumber(generatedBillNumber);
+        setPrintDateTime(now);
+        setPendingBillData(billData);
+        setPendingBillDocId(billDocumentRef.id);
+      });
+
+      // Use the existing invoice HTML generator.
+      const invoiceHtml = createInvoiceHtmlDocument();
+
+      // Generate the PDF using your existing API.
+      const pdfUrl = await generateInvoicePdf(invoiceHtml);
+
+      // Open the generated PDF in the new tab.
+      printWindow.location.replace(pdfUrl);
+
+      // Show existing save confirmation in the original tab.
+      setPendingPrintConfirmation(true);
+
     } catch (error) {
-      console.error("Unable to prepare invoice:", error);
+      console.error("Unable to open invoice:", error);
 
-      setIsPrinting(false);
+      if (printWindow && !printWindow.closed) {
+        printWindow.close();
+      }
+
+      setPendingPrintConfirmation(false);
       setPendingBillData(null);
       setPendingBillDocId(null);
 
-      window.alert(t.printError);
+      const message =
+        error.message === "POPUP_BLOCKED"
+          ? (
+            language === "hi"
+              ? "कृपया Chrome में इस वेबसाइट के Pop-ups allow करें और दोबारा प्रयास करें।"
+              : "Please allow pop-ups for this website in Chrome and try again."
+          )
+          : getInvoiceApiUserMessage(error, language);
+
+      window.alert(message);
+
     } finally {
       setIsPrinting(false);
     }
@@ -1229,6 +1456,8 @@ function NewBill() {
     user,
     t,
     customerName,
+    getItemLabel,
+    theme,
     validateCustomerDetails,
     items,
     billType,
@@ -1250,21 +1479,24 @@ function NewBill() {
     gstAmount,
     subtotal,
     getLineDetails,
-    getItemLabel,
   ]);
 
 
   useEffect(() => {
     const handleAfterPrint = () => {
       setIsPrinting(false);
-      if (pendingBillData && pendingBillDocId) {
+      if (
+        pendingBillData &&
+        pendingBillDocId &&
+        !pendingPrintConfirmation
+      ) {
         setPendingPrintConfirmation(true);
       }
     };
 
     window.addEventListener("afterprint", handleAfterPrint);
     return () => window.removeEventListener("afterprint", handleAfterPrint);
-  }, [pendingBillData, pendingBillDocId]);
+  }, [pendingBillData, pendingBillDocId, pendingPrintConfirmation]);
 
   const cancelPrintConfirmation = () => {
     // Cancel only discards the local pending invoice. No Firestore write.
@@ -1311,83 +1543,6 @@ function NewBill() {
   };
 
 
-  const createInvoiceHtmlDocument = () => {
-    const invoice = document.querySelector(".print-invoice");
-
-    if (!invoice) {
-      throw new Error("Invoice element not found");
-    }
-
-    const clone = invoice.cloneNode(true);
-    clone.style.display = "flex";
-
-    const stylesheetLinks = Array.from(
-      document.querySelectorAll('link[rel="stylesheet"]')
-    )
-      .map((link) => link.href)
-      .filter(Boolean);
-
-    const inlineStyles = Array.from(document.querySelectorAll("style"))
-      .map((style) => style.innerHTML)
-      .join("\n");
-
-    return `<!doctype html>
-<html lang="${language === "hi" ? "hi" : "en"}">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<base href="${window.location.origin}/" />
-
-${stylesheetLinks.map((href) =>
-      `<link rel="stylesheet" href="${href}">`
-    ).join("\n")}
-
-<style>
-${inlineStyles}
-
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100%;
-  background: #fff !important;
-}
-
-body {
-  -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
-}
-
-.new-bill-page {
-  width: 100% !important;
-  min-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: #fff !important;
-}
-
-.new-bill-page .print-invoice {
-  display: flex !important;
-  width: 194mm !important;
-  max-width: 194mm !important;
-  margin: 0 auto !important;
-  background: #fff !important;
-  color: #181716 !important;
-}
-
-@page {
-  size: A4 portrait;
-  margin: 8mm;
-}
-</style>
-</head>
-<body>
-<div class="new-bill-page bill-theme-${theme}">
-${clone.outerHTML}
-</div>
-</body>
-</html>`;
-  };
-
   const confirmWhatsAppAndOpen = async () => {
     if (!pendingBillData || !pendingBillDocId || isOpeningWhatsApp) return;
 
@@ -1425,21 +1580,7 @@ ${clone.outerHTML}
     try {
       const invoiceHtml = createInvoiceHtmlDocument();
 
-      const uploadResponse = await fetch("/api/upload-invoice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ html: invoiceHtml }),
-      });
-
-      const uploadResult = await uploadResponse.json();
-
-      if (!uploadResponse.ok || !uploadResult.success || !uploadResult.pdfUrl) {
-        throw new Error(uploadResult.error || "PDF upload failed");
-      }
-
-      const pdfUrl = uploadResult.pdfUrl;
+      const pdfUrl = await generateInvoicePdf(invoiceHtml);
       const billRef = doc(db, "bills", pendingBillDocId);
 
       // If the shopkeeper corrected the number, update the saved bill too.
@@ -1484,9 +1625,7 @@ ${clone.outerHTML}
     } catch (error) {
       console.error("PDF upload or WhatsApp preparation failed:", error);
       whatsappWindow.close();
-      window.alert(language === "hi"
-        ? "PDF अपलोड या WhatsApp तैयार नहीं हो सका। कृपया दोबारा प्रयास करें।"
-        : "Could not upload the PDF or prepare WhatsApp. Please try again.");
+      window.alert(getInvoiceApiUserMessage(error, language));
     } finally {
       setIsOpeningWhatsApp(false);
     }
@@ -1500,9 +1639,13 @@ ${clone.outerHTML}
 
   useEffect(() => {
     if (gstPrintRequest > 0) {
-      handlePrintRef.current?.(true);
+      window.alert(
+        language === "hi"
+          ? "GST दर सेव हो गई है। अब बिल बनाने के लिए 'बिल प्रिंट करें' पर दोबारा क्लिक करें।"
+          : "GST rate saved. Click 'Print Bill' again to generate the invoice."
+      );
     }
-  }, [gstPrintRequest]);
+  }, [gstPrintRequest, language]);
 
   // ============================================
   // LOADER
@@ -1765,10 +1908,11 @@ ${clone.outerHTML}
                 )}
               </div>
 
-              {metal === "gold" && (
+              {(metal === "gold" || metal === "silver") && (
                 <div className="field">
                   <label>{t.purity}</label>
                   <select
+                    className="purity-select"
                     value={carat}
                     onChange={(event) =>
                       handleCaratChange(event.target.value)
@@ -1949,7 +2093,8 @@ ${clone.outerHTML}
                           <div>
                             <strong>{line.itemKey ? getItemLabel(line.itemKey, line.metal, language) : line.itemName}</strong>
                             <small>
-                              {line.metal === "gold" ? `${t.gold} • ${line.carat}` : t.silver}
+                              {line.metal === "gold" ? t.gold : t.silver}
+                              {line.carat ? ` • ${line.carat}` : ""}
                               {" • "}{line.quantity} {t.pieces}
                               {" • "}{line.weight} {t.gram}
                             </small>
@@ -2204,14 +2349,14 @@ ${clone.outerHTML}
                   <span className="print-cell-label">{t.item}</span>
                   <div className="print-item-name-wrap">
                     <h3>{String(index + 1).padStart(2, "0")} · {itemName}</h3>
-                    <p>{line.metal === "gold" ? `${t.gold}${line.carat ? ` · ${line.carat}` : ""}` : t.silver}</p>
+                    <p>{line.metal === "gold" ? t.gold : t.silver}{line.carat ? ` · ${line.carat}` : ""}</p>
                   </div>
                 </div>
 
                 <div className="print-item-cell"><span className="print-cell-label">{t.quantity}</span><strong>{line.quantity}</strong></div>
                 <div className="print-item-cell"><span className="print-cell-label">{t.weight}</span><strong>{line.weight}g</strong></div>
                 <div className="print-item-cell"><span className="print-cell-label">{t.rate}</span><strong>₹{formatMoney(line.rate, 0)}</strong></div>
-                {line.metal === "gold" && <div className="print-item-cell"><span className="print-cell-label">{t.purity}</span><strong>{line.carat}</strong></div>}
+                {line.carat && <div className="print-item-cell"><span className="print-cell-label">{t.purity}</span><strong>{line.carat}</strong></div>}
                 <div className="print-item-cell"><span className="print-cell-label">{t.metalValue}</span><strong>₹{formatMoney(detail.metalValue)}</strong></div>
                 {detail.makingValue > 0 && <div className="print-item-cell"><span className="print-cell-label">{t.making}</span><strong>₹{formatMoney(detail.makingValue)}</strong></div>}
                 {detail.otherValue > 0 && <div className="print-item-cell"><span className="print-cell-label">{t.otherCharges}</span><strong>₹{formatMoney(detail.otherValue)}</strong></div>}
@@ -2305,8 +2450,8 @@ ${clone.outerHTML}
             </h2>
             <p>
               {language === "hi"
-                ? "प्रिंट डायलॉग बंद हो गया है। आगे बढ़ने पर बिल डेटाबेस में सेव होगा और फिर ग्राहक का WhatsApp नंबर कन्फर्म करने का विकल्प आएगा।"
-                : "The print window has closed. Continue to save this bill in the database, then confirm the customer's WhatsApp number before opening the chat."}
+                ? "आपका बिल PDF नए टैब में खुल गया है। आगे बढ़ने पर बिल डेटाबेस में सेव होगा और फिर ग्राहक का WhatsApp नंबर कन्फर्म करने का विकल्प आएगा।"
+                : "Your invoice PDF has opened in a new tab. Continue to save this bill in the database, then confirm the customer's WhatsApp number before opening the chat."}
             </p>
             <div className="billbox-share-summary">
               <span>{language === "hi" ? "बिल नंबर" : "Invoice number"}</span>
