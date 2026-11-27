@@ -5751,3 +5751,126 @@ button {
     transparent 60%
   ) !important;
 }
+
+
+
+
+
+
+
+
+
+/* ============================================
+   RATE UNIT SELECTOR (Per 1g / Per 10g / Per 1kg)
+   Append-only styles; existing BillBox styles remain unchanged.
+============================================ */
+.rate-entry-field .rate-unit-select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 9px;
+  padding: 10px 42px 10px 13px;
+  border: 1px solid var(--input-border, rgba(128, 128, 128, 0.28));
+  border-radius: 10px;
+  background-color: var(--input-bg, var(--card-bg, #fff));
+  color: var(--text-primary, inherit);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 17px) 18px, calc(100% - 12px) 18px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rate-entry-field .rate-unit-select:focus {
+  border-color: var(--primary, #3978f6);
+  box-shadow: 0 0 0 3px rgba(57, 120, 246, 0.12);
+}
+
+.rate-entry-field .rate-unit-select option {
+  background: var(--input-bg, #fff);
+  color: var(--text-primary, #222);
+}
+
+@media (max-width: 600px) {
+  .rate-entry-field .rate-unit-select {
+    min-height: 46px;
+    font-size: 14px;
+  }
+}
+
+
+/* =========================================
+   RATE UNIT DROPDOWN - DARK & LIGHT THEME
+========================================= */
+
+.field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 40px 11px 14px;
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+
+  cursor: pointer;
+  outline: none;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d6a84b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+
+  transition: all 0.2s ease;
+}
+
+/* DARK THEME */
+[data-theme="dark"] .field select,
+.dark-theme .field select {
+  background-color: #171c2a;
+  color: #f3f4f6;
+  border: 1px solid #343b4d;
+}
+
+[data-theme="dark"] .field select option,
+.dark-theme .field select option {
+  background: #171c2a;
+  color: #f3f4f6;
+}
+
+/* LIGHT THEME */
+[data-theme="light"] .field select,
+.light-theme .field select {
+  background-color: #ffffff;
+  color: #202638;
+  border: 1px solid #dce1e9;
+}
+
+[data-theme="light"] .field select option,
+.light-theme .field select option {
+  background: #ffffff;
+  color: #202638;
+}
+
+/* HOVER */
+.field select:hover {
+  border-color: #d6a84b;
+}
+
+/* FOCUS */
+.field select:focus {
+  border-color: #d6a84b;
+  box-shadow: 0 0 0 3px rgba(214, 168, 75, 0.14);
+}

@@ -612,6 +612,14 @@ const makeBillNumber = () => {
   )}${String(now.getMilliseconds()).padStart(3, "0")}`;
 };
 
+const getRateUnitLabel = (unit, metal, language) => {
+  const resolvedUnit = unit || (metal === "gold" ? "10g" : "1kg");
+  const labels = language === "hi"
+    ? { "1g": "प्रति 1 ग्राम", "10g": "प्रति 10 ग्राम", "1kg": "प्रति 1 किलो" }
+    : { "1g": "Per 1 Gram", "10g": "Per 10 Grams", "1kg": "Per 1 KG" };
+  return labels[resolvedUnit] || labels[metal === "gold" ? "10g" : "1kg"];
+};
+
 function NewBill() {
   const navigate = useNavigate();
 
@@ -657,6 +665,7 @@ function NewBill() {
   const [quantity, setQuantity] = useState(1);
   const [weight, setWeight] = useState("");
   const [rate, setRate] = useState("");
+  const [rateUnit, setRateUnit] = useState("10g");
   const [itemMaking, setItemMaking] = useState("");
   const [itemOtherCharges, setItemOtherCharges] = useState("");
   const [itemGstRate, setItemGstRate] = useState("");
@@ -831,9 +840,11 @@ function NewBill() {
     const itemWeight = Number(line.weight) || 0;
     const itemRate = Number(line.rate) || 0;
 
-    return line.metal === "gold"
-      ? (itemWeight * itemRate) / 10
-      : (itemWeight * itemRate) / 1000;
+    // Backward compatibility: old Gold bills used per 10g and old Silver bills per 1kg.
+    const selectedUnit = line.rateUnit || (line.metal === "gold" ? "10g" : "1kg");
+    const divisor = selectedUnit === "1g" ? 1 : selectedUnit === "1kg" ? 1000 : 10;
+
+    return (itemWeight * itemRate) / divisor;
   }, []);
 
   const makingAmount = useMemo(
@@ -911,9 +922,10 @@ function NewBill() {
       ? `gold-${carat}`
       : `silver-${item}`;
 
-  const matchingRate = items.find(
+  const matchingRateLine = items.find(
     (line) => line.rateKey === rateKey
-  )?.rate;
+  );
+  const matchingRate = matchingRateLine?.rate;
 
   const saveGstRateAndContinue = async () => {
     if (!user) return;
@@ -955,6 +967,7 @@ function NewBill() {
     setWeight("");
     setQuantity(1);
     setRate("");
+    setRateUnit(value === "gold" ? "10g" : "1kg");
     setItemMaking("");
     setItemOtherCharges("");
     setItemGstRate(shopProfile.gstRate === null || shopProfile.gstRate === undefined ? "" : String(shopProfile.gstRate));
@@ -972,6 +985,7 @@ function NewBill() {
     const existing = items.find((line) => line.rateKey === selectedRateKey);
     if (metal === "gold") {
       setRate(existing ? String(existing.rate) : "");
+      setRateUnit(existing?.rateUnit || "10g");
     }
   };
 
@@ -987,6 +1001,7 @@ function NewBill() {
       );
 
       setRate(existing ? String(existing.rate) : "");
+      setRateUnit(existing?.rateUnit || "1kg");
     }
   };
 
@@ -1055,6 +1070,7 @@ function NewBill() {
       quantity: Number(quantity),
       weight: Number(weight),
       rate: Number(rate),
+      rateUnit,
       rateKey: selectedRateKey,
       makingCharges: toAmount(itemMaking),
       otherCharges: toAmount(itemOtherCharges),
@@ -1072,6 +1088,7 @@ function NewBill() {
         line.metal === newLine.metal &&
         line.carat === newLine.carat &&
         Number(line.rate) === newLine.rate &&
+        (line.rateUnit || (line.metal === "gold" ? "10g" : "1kg")) === newLine.rateUnit &&
         Number(line.makingCharges || 0) === newLine.makingCharges &&
         Number(line.otherCharges || 0) === newLine.otherCharges &&
         Number(line.gstRate ?? shopProfile.gstRate ?? 0) === Number(newLine.gstRate) &&
@@ -1088,6 +1105,7 @@ function NewBill() {
               quantity: Number(line.quantity) + newLine.quantity,
               weight: Number(line.weight) + newLine.weight,
               rate: newLine.rate,
+              rateUnit: newLine.rateUnit,
               rateKey: selectedRateKey,
             }
             : line
@@ -1111,6 +1129,7 @@ function NewBill() {
     setQuantity(1);
     setWeight("");
     setRate("");
+    setRateUnit(metal === "gold" ? "10g" : "1kg");
     setItemMaking("");
     setItemOtherCharges("");
     setItemGstRate(shopProfile.gstRate === null || shopProfile.gstRate === undefined ? "" : String(shopProfile.gstRate));
@@ -1298,6 +1317,7 @@ ${clone.outerHTML}
         quantity: Number(line.quantity) || 0,
         weight: Number(line.weight) || 0,
         rate: Number(line.rate) || 0,
+        rateUnit: line.rateUnit || (line.metal === "gold" ? "10g" : "1kg"),
         amount: detail.metalValue,
         makingCharges: detail.makingValue,
         makingChargesPerPiece: toAmount(line.makingCharges),
@@ -1964,14 +1984,18 @@ ${clone.outerHTML}
                 />
               </div>
 
-              <div className="field">
-                <label>
-                  {t.rate}
-                  <small>
-                    {" "}
-                    ({metal === "gold" ? t.per10Gram : t.perKg})
-                  </small>
-                </label>
+              <div className="field rate-entry-field">
+                <label>{t.rate}</label>
+                <select
+                  className="rate-unit-select"
+                  value={rateUnit}
+                  onChange={(event) => setRateUnit(event.target.value)}
+                  aria-label={language === "hi" ? "दर की इकाई" : "Rate unit"}
+                >
+                  <option value="1g">{language === "hi" ? "प्रति 1 ग्राम" : "Per 1 Gram"}</option>
+                  <option value="10g">{language === "hi" ? "प्रति 10 ग्राम" : "Per 10 Grams"}</option>
+                  <option value="1kg">{language === "hi" ? "प्रति 1 किलो" : "Per 1 KG"}</option>
+                </select>
                 <input
                   type="number"
                   min="0"
@@ -1982,14 +2006,10 @@ ${clone.outerHTML}
                       : t.enterRate
                   }
                   value={rate}
-                  onChange={(event) =>
-                    setRate(event.target.value)
-                  }
+                  onChange={(event) => setRate(event.target.value)}
                 />
                 {matchingRate && !rate && (
-                  <small className="rate-hint">
-                    {t.rateAvailable}
-                  </small>
+                  <small className="rate-hint">{t.rateAvailable}</small>
                 )}
               </div>
 
@@ -2120,7 +2140,7 @@ ${clone.outerHTML}
                         <div><span>{t.making}</span><strong>₹ {formatMoney(detail.makingValue)}</strong></div>
                         <div><span>{t.otherCharges}</span><strong>₹ {formatMoney(detail.otherValue)}</strong></div>
                         {detail.gstRate > 0 && <div><span>{t.gst} ({detail.gstRate}%)</span><strong>₹ {formatMoney(detail.gstAmount)}</strong></div>}
-                        <div><span>{t.rate}</span><strong>₹ {formatMoney(line.rate, 0)}</strong></div>
+                        <div><span>{t.rate} ({getRateUnitLabel(line.rateUnit, line.metal, language)})</span><strong>₹ {formatMoney(line.rate, 0)}</strong></div>
                       </div>
 
                       {(line.hsnCode || line.skuCode || line.huid) && (
@@ -2355,7 +2375,7 @@ ${clone.outerHTML}
 
                 <div className="print-item-cell"><span className="print-cell-label">{t.quantity}</span><strong>{line.quantity}</strong></div>
                 <div className="print-item-cell"><span className="print-cell-label">{t.weight}</span><strong>{line.weight}g</strong></div>
-                <div className="print-item-cell"><span className="print-cell-label">{t.rate}</span><strong>₹{formatMoney(line.rate, 0)}</strong></div>
+                <div className="print-item-cell"><span className="print-cell-label">{t.rate} ({getRateUnitLabel(line.rateUnit, line.metal, language)})</span><strong>₹{formatMoney(line.rate, 0)}</strong></div>
                 {line.carat && <div className="print-item-cell"><span className="print-cell-label">{t.purity}</span><strong>{line.carat}</strong></div>}
                 <div className="print-item-cell"><span className="print-cell-label">{t.metalValue}</span><strong>₹{formatMoney(detail.metalValue)}</strong></div>
                 {detail.makingValue > 0 && <div className="print-item-cell"><span className="print-cell-label">{t.making}</span><strong>₹{formatMoney(detail.makingValue)}</strong></div>}
