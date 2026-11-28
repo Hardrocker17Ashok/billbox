@@ -634,6 +634,8 @@ function NewBill() {
   const [billNumber, setBillNumber] = useState("INV-0000");
   const [printDateTime, setPrintDateTime] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
+  const uploadedPdfUrlRef = useRef("");
+  const billSavedRef = useRef(false);
   const [pendingPrintConfirmation, setPendingPrintConfirmation] = useState(false);
   const [pendingBillData, setPendingBillData] = useState(null);
   const [pendingBillDocId, setPendingBillDocId] = useState(null);
@@ -1401,77 +1403,35 @@ ${clone.outerHTML}
       amountPaid: receivedAmount,
       balanceAmount,
     };
-    let printWindow = null;
-
     try {
-      // Open a new tab immediately during the user's click.
-      // This avoids iOS Chrome popup restrictions.
-      printWindow = window.open("about:blank", "_blank");
+      // Start a fresh print/save cycle for this invoice.
+      uploadedPdfUrlRef.current = "";
+      billSavedRef.current = false;
 
-      if (!printWindow) {
-        throw new Error("POPUP_BLOCKED");
-      }
-
-      printWindow.document.open();
-      printWindow.document.write(`
-    <!doctype html>
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>BillBox</title>
-      </head>
-      <body style="font-family:Arial,sans-serif;padding:30px;text-align:center">
-        <h3>Preparing your invoice...</h3>
-        <p>Please wait.</p>
-      </body>
-    </html>
-  `);
-      printWindow.document.close();
-
-      // Force React to render invoice data before creating HTML.
       flushSync(() => {
         setBillNumber(generatedBillNumber);
         setPrintDateTime(now);
         setPendingBillData(billData);
         setPendingBillDocId(billDocumentRef.id);
+        setPendingPrintConfirmation(false);
+        setWhatsAppConfirmOpen(false);
       });
 
-      // Use the existing invoice HTML generator.
-      const invoiceHtml = createInvoiceHtmlDocument();
-
-      // Generate the PDF using your existing API.
-      const pdfUrl = await generateInvoicePdf(invoiceHtml);
-
-      // Open the generated PDF in the new tab.
-      printWindow.location.replace(pdfUrl);
-
-      // Show existing save confirmation in the original tab.
-      setPendingPrintConfirmation(true);
-
+      // Open the browser's native print preview directly from the original
+      // invoice DOM. No intermediate preview screen, iframe, new tab or API.
+      // The existing @media print CSS controls the original A4 invoice layout.
+      window.print();
     } catch (error) {
-      console.error("Unable to open invoice:", error);
-
-      if (printWindow && !printWindow.closed) {
-        printWindow.close();
-      }
-
+      console.error("Unable to open the native print dialog:", error);
+      setIsPrinting(false);
       setPendingPrintConfirmation(false);
       setPendingBillData(null);
       setPendingBillDocId(null);
-
-      const message =
-        error.message === "POPUP_BLOCKED"
-          ? (
-            language === "hi"
-              ? "कृपया Chrome में इस वेबसाइट के Pop-ups allow करें और दोबारा प्रयास करें।"
-              : "Please allow pop-ups for this website in Chrome and try again."
-          )
-          : getInvoiceApiUserMessage(error, language);
-
-      window.alert(message);
-
-    } finally {
-      setIsPrinting(false);
+      window.alert(
+        language === "hi"
+          ? "प्रिंट प्रीव्यू नहीं खुल सका। कृपया दोबारा प्रयास करें।"
+          : "The print preview could not be opened. Please try again."
+      );
     }
   }, [
     user,
@@ -1503,15 +1463,20 @@ ${clone.outerHTML}
   ]);
 
 
+  const openPostPrintConfirmation = () => {
+    setIsPrinting(false);
+    if (pendingBillData && pendingBillDocId) {
+      setPendingPrintConfirmation(true);
+    }
+  };
+
   useEffect(() => {
     const handleAfterPrint = () => {
       setIsPrinting(false);
-      if (
-        pendingBillData &&
-        pendingBillDocId &&
-        !pendingPrintConfirmation
-      ) {
-        setPendingPrintConfirmation(true);
+      // The browser fires afterprint when its native print dialog closes.
+      // Then show the existing Save & Share confirmation.
+      if (pendingBillData && pendingBillDocId && !pendingPrintConfirmation) {
+        openPostPrintConfirmation();
       }
     };
 
@@ -1519,13 +1484,18 @@ ${clone.outerHTML}
     return () => window.removeEventListener("afterprint", handleAfterPrint);
   }, [pendingBillData, pendingBillDocId, pendingPrintConfirmation]);
 
-  const cancelPrintConfirmation = () => {
-    // Cancel only discards the local pending invoice. No Firestore write.
+  const resetPendingInvoice = () => {
     setPendingPrintConfirmation(false);
     setPendingBillData(null);
     setPendingBillDocId(null);
     setBillNumber("INV-0000");
     setPrintDateTime(null);
+    uploadedPdfUrlRef.current = "";
+    billSavedRef.current = false;
+  };
+
+  const cancelPrintConfirmation = () => {
+    resetPendingInvoice();
   };
 
   const confirmPrintedAndSave = async () => {
@@ -1535,20 +1505,42 @@ ${clone.outerHTML}
     setIsSavingBill(true);
 
     try {
-      // Keep the existing idempotent Firestore save workflow unchanged.
-      const billRef = doc(db, "bills", pendingBillDocId);
-      await setDoc(billRef, {
-        ...pendingBillData,
-        createdAt: serverTimestamp(),
-        printedAt: serverTimestamp(),
-      });
+      // Upload the final A4 PDF to R2 only after the shopkeeper confirms save.
+      let uploadedPdfUrl = uploadedPdfUrlRef.current;
+      if (!uploadedPdfUrl) {
+        const invoiceHtml = createInvoiceHtmlDocument();
+        uploadedPdfUrl = await generateInvoicePdf(invoiceHtml);
+        uploadedPdfUrlRef.current = uploadedPdfUrl;
+      }
 
+      const billRef = doc(db, "bills", pendingBillDocId);
+
+      // Idempotent save: retrying an upload/save does not create another bill.
+      if (!billSavedRef.current) {
+        // Preserve the existing Firestore bill schema. The R2 PDF URL stays
+        // in memory only and is used later for WhatsApp sharing.
+        await setDoc(billRef, {
+          ...pendingBillData,
+          createdAt: serverTimestamp(),
+          printedAt: serverTimestamp(),
+        });
+        billSavedRef.current = true;
+      } else {
+        await updateDoc(billRef, {
+          printedAt: serverTimestamp(),
+        });
+      }
       setPendingPrintConfirmation(false);
       setWhatsAppMobile(pendingBillData.customerMobile || "");
       setWhatsAppConfirmOpen(true);
     } catch (error) {
-      console.error("Bill save error:", error?.code, error?.message, error);
-      window.alert(`${t.saveError} ${error?.code || error?.message || ""}`);
+      console.error("Bill save / R2 upload error:", error?.code, error?.message, error);
+      window.alert(
+        `${language === "hi"
+          ? "बिल सेव या PDF अपलोड नहीं हो सकी। दोबारा प्रयास करें।"
+          : "The bill could not be saved or its PDF could not be uploaded. Please retry."
+        } ${error?.code || error?.message || ""}`
+      );
     } finally {
       saveLockRef.current = false;
       setIsSavingBill(false);
@@ -1557,10 +1549,7 @@ ${clone.outerHTML}
 
   const closeWhatsAppConfirmation = () => {
     setWhatsAppConfirmOpen(false);
-    setPendingBillData(null);
-    setPendingBillDocId(null);
-    setBillNumber("INV-0000");
-    setPrintDateTime(null);
+    resetPendingInvoice();
   };
 
 
@@ -1599,9 +1588,11 @@ ${clone.outerHTML}
     whatsappWindow.document.close();
 
     try {
-      const invoiceHtml = createInvoiceHtmlDocument();
+      const pdfUrl = uploadedPdfUrlRef.current;
+      if (!pdfUrl) {
+        throw new Error("Invoice PDF URL is missing. Please save the bill again.");
+      }
 
-      const pdfUrl = await generateInvoicePdf(invoiceHtml);
       const billRef = doc(db, "bills", pendingBillDocId);
 
       // If the shopkeeper corrected the number, update the saved bill too.
@@ -2252,8 +2243,7 @@ ${clone.outerHTML}
         </section>
       </main>
 
-      {/* PRINT INVOICE */}
-
+      {/* ORIGINAL PRINT INVOICE — retained for exact A4 rendering */}
       <div className="print-invoice">
         <div className="print-header">
           <div className="print-shop">
@@ -2471,8 +2461,8 @@ ${clone.outerHTML}
             </h2>
             <p>
               {language === "hi"
-                ? "आपका बिल PDF नए टैब में खुल गया है। आगे बढ़ने पर बिल डेटाबेस में सेव होगा और फिर ग्राहक का WhatsApp नंबर कन्फर्म करने का विकल्प आएगा।"
-                : "Your invoice PDF has opened in a new tab. Continue to save this bill in the database, then confirm the customer's WhatsApp number before opening the chat."}
+                ? "प्रिंट विंडो बंद होने के बाद आगे बढ़ें। आपका बिल Firebase में सेव होगा और PDF Cloudflare पर अपलोड होगी। फिर WhatsApp नंबर कन्फर्म कर सकेंगे।"
+                : "After closing the print dialog, continue to save the bill in Firebase and upload its PDF to Cloudflare. Then confirm the customer's WhatsApp number."}
             </p>
             <div className="billbox-share-summary">
               <span>{language === "hi" ? "बिल नंबर" : "Invoice number"}</span>

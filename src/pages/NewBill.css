@@ -5874,3 +5874,6 @@ button {
   border-color: #d6a84b;
   box-shadow: 0 0 0 3px rgba(214, 168, 75, 0.14);
 }
+
+
+/* In-app iframe preview removed. Print opens the browser native print preview directly. */

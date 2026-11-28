@@ -1,3 +1,4 @@
+
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 
@@ -53,25 +54,26 @@ function createR2Client() {
 }
 
 /* =====================================
-   PDF GENERATION + CLOUDFLARE R2 UPLOAD
+   PDF GENERATION
+   - mode: "preview" => return PDF bytes only
+   - default => upload PDF to R2 and return signed URL
 ===================================== */
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  // API health check
   if (req.method === "GET") {
     return sendJson(res, 200, {
       success: true,
       message:
         "Invoice API route is available. Send a POST request to generate a PDF.",
       route: "/api/upload-invoice",
+      modes: ["preview", "upload"],
     });
   }
 
   if (req.method !== "POST") {
     res.setHeader("Allow", "GET, POST");
-
     return sendJson(res, 405, {
       success: false,
       error: "Method not allowed",
@@ -82,10 +84,6 @@ export default async function handler(req, res) {
   let s3 = null;
 
   try {
-    /* =====================================
-       READ REQUEST BODY
-    ===================================== */
-
     let body = req.body;
 
     if (typeof body === "string") {
@@ -100,6 +98,7 @@ export default async function handler(req, res) {
     }
 
     const html = body?.html;
+    const previewOnly = body?.mode === "preview";
 
     if (
       typeof html !== "string" ||
@@ -112,10 +111,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /* =====================================
-       VALIDATE HTML SIZE
-    ===================================== */
-
     const htmlSize = Buffer.byteLength(html, "utf8");
 
     if (htmlSize > 3 * 1024 * 1024) {
@@ -125,23 +120,20 @@ export default async function handler(req, res) {
       });
     }
 
-    /* =====================================
-       VALIDATE R2 ENVIRONMENT
-    ===================================== */
+    // Preview mode does not require R2 credentials
+    // and does not upload anything to Cloudflare R2.
 
-    const missingVariables = getMissingR2Variables();
+    if (!previewOnly) {
+      const missingVariables = getMissingR2Variables();
 
-    if (missingVariables.length > 0) {
-      throw new Error(
-        `Missing Vercel environment variables: ${missingVariables.join(", ")}`
-      );
+      if (missingVariables.length > 0) {
+        throw new Error(
+          `Missing Vercel environment variables: ${missingVariables.join(", ")}`
+        );
+      }
+
+      s3 = createR2Client();
     }
-
-    s3 = createR2Client();
-
-    /* =====================================
-       LAUNCH CHROMIUM
-    ===================================== */
 
     browser = await puppeteer.launch({
       args: chromium.args,
@@ -162,24 +154,17 @@ export default async function handler(req, res) {
       deviceScaleFactor: 1,
     });
 
-    // Apply @media print rules from NewBill.css
     await page.emulateMediaType("print");
 
     page.setDefaultNavigationTimeout(30000);
     page.setDefaultTimeout(30000);
-
-    /* =====================================
-       LOAD INVOICE HTML
-    ===================================== */
 
     await page.setContent(html, {
       waitUntil: "load",
       timeout: 30000,
     });
 
-    /* =====================================
-       WAIT FOR FONTS AND IMAGES
-    ===================================== */
+    // Wait for fonts and images before generating PDF.
 
     await page.evaluate(async () => {
       if (document.fonts?.ready) {
@@ -190,26 +175,24 @@ export default async function handler(req, res) {
 
       await Promise.all(
         images.map((img) => {
-          if (img.complete) {
-            return Promise.resolve();
-          }
+          if (img.complete) return Promise.resolve();
 
           return new Promise((resolve) => {
             const finish = () => resolve();
 
-            img.addEventListener("load", finish, { once: true });
-            img.addEventListener("error", finish, { once: true });
+            img.addEventListener("load", finish, {
+              once: true,
+            });
 
-            // Broken remote images should not block invoice generation.
+            img.addEventListener("error", finish, {
+              once: true,
+            });
+
             setTimeout(finish, 10000);
           });
         })
       );
     });
-
-    /* =====================================
-       VERIFY INVOICE ELEMENT
-    ===================================== */
 
     const invoiceExists = await page.$(".print-invoice");
 
@@ -219,9 +202,7 @@ export default async function handler(req, res) {
       );
     }
 
-    /* =====================================
-       GENERATE A4 PDF
-    ===================================== */
+    // Generate A4 PDF.
 
     const pdfData = await page.pdf({
       format: "A4",
@@ -239,7 +220,40 @@ export default async function handler(req, res) {
       throw new Error("Chromium did not generate a valid PDF");
     }
 
-    console.log("Invoice PDF generated:", pdfBuffer.length, "bytes");
+    console.log(
+      previewOnly
+        ? "Invoice preview PDF generated:"
+        : "Invoice PDF generated:",
+      pdfBuffer.length,
+      "bytes"
+    );
+
+    /* =====================================
+       PREVIEW MODE
+       Return PDF directly.
+       No R2 upload.
+    ===================================== */
+
+    if (previewOnly) {
+      res.setHeader("Cache-Control", "no-store");
+
+      res.setHeader(
+        "Content-Type",
+        "application/pdf"
+      );
+
+      res.setHeader(
+        "Content-Disposition",
+        'inline; filename="billbox-invoice-preview.pdf"'
+      );
+
+      res.setHeader(
+        "Content-Length",
+        String(pdfBuffer.length)
+      );
+
+      return res.status(200).send(pdfBuffer);
+    }
 
     /* =====================================
        UPLOAD PDF TO CLOUDFLARE R2
@@ -262,7 +276,8 @@ export default async function handler(req, res) {
     console.log("Invoice PDF uploaded to R2:", fileName);
 
     /* =====================================
-       GENERATE SIGNED URL
+       GENERATE SIGNED PDF URL
+       Valid for 7 days.
     ===================================== */
 
     const pdfUrl = await getSignedUrl(
@@ -278,10 +293,6 @@ export default async function handler(req, res) {
       }
     );
 
-    /* =====================================
-       SUCCESS RESPONSE
-    ===================================== */
-
     return sendJson(res, 200, {
       success: true,
       message: "Invoice PDF generated and uploaded successfully",
@@ -289,7 +300,6 @@ export default async function handler(req, res) {
       pdfUrl,
       previewUrl: pdfUrl,
     });
-
   } catch (error) {
     console.error(
       "Invoice PDF render/upload error:",
@@ -302,7 +312,6 @@ export default async function handler(req, res) {
       error: "PDF render or upload failed",
       details: error?.message || "Unknown server error",
     });
-
   } finally {
     if (browser) {
       try {
