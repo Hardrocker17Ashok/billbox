@@ -1,6 +1,7 @@
 import "./PendingBills.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { flushSync } from "react-dom";
 import { onAuthStateChanged } from "firebase/auth";
 
 import {
@@ -8,6 +9,90 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import PageLoader from "../components/PageLoader";
+
+/* =====================================
+   INVOICE PDF API RESPONSE HANDLER
+   Same PDF generation flow as New Bill.
+===================================== */
+async function generateInvoicePdf(invoiceHtml) {
+  let response;
+
+  try {
+    response = await fetch("/api/upload-invoice", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: JSON.stringify({ html: invoiceHtml }),
+    });
+  } catch (error) {
+    throw new Error(`API_UNAVAILABLE: ${error?.message || "Network request failed"}`, { cause: error });
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  const responseText = await response.text();
+
+  if (contentType.includes("text/html") || response.status === 404) {
+    throw new Error(
+      `API_ROUTE_NOT_FOUND: Invoice API returned HTTP ${response.status}. ` +
+      "Run the project with `npx vercel dev` from the project root, " +
+      "or verify that api/upload-invoice.js is in the Vercel project root."
+    );
+  }
+
+  let result;
+  try {
+    result = responseText ? JSON.parse(responseText) : null;
+  } catch (error) {
+    throw new Error(
+      `API_INVALID_RESPONSE: Invoice API returned non-JSON data ` +
+      `(HTTP ${response.status}, Content-Type: ${contentType || "unknown"}). ` +
+      responseText.slice(0, 250),
+      { cause: error }
+    );
+  }
+
+  if (!result || typeof result !== "object") {
+    throw new Error(`API_EMPTY_RESPONSE: Invoice API returned an empty response (HTTP ${response.status}).`);
+  }
+
+  if (!response.ok || result.success !== true) {
+    throw new Error(result.details || result.error || `Invoice API failed with HTTP ${response.status}.`);
+  }
+
+  const pdfUrl = result.pdfUrl || result.previewUrl;
+  if (typeof pdfUrl !== "string" || !pdfUrl.trim()) {
+    throw new Error("Invoice API succeeded but did not return pdfUrl or previewUrl.");
+  }
+
+  return pdfUrl;
+}
+
+function getInvoiceApiUserMessage(error, language = "en") {
+  const message = String(error?.message || "");
+
+  if (
+    message.includes("API_ROUTE_NOT_FOUND") ||
+    message.includes("API_UNAVAILABLE") ||
+    message.includes("API_INVALID_RESPONSE") ||
+    message.includes("API_EMPTY_RESPONSE")
+  ) {
+    return language === "hi"
+      ? "Invoice API route nahi mil raha."
+      : "The invoice API route is unavailable.";
+  }
+
+  if (message.includes("TAX_INVOICE_SAVE_FAILED")) {
+    return language === "hi"
+      ? "पक्का बिल सेव नहीं हो सका। कृपया दोबारा प्रयास करें।"
+      : "Tax invoice could not be saved. Please try again.";
+  }
+
+  return language === "hi"
+    ? `बिल PDF तैयार नहीं हो सकी। कारण: ${message || "अज्ञात त्रुटि"}`
+    : `Unable to prepare the invoice PDF. Reason: ${message || "Unknown error"}`;
+}
 
 const DEFAULT_PROFILE = {
   shopName: "BillBox", ownerName: "", phone: "", alternatePhone: "",
@@ -77,7 +162,6 @@ const dateText = (value, language) => toDate(value)?.toLocaleDateString(language
 const totalOf = (b) => Number(b.grandTotal ?? b.totalAmount ?? b.payment?.total ?? 0) || 0;
 const paidOf = (b) => Number(b.paidAmount ?? b.amountPaid ?? b.payment?.paid ?? 0) || 0;
 const balanceOf = (b) => Math.max(0, Number(b.balanceDue ?? b.balanceAmount ?? b.payment?.balance ?? (totalOf(b) - paidOf(b))) || 0);
-const safe = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 function PendingBills() {
   const navigate = useNavigate();
@@ -178,13 +262,32 @@ function PendingBills() {
   };
 
   const printBill = async (bill, requestedType = "estimate") => {
-    let invoice = { ...bill, billType: requestedType };
+    // Open the tab synchronously from the user's tap/click. This is required
+    // for iPhone/iPad Chrome and Safari popup policies.
+    let pdfWindow = null;
+
+    try {
+      pdfWindow = window.open("about:blank", "_blank");
+      if (!pdfWindow) throw new Error("POPUP_BLOCKED");
+
+      pdfWindow.document.open();
+      pdfWindow.document.write(`<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BillBox</title>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#111;color:#f5f0e6;font-family:Arial,sans-serif;text-align:center}
+.card{padding:30px}.spinner{width:38px;height:38px;margin:22px auto;border:3px solid #494237;border-top-color:#c6a15b;border-radius:50%;animation:spin .8s linear infinite}
+p{color:#aaa49a;font-size:14px}@keyframes spin{to{transform:rotate(360deg)}}
+</style></head><body><main class="card"><strong>BILLBOX</strong><div class="spinner"></div><p>${language === "hi" ? "आपका बिल PDF तैयार हो रहा है..." : "Preparing your invoice PDF..."}</p></main></body></html>`);
+      pdfWindow.document.close();
+
+      let invoice = { ...bill, billType: requestedType };
 
     if (requestedType === "tax") {
       // Only the GSTIN saved in Profile > Shop Settings is accepted.
       // Do not prompt for or save GSTIN from this Pending Bills screen.
       const gstin = String(profile.gstNumber || "").trim().toUpperCase();
       if (!gstin) {
+        if (pdfWindow && !pdfWindow.closed) pdfWindow.close();
         window.alert(t.gstinRequired);
         return;
       }
@@ -197,6 +300,7 @@ function PendingBills() {
         : Number(savedGstRate);
 
       if (!Number.isFinite(gstRate) || gstRate < 0 || gstRate > 100) {
+        if (pdfWindow && !pdfWindow.closed) pdfWindow.close();
         window.alert(language === "hi" ? "दुकान की GST दर सही नहीं है। कृपया Profile → Shop Settings में जाँचें।" : "The shop GST rate is invalid. Please check Profile → Shop Settings.");
         return;
       }
@@ -287,8 +391,7 @@ function PendingBills() {
         });
       } catch (error) {
         console.error("Tax invoice update failed:", error);
-        window.alert(language === "hi" ? "पक्का बिल सेव नहीं हो सका। कृपया दोबारा प्रयास करें।" : "Tax invoice could not be saved. Please try again.");
-        return;
+        throw new Error("TAX_INVOICE_SAVE_FAILED", { cause: error });
       }
 
       if (balance > 0.009) {
@@ -302,10 +405,33 @@ function PendingBills() {
       };
     }
 
-    setSelected(invoice);
-    setPrintTarget(invoice);
-    setAfterPrintBill(invoice);
-    window.setTimeout(() => window.print(), 300);
+      // Render the existing invoice component before capturing its HTML.
+      setSelected(invoice);
+      flushSync(() => setPrintTarget(invoice));
+
+      const invoiceHtml = createInvoiceHtmlDocument();
+      const pdfUrl = await generateInvoicePdf(invoiceHtml);
+
+      // Show the hosted PDF in the tab opened directly from the user action.
+      pdfWindow.location.replace(pdfUrl);
+
+      // Preserve the existing WhatsApp follow-up, without depending on
+      // window.print()/afterprint (which does not work consistently on iOS).
+      setAfterPrintBill(null);
+      setWhatsAppBill(invoice);
+      setWhatsAppMobile(invoice.customerMobile || "");
+    } catch (error) {
+      console.error("Pending bill PDF generation failed:", error);
+      if (pdfWindow && !pdfWindow.closed) pdfWindow.close();
+      setPrintTarget(null);
+      setAfterPrintBill(null);
+
+      if (error?.message === "POPUP_BLOCKED") {
+        window.alert(t.noPopup);
+      } else {
+        window.alert(getInvoiceApiUserMessage(error, language));
+      }
+    }
   };
 
   useEffect(() => {

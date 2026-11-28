@@ -35,7 +35,8 @@ async function generateInvoicePdf(invoiceHtml) {
     });
   } catch (error) {
     throw new Error(
-      `API_UNAVAILABLE: ${error?.message || "Network request failed"}`
+      `API_UNAVAILABLE: ${error?.message || "Network request failed"}`,
+      { cause: error }
     );
   }
 
@@ -102,8 +103,8 @@ function getInvoiceApiUserMessage(error, language = "en") {
     message.includes("API_EMPTY_RESPONSE")
   ) {
     return language === "hi"
-      ? "Invoice API route nahi mil raha. Localhost par normal `npm run dev` ki jagah project root se `npx vercel dev` chalao aur Vercel ke diye hue localhost URL ko open karo. Production mein `api/upload-invoice.js` file project root ke api folder mein honi chahiye."
-      : "The invoice API route is unavailable. For local testing, run `npx vercel dev` from the project root instead of `npm run dev`, then open the localhost URL shown by Vercel. In production, keep `api/upload-invoice.js` inside the project-root api folder.";
+      ? "Invoice API route nahi mil raha."
+      : "The invoice API route is unavailable.";
   }
 
   return language === "hi"
